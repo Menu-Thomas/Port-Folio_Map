@@ -79,7 +79,7 @@ const hexObjects = [];
 
 hexMap.forEach(({ q, r, type }) => {
   const { x, z } = hexToWorld(q, r);
-  loader.load(`/models/Hex-${type}.glb`, gltf => {
+  loader.load(`./models/Hex-${type}.glb`, gltf => {
     const hex = gltf.scene;
     hex.position.set(x, 0, z);
     hex.scale.set(1, 1, 1);
@@ -201,23 +201,23 @@ window.addEventListener('click', async () => {
     console.log('Clicked hex type:', type, 'name:', INTERSECTED.name, 'userData:', INTERSECTED.userData);
     let html = '';
     if (type === 'contact') {
-      html = await loadSidebarPage('sidepages/contact.html');
+      html = await loadSidebarPage('./sidepages/contact.html');
     } else if (type === 'home') {
-      html = await loadSidebarPage('sidepages/home.html');
+      html = await loadSidebarPage('./sidepages/home.html');
     } else if (type === 'cv') {
-      html = await loadSidebarPage('sidepages/cv.html');
+      html = await loadSidebarPage('./sidepages/cv.html');
     } else if (type === 'projects') {
-      html = await loadSidebarPage('sidepages/projects.html');
+      html = await loadSidebarPage('./sidepages/projects.html');
     } else if (type === 'champ1' || type === 'champ2') {
-      html = await loadSidebarPage('sidepages/champs.html');
+      html = await loadSidebarPage('./sidepages/champs.html');
     } else if (type === 'forest1' || type === 'forest2' || type === 'forest3') {
-      html = await loadSidebarPage('sidepages/foret.html');
+      html = await loadSidebarPage('./sidepages/foret.html');
     } else if (type === 'marais' || type === 'marais2') {
-      html = await loadSidebarPage('sidepages/marais.html');
+      html = await loadSidebarPage('./sidepages/marais.html');
     } else if (type === 'desert1' || type === 'desert2') {
-      html = await loadSidebarPage('sidepages/desert.html');
+      html = await loadSidebarPage('./sidepages/desert.html');
     } else if (type === 'plain1') {
-      html = await loadSidebarPage('sidepages/plaine.html');
+      html = await loadSidebarPage('./sidepages/plaine.html');
     } else {
       html = `<h2>${type ? type : 'Hexagone'}</h2><p>Page à venir...</p>`;
     }
@@ -273,7 +273,7 @@ window.addEventListener('resize', () => {
 
 // Equirectangular 360° background (JPG/PNG)
 const textureLoader = new THREE.TextureLoader();
-textureLoader.load('/textures/env.jpg', (texture) => {
+textureLoader.load('./textures/env.jpg', (texture) => {
   texture.mapping = THREE.EquirectangularReflectionMapping;
   texture.colorSpace = THREE.SRGBColorSpace;
   scene.background = texture;
@@ -286,23 +286,23 @@ window.addEventListener('mouseup', async (e) => {
     console.log('Clicked hex type:', type, 'name:', INTERSECTED.name, 'userData:', INTERSECTED.userData);
     let html = '';
     if (type === 'contact') {
-      html = await loadSidebarPage('sidepages/contact.html');
+      html = await loadSidebarPage('./sidepages/contact.html');
     } else if (type === 'home') {
-      html = await loadSidebarPage('sidepages/home.html');
+      html = await loadSidebarPage('./sidepages/home.html');
     } else if (type === 'cv') {
-      html = await loadSidebarPage('sidepages/cv.html');
+      html = await loadSidebarPage('./sidepages/cv.html');
     } else if (type === 'projects') {
-      html = await loadSidebarPage('sidepages/projects.html');
+      html = await loadSidebarPage('./sidepages/projects.html');
     } else if (type === 'champ1' || type === 'champ2') {
-      html = await loadSidebarPage('sidepages/champs.html');
+      html = await loadSidebarPage('./sidepages/champs.html');
     } else if (type === 'forest1' || type === 'forest2' || type === 'forest3') {
-      html = await loadSidebarPage('sidepages/foret.html');
+      html = await loadSidebarPage('./sidepages/foret.html');
     } else if (type === 'marais' || type === 'marais2') {
-      html = await loadSidebarPage('sidepages/marais.html');
+      html = await loadSidebarPage('./sidepages/marais.html');
     } else if (type === 'desert1' || type === 'desert2') {
-      html = await loadSidebarPage('sidepages/desert.html');
+      html = await loadSidebarPage('./sidepages/desert.html');
     } else if (type === 'plain1') {
-      html = await loadSidebarPage('sidepages/plaine.html');
+      html = await loadSidebarPage('./sidepages/plaine.html');
     } else {
       html = `<h2>${type ? type : 'Hexagone'}</h2><p>Page à venir...</p>`;
     }

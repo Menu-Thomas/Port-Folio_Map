@@ -1,11 +1,9 @@
+// === Import Dependencies ===
 import * as THREE from 'https://esm.sh/three@0.150.1';
 import { GLTFLoader } from 'https://esm.sh/three@0.150.1/examples/jsm/loaders/GLTFLoader.js';
 import { OrbitControls } from 'https://esm.sh/three@0.150.1/examples/jsm/controls/OrbitControls.js';
 
-
-
-
-// Scene setup
+// === Scene Initialization ===
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x111111);
 
@@ -18,153 +16,181 @@ renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
 const controls = new OrbitControls(camera, renderer.domElement);
-controls.minDistance = 6; // plus proche = zoom max (augmente pour moins zoomer)
-controls.maxDistance = 12; // plus loin = zoom min (diminue pour moins dézoomer)
+controls.minDistance = 6;
+controls.maxDistance = 12;
+controls.enableZoom = false;
 
-// Lighting
-const light = new THREE.PointLight(0xffffff, 0.9); // increased from 0.6
-light.position.set(10, 15, 10);
-scene.add(light);
-scene.add(new THREE.AmbientLight(0xffffff, 0.6)); // increased from 0.4
-const dirLight = new THREE.DirectionalLight(0xffffff, 1.1); // increased from 0.8
-dirLight.position.set(5, 10, 5);
-scene.add(dirLight);
+// === Lighting Setup ===
+function setupLighting() {
+  const pointLight = new THREE.PointLight(0xffffff, 0.9);
+  pointLight.position.set(10, 15, 10);
+  scene.add(pointLight);
 
-// Ocean background
-const oceanGeometry = new THREE.PlaneGeometry(100, 100, 15, 15); // was 50, 50
-oceanGeometry.rotateX(-Math.PI / 2);
-const vertData = [], v3 = new THREE.Vector3();
-for (let i = 0; i < oceanGeometry.attributes.position.count; i++) {
-  v3.fromBufferAttribute(oceanGeometry.attributes.position, i);
-  vertData.push({
-    initH: v3.y,
-    amplitude: THREE.MathUtils.randFloatSpread(2),
-    phase: THREE.MathUtils.randFloat(0, Math.PI)
-  });
+  const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+  scene.add(ambientLight);
+
+  const directionalLight = new THREE.DirectionalLight(0xffffff, 1.1);
+  directionalLight.position.set(5, 10, 5);
+  scene.add(directionalLight);
 }
-const oceanMaterial = new THREE.MeshLambertMaterial({ color: '#446677' });
-const oceanMesh = new THREE.Mesh(oceanGeometry, oceanMaterial);
-oceanMesh.position.y = -0.25;
-scene.add(oceanMesh);
+setupLighting();
 
-// Axial hex coordinate to world
+// === Ocean Setup ===
+function createOcean() {
+  const geometry = new THREE.PlaneGeometry(100, 100, 50, 50);
+  geometry.rotateX(-Math.PI / 2);
+
+  const vertData = [];
+  const v3 = new THREE.Vector3();
+
+  for (let i = 0; i < geometry.attributes.position.count; i++) {
+    v3.fromBufferAttribute(geometry.attributes.position, i);
+
+    const distanceFromCenter = Math.sqrt(v3.x * v3.x + v3.z * v3.z);
+    const waveHeight = Math.sin(distanceFromCenter * 0.2 + Math.PI / 4) * 0.5;
+    v3.y += waveHeight;
+
+    vertData.push({
+      initH: v3.y,
+      amplitude: THREE.MathUtils.randFloatSpread(0.5),
+      phase: THREE.MathUtils.randFloat(0, Math.PI),
+    });
+
+    geometry.attributes.position.setXYZ(i, v3.x, v3.y, v3.z);
+  }
+  geometry.attributes.position.needsUpdate = true;
+
+  const canvas = document.createElement('canvas');
+  canvas.width = 1;
+  canvas.height = 256;
+  const ctx = canvas.getContext('2d');
+
+  const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+  gradient.addColorStop(0, '#1a82f7');
+  gradient.addColorStop(1, '#2F2727');
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.wrapS = THREE.ClampToEdgeWrapping;
+  texture.wrapT = THREE.ClampToEdgeWrapping;
+
+  const material = new THREE.MeshLambertMaterial({ map: texture });
+  const mesh = new THREE.Mesh(geometry, material);
+  mesh.position.y = -0.25;
+  scene.add(mesh);
+
+  return { geometry, vertData };
+}
+const { geometry: oceanGeometry, vertData: oceanVertData } = createOcean();
+
+// === Hex Map Setup ===
+const hexMap = [
+  { q: 0, r: 0, type: 'home' },
+  { q: 1, r: 0, type: 'cv' },
+  { q: 0, r: 1, type: 'projects' },
+  { q: 2, r: 2, type: 'contact' },
+  { q: 1, r: 2, type: 'bridge' },
+  { q: -2, r: 0, type: 'plain1' },
+  { q: -1, r: 2, type: 'plain1' },
+  { q: 0, r: 2, type: 'plain1' },
+  { q: -1, r: 1, type: 'plain1' },
+  { q: -2, r: -1, type: 'plain1' },
+  { q: 0, r: -1, type: 'champ1' },
+  { q: -1, r: 0, type: 'champ2' },
+  { q: 1, r: 1, type: 'forest1' },
+  { q: 3, r: -1, type: 'forest2' },
+  { q: 2, r: 0, type: 'forest3' },
+  { q: 1, r: -1, type: 'forest1' },
+  { q: 2, r: -1, type: 'forest1' },
+  { q: 2, r: -2, type: 'forest2' },
+  { q: 1, r: -2, type: 'marais2' },
+  { q: 0, r: -2, type: 'marais' },
+  { q: -1, r: -2, type: 'marais2' },
+  { q: -1, r: -1, type: 'marais' },
+  { q: -2, r: 2, type: 'desert1' },
+  { q: -3, r: 2, type: 'desert2' },
+  { q: -3, r: 1, type: 'desert1' },
+  { q: -2, r: 1, type: 'desert2' },
+];
+
+const loader = new GLTFLoader();
+const hexObjects = [];
+
+hexMap.forEach(({ q, r, type }) => {
+  const { x, z } = hexToWorld(q, r);
+  loader.load(`./models/Hex-${type}.glb`, (gltf) => {
+    const hex = gltf.scene;
+    hex.position.set(x, 0, z);
+    hex.scale.set(1, 1, 1);
+    hex.userData = { type, q, r };
+    scene.add(hex);
+    hexObjects.push(hex);
+  });
+});
+
 function hexToWorld(q, r, size = 1) {
   const x = size * Math.sqrt(3) * (q + r / 2);
   const z = size * 1.5 * r;
   return { x, z };
 }
 
-// Hex map (random example layout)
-const hexMap = [
-  { q: 0,  r: 0, type: 'home' },
-  { q: 1,  r: 0, type: 'cv' },
-  { q: 0,  r: 1, type: 'projects' },
-  { q: -1, r: 1, type: 'champ1' },
-  { q: -1, r: 0, type: 'champ2' },
-  { q: -1, r: -1, type: 'forest1' },
-  { q: 0,  r: -1, type: 'forest2' },
-  { q: 1,  r: -1, type: 'marais' },
-  { q: 2,  r: -1, type: 'contact' },
-  { q: 2,  r: 0, type: 'desert1' },
-  { q: 1,  r: 1, type: 'desert2' },
-  { q: -2, r: 0, type: 'forest3' },
-  { q: -2, r: 1, type: 'plain1' },
-  { q: -2, r: 2, type: 'plain1' },
-  { q: -1, r: 2, type: 'plain1' }
-];
-
-// Load hexes
-const loader = new GLTFLoader();
-const hexObjects = [];
-
-hexMap.forEach(({ q, r, type }) => {
-  const { x, z } = hexToWorld(q, r);
-  loader.load(`./models/Hex-${type}.glb`, gltf => {
-    const hex = gltf.scene;
-    hex.position.set(x, 0, z);
-    hex.scale.set(1, 1, 1);
-    // Ajoute le type dans userData pour la détection du clic
-    hex.userData.type = type;
-    scene.add(hex);
-    hexObjects.push(hex);
-  });
-});
-
-// Raycasting
+// === Raycasting Setup ===
 const raycaster = new THREE.Raycaster();
 const mouse = new THREE.Vector2();
 let INTERSECTED = null;
-let isDragging = false;
-let dragStart = null;
-let dragMoved = false; // NEW: track if mouse moved
 
-window.addEventListener('mousemove', event => {
-  // Calcule la position de la souris en tenant compte du décalage de la scène si la sidebar est ouverte
-  let offsetX = event.clientX;
-  let width = window.innerWidth;
-  if (sidebar.style.display === 'block') {
-    // La scène est à droite, donc on décale la souris
-    offsetX = event.clientX - width / 2;
-    width = width / 2;
-    // Ignore les mouvements de souris sur la partie gauche (sidebar)
-    if (event.clientX < window.innerWidth / 2) {
-      mouse.x = 1000; // valeur hors champ pour désactiver le hover
-      mouse.y = 1000;
-      return;
-    }
-  }
-  mouse.x = (offsetX / width) * 2 - 1;
-  mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
-});
-
-window.addEventListener('mousedown', (e) => {
-  if (INTERSECTED) {
-    isDragging = true;
-    dragMoved = false; // reset
-    dragStart = { x: e.clientX, y: e.clientY };
-  }
-});
-window.addEventListener('mousemove', (e) => {
-  if (isDragging && dragStart) {
-    if (Math.abs(e.clientX - dragStart.x) > 5 || Math.abs(e.clientY - dragStart.y) > 5) {
-      dragMoved = true;
-    }
-  }
-});
-window.addEventListener('mouseup', () => {
-  dragStart = null;
-  setTimeout(() => { isDragging = false; }, 10);
-});
-
-// Add a sidebar for page content
+// === Sidebar and Page Management ===
 const sidebar = document.createElement('div');
 sidebar.id = 'sidebar';
-sidebar.style.position = 'fixed';
-sidebar.style.top = '0';
-sidebar.style.left = '0';
-sidebar.style.width = '50vw';
-sidebar.style.height = '100vh';
-sidebar.style.background = 'rgba(30, 30, 40, 0.98)';
-sidebar.style.color = '#fff';
-sidebar.style.overflowY = 'auto';
-sidebar.style.zIndex = '10';
-sidebar.style.display = 'none';
-sidebar.style.boxShadow = '2px 0 10px #0008';
-sidebar.style.padding = '2em 2em 2em 2em';
+sidebar.style.position = 'relative';
+sidebar.style.width = '100%';
+sidebar.style.height = 'auto';
+sidebar.style.marginTop = '1em';
+sidebar.style.padding = '0'; // Initially hidden
 document.body.appendChild(sidebar);
 
-function showSidebar(contentHtml) {
-  sidebar.innerHTML = `
-    <button id="closeSidebar" style="position:absolute;top:1em;right:1.5em;font-size:2em;background:none;border:none;color:#fff;cursor:pointer;z-index:20;line-height:1;">&times;</button>
-    <div style="margin-top:2.5em;">${contentHtml}</div>
-  `;
-  sidebar.style.display = 'block';
-  document.getElementById('closeSidebar').onclick = () => {
-    sidebar.style.display = 'none';
-    updateSceneLayout();
-  };
-  updateSceneLayout();
+// Add a container for all pages
+const pagesContainer = document.createElement('div');
+pagesContainer.id = 'pagesContainer';
+pagesContainer.style.width = '100%';
+pagesContainer.style.display = 'flex';
+pagesContainer.style.flexDirection = 'column';
+pagesContainer.style.gap = '2em';
+pagesContainer.style.transition = 'all 0.5s ease-in-out';
+document.body.appendChild(pagesContainer);
+
+// Preload pages
+async function preloadPages() {
+  const pages = [
+    { type: 'home', file: './sidepages/home.html' },
+    { type: 'cv', file: './sidepages/cv.html' },
+    { type: 'projects', file: './sidepages/projects.html' },
+    { type: 'contact', file: './sidepages/contact.html' },
+  ];
+
+  for (const page of pages) {
+    const contentHtml = await loadSidebarPage(page.file);
+    const pageElement = document.createElement('div');
+    pageElement.className = 'page';
+    pageElement.style.padding = '2em';
+    pageElement.style.borderRadius = '10px';
+    pageElement.style.opacity = '1';
+    pageElement.style.transform = 'translateY(0)';
+    pageElement.innerHTML = contentHtml;
+    pagesContainer.appendChild(pageElement);
+  }
 }
+
+// Call preloadPages to display all pages by default
+preloadPages();
+
+// Adjust scrolling behavior
+document.body.style.overflowY = 'auto';
+document.body.style.display = 'flex';
+document.body.style.flexDirection = 'column';
+document.body.style.alignItems = 'center';
+document.body.style.gap = '1em';
 
 // Utility to load HTML from file
 async function loadSidebarPage(filename) {
@@ -172,33 +198,16 @@ async function loadSidebarPage(filename) {
   return await res.text();
 }
 
-// Responsive: déplace la scène à droite si la sidebar est ouverte
-function updateSceneLayout() {
-  if (sidebar.style.display === 'block') {
-    renderer.setSize(window.innerWidth / 2, window.innerHeight);
-    renderer.domElement.style.position = 'fixed';
-    renderer.domElement.style.left = '50vw';
-    renderer.domElement.style.top = '0';
-    renderer.domElement.style.width = '50vw';
-    renderer.domElement.style.height = '100vh';
-    camera.aspect = (window.innerWidth / 2) / window.innerHeight;
-    camera.updateProjectionMatrix();
-  } else {
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.domElement.style.position = '';
-    renderer.domElement.style.left = '';
-    renderer.domElement.style.top = '';
-    renderer.domElement.style.width = '100vw';
-    renderer.domElement.style.height = '100vh';
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.updateProjectionMatrix();
-  }
-}
 
 window.addEventListener('click', async () => {
-  if (INTERSECTED && (!isDragging || !dragMoved)) {
+  if (INTERSECTED) {
     let type = INTERSECTED.userData?.type || INTERSECTED.name;
-    console.log('Clicked hex type:', type, 'name:', INTERSECTED.name, 'userData:', INTERSECTED.userData);
+
+    // Skip click functionality for plain1 and bridge types
+    if (type === 'plain1' || type === 'bridge') {
+      return;
+    }
+
     let html = '';
     if (type === 'contact') {
       html = await loadSidebarPage('./sidepages/contact.html');
@@ -208,30 +217,28 @@ window.addEventListener('click', async () => {
       html = await loadSidebarPage('./sidepages/cv.html');
     } else if (type === 'projects') {
       html = await loadSidebarPage('./sidepages/projects.html');
-    } else if (type === 'champ1' || type === 'champ2') {
-      html = await loadSidebarPage('./sidepages/champs.html');
-    } else if (type === 'forest1' || type === 'forest2' || type === 'forest3') {
-      html = await loadSidebarPage('./sidepages/foret.html');
-    } else if (type === 'marais' || type === 'marais2') {
-      html = await loadSidebarPage('./sidepages/marais.html');
-    } else if (type === 'desert1' || type === 'desert2') {
-      html = await loadSidebarPage('./sidepages/desert.html');
-    } else if (type === 'plain1') {
-      html = await loadSidebarPage('./sidepages/plaine.html');
     } else {
       html = `<h2>${type ? type : 'Hexagone'}</h2><p>Page à venir...</p>`;
     }
-    showSidebar(html);
+    showPage(html);
   }
 });
 
-// Animation
+// Update mouse position on mouse move
+window.addEventListener('mousemove', (event) => {
+  mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+  mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+});
+
+// === Animation Loop ===
 const clock = new THREE.Clock();
+
 function animate() {
   requestAnimationFrame(animate);
   const time = clock.getElapsedTime();
 
-  vertData.forEach((vd, idx) => {
+  // Animate ocean waves
+  oceanVertData.forEach((vd, idx) => {
     const y = vd.initH + Math.sin(time + vd.phase) * vd.amplitude;
     oceanGeometry.attributes.position.setY(idx, y);
   });
@@ -241,10 +248,17 @@ function animate() {
   raycaster.setFromCamera(mouse, camera);
   const intersects = raycaster.intersectObjects(hexObjects, true);
 
+  // Handle hover effects
   for (const hex of hexObjects) {
-    // On hover, move up, sinon revient à y=0
+    // Skip hover animation for plain1 and bridge types
+    if (hex.userData.type === 'plain1' || hex.userData.type === 'bridge') {
+      hex.position.y = 0; // Ensure these hexes stay at y=0
+      continue;
+    }
+
+    // On hover, move up slightly, otherwise reset to y=0
     if (INTERSECTED === hex) {
-      hex.position.y = THREE.MathUtils.lerp(hex.position.y, 0.35, 0.08); // Lower and slower
+      hex.position.y = THREE.MathUtils.lerp(hex.position.y, 0.2, 0.08); // Subtle hover effect
     } else {
       hex.position.y = THREE.MathUtils.lerp(hex.position.y, 0, 0.08);
     }
@@ -253,7 +267,13 @@ function animate() {
   if (intersects.length > 0) {
     let object = intersects[0].object;
     while (object.parent && !hexObjects.includes(object)) object = object.parent;
-    INTERSECTED = object;
+
+    // Skip interaction for plain1 and bridge types
+    if (object.userData.type === 'plain1' || object.userData.type === 'bridge') {
+      INTERSECTED = null;
+    } else {
+      INTERSECTED = object;
+    }
   } else {
     INTERSECTED = null;
   }
@@ -263,15 +283,34 @@ function animate() {
 }
 animate();
 
-// Resize handler
+// Replace click functionality with scrolling to the corresponding page
+window.addEventListener('click', () => {
+  if (INTERSECTED) {
+    const type = INTERSECTED.userData?.type || INTERSECTED.name;
+
+    // Skip click functionality for plain1 and bridge types
+    if (type === 'plain1' || type === 'bridge') {
+      return;
+    }
+
+    // Scroll to the corresponding page
+    const targetElement = document.getElementById(type);
+    if (targetElement) {
+      targetElement.scrollIntoView({ behavior: 'smooth' });
+    } else {
+      console.warn(`No section found for hex type: ${type}`);
+    }
+  }
+});
+
+// === Resize Handler ===
 window.addEventListener('resize', () => {
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth, window.innerHeight);
-  updateSceneLayout();
 });
 
-// Equirectangular 360° background (JPG/PNG)
+// === Background Setup ===
 const textureLoader = new THREE.TextureLoader();
 textureLoader.load('./textures/env.jpg', (texture) => {
   texture.mapping = THREE.EquirectangularReflectionMapping;
@@ -279,51 +318,61 @@ textureLoader.load('./textures/env.jpg', (texture) => {
   scene.background = texture;
 });
 
-// Fix click/drag logic: open sidebar on mouseup if not dragging and on a hex
-window.addEventListener('mouseup', async (e) => {
-  if (INTERSECTED && !isDragging) {
-    let type = INTERSECTED.userData?.type || INTERSECTED.name;
-    console.log('Clicked hex type:', type, 'name:', INTERSECTED.name, 'userData:', INTERSECTED.userData);
-    let html = '';
-    if (type === 'contact') {
-      html = await loadSidebarPage('./sidepages/contact.html');
-    } else if (type === 'home') {
-      html = await loadSidebarPage('./sidepages/home.html');
-    } else if (type === 'cv') {
-      html = await loadSidebarPage('./sidepages/cv.html');
-    } else if (type === 'projects') {
-      html = await loadSidebarPage('./sidepages/projects.html');
-    } else if (type === 'champ1' || type === 'champ2') {
-      html = await loadSidebarPage('./sidepages/champs.html');
-    } else if (type === 'forest1' || type === 'forest2' || type === 'forest3') {
-      html = await loadSidebarPage('./sidepages/foret.html');
-    } else if (type === 'marais' || type === 'marais2') {
-      html = await loadSidebarPage('./sidepages/marais.html');
-    } else if (type === 'desert1' || type === 'desert2') {
-      html = await loadSidebarPage('./sidepages/desert.html');
-    } else if (type === 'plain1') {
-      html = await loadSidebarPage('./sidepages/plaine.html');
-    } else {
-      html = `<h2>${type ? type : 'Hexagone'}</h2><p>Page à venir...</p>`;
-    }
-    showSidebar(html);
-  }
-  dragStart = null;
-  setTimeout(() => { isDragging = false; }, 10);
-});
+// === Particle Animation ===
+const canvas2 = document.getElementById('bgCanvas');
+const ctx2 = canvas2.getContext('2d');
+let particles = [];
+const particleCount = 300;
 
-// Close sidebar when clicking outside sidebar and not on a hex
-window.addEventListener('mousedown', (e) => {
-  // If sidebar is open
-  if (sidebar.style.display === 'block') {
-    // If click is on left half (sidebar), do nothing
-    if (e.clientX < window.innerWidth / 2) return;
-    // If click is on a hex, do nothing (let normal logic handle)
-    raycaster.setFromCamera(mouse, camera);
-    const intersects = raycaster.intersectObjects(hexObjects, true);
-    if (intersects.length > 0) return;
-    // Otherwise, close sidebar
-    sidebar.style.display = 'none';
-    updateSceneLayout();
+// Particle constructor
+function Particle() {
+  this.x = Math.random() * canvas2.width;
+  this.y = canvas2.height + Math.random() * 300;
+  this.speed = 1 + Math.random();
+  this.radius = Math.random() * 3;
+  this.opacity = (Math.random() * 100) / 1000;
+}
+
+// Initialize particles
+for (let i = 0; i < particleCount; i++) {
+  particles.push(new Particle());
+}
+
+// Animation loop
+function loop() {
+  requestAnimationFrame(loop);
+  drawParticles();
+}
+
+// Draw particles
+function drawParticles() {
+  ctx2.clearRect(0, 0, canvas2.width, canvas2.height);
+  ctx2.globalCompositeOperation = 'lighter';
+  for (let i = 0; i < particles.length; i++) {
+    const p = particles[i];
+    ctx2.beginPath();
+    ctx2.fillStyle = `rgba(255,255,255,${p.opacity})`;
+    ctx2.arc(p.x, p.y, p.radius, 0, Math.PI * 2, false);
+    ctx2.fill();
+    p.y -= p.speed;
+    if (p.y <= -10) {
+      particles[i] = new Particle();
+    }
   }
-});
+}
+
+// Start particle animation
+loop();
+
+// Draw a dynamic wavy frame between underwater and top water sections
+
+
+
+// Resize handler to redraw the wavy frame
+function resizeCanvas() {
+  canvas2.width = window.innerWidth;
+  canvas2.height = window.innerHeight;
+  drawWavyOceanFrame(); // Redraw the frame on resize
+}
+resizeCanvas();
+window.addEventListener('resize', resizeCanvas);

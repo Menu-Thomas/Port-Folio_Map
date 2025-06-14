@@ -1,7 +1,7 @@
 import ReactDOM from "react-dom/client";
-import * as THREE from 'https://esm.sh/three@0.150.1';
-import { GLTFLoader } from 'https://esm.sh/three@0.150.1/examples/jsm/loaders/GLTFLoader.js';
-import { OrbitControls } from 'https://esm.sh/three@0.150.1/examples/jsm/controls/OrbitControls.js';
+import * as THREE from './three.module.js'; // Use relative path for THREE.js
+import { GLTFLoader } from './GLTFLoader.js'; // Use relative path for GLTFLoader
+import { OrbitControls } from './OrbitControls.js'; // Use relative path for OrbitControls
 import CircularText from "./CircularText.jsx";
 
 // === Scene Initialization ===

@@ -134,3 +134,8 @@ dist
 .yarn/build-state.yml
 .yarn/install-state.gz
 .pnp.*
+
+# GitHub Pages deployment files (keep these!)
+# .nojekyll - ensures GitHub Pages serves all files
+# public/ - contains all 3D models, textures, and assets
+# .github/workflows/ - contains deployment automation

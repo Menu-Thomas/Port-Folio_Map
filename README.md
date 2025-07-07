@@ -43,10 +43,33 @@ Three.js: 3D engine for the web
 JavaScript: Interaction programming
 HTML/CSS: Page structure and styling
 GLTF/GLB: 3D model format
-How to Run
-Clone this repository
-Open index.html in your browser
-For development, use a local server (like Live Server for VS Code)
+
+## How to Run
+
+### Local Development
+1. Clone this repository
+2. Open `index.html` in your browser
+3. For development, use a local server (like Live Server for VS Code)
+
+### GitHub Pages Deployment
+This project is configured for automatic deployment to GitHub Pages:
+
+1. **Push to main branch**: The site will automatically deploy via GitHub Actions
+2. **Access your site**: Visit `https://[your-username].github.io/Port-Folio_Map/`
+3. **Enable GitHub Pages**:
+   - Go to your repository settings
+   - Navigate to "Pages" section
+   - Set source to "GitHub Actions"
+
+The deployment workflow is configured in `.github/workflows/deploy.yml` and will:
+- Automatically build and deploy on every push to main
+- Serve all static assets correctly
+- Handle 3D models and textures
+
+### Requirements
+- Modern browser with WebGL support
+- Internet connection (for CDN dependencies: Three.js, GSAP)
+
 Free Initial Consultation
 Do you have an idea but don't know where to start? I offer a free call to discuss it, no obligation. 🎁 You'll walk away with concrete initial advice and a clearer vision of your project.
 

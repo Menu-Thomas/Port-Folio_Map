@@ -1,0 +1,13 @@
+# GitHub Pages optimizations for 3D Portfolio
+
+# Handle 3D model files
+*.glb binary
+*.gltf linguist-detectable=false
+*.hdr binary
+
+# Optimize for web delivery
+*.js linguist-language=JavaScript
+*.html linguist-language=HTML
+
+# Asset organization
+public/* linguist-vendored

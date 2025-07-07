@@ -16,7 +16,7 @@
 
 import * as THREE from 'https://esm.sh/three@0.150.1';
 import { GLTFLoader } from 'https://esm.sh/three@0.150.1/examples/jsm/loaders/GLTFLoader.js';
-import { gsap } from "gsap";
+import { gsap } from 'https://esm.sh/gsap@3.12.2';
 
 // === CONFIGURATION CONSTANTS ===
 const CONFIG = {
@@ -302,7 +302,7 @@ hexMap.forEach(({ q, r, type }) => {
   ErrorHandler.handleAsyncError(
     new Promise((resolve, reject) => {
       loader.load(
-        `./models/Hex-${type}.glb`,
+        `./public/models/Hex-${type}.glb`,
         (gltf) => {
           try {
             processGLBMaterials(gltf);
@@ -740,7 +740,7 @@ const textureLoader = new THREE.TextureLoader();
 ErrorHandler.handleAsyncError(
   new Promise((resolve, reject) => {
     textureLoader.load(
-      './textures/env.jpg',
+      './public/textures/env.jpg',
       (texture) => {
         try {
           texture.mapping = THREE.EquirectangularReflectionMapping;
@@ -1068,7 +1068,7 @@ drawerModels.forEach((model) => {
   ErrorHandler.handleAsyncError(
     new Promise((resolve, reject) => {
       loader.load(
-        `./models/${model}.glb`,
+        `./public/models/${model}.glb`,
         (gltf) => {
           try {
             processGLBMaterials(gltf);

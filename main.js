@@ -1,38 +1,209 @@
-import React, { useState } from "react";
-import ReactDOM from "react-dom/client";
+/**
+ * Interactive Portfolio Map - Thomas Menu
+ * A Three.js-based hexagonal portfolio interface with smooth animations and interactivity
+ * 
+ * Features:
+ * - Hexagonal grid world map
+ * - Interactive drawer objects with hover effects
+ * - Smooth camera animations
+ * - Dynamic lighting and ocean simulation
+ * - Modal integration for project details
+ * - Navigation sidebar with unread indicators
+ * 
+ * @author Thomas Menu
+ * @version 2.0.0
+ */
+
 import * as THREE from 'https://esm.sh/three@0.150.1';
 import { GLTFLoader } from 'https://esm.sh/three@0.150.1/examples/jsm/loaders/GLTFLoader.js';
-import { OrbitControls } from 'https://esm.sh/three@0.150.1/examples/jsm/controls/OrbitControls.js'; // Use relative path for OrbitControls
-import CircularText from "./CircularText.jsx";
-import RotatingText from "./RotatingText.jsx";
 import { gsap } from "gsap";
+
+// === CONFIGURATION CONSTANTS ===
+const CONFIG = {
+  SCENE: {
+    BACKGROUND_COLOR: 0x111111,
+    FOG_COLOR: 0xffd4a3,
+    FOG_NEAR: 15,
+    FOG_FAR: 60
+  },
+  CAMERA: {
+    FOV: 60,
+    NEAR: 0.05,
+    FAR: 1000,
+    ORIGINAL_POSITION: { x: 0, y: 4.5, z: 8 },
+    ORIGINAL_LOOK_AT: { x: 0, y: 0.5, z: 3 }
+  },
+  RENDERER: {
+    TONE_MAPPING_EXPOSURE: 1.4,
+    SHADOW_MAP_SIZE: 2048
+  },
+  ANIMATION: {
+    CAMERA_DURATION: 2,
+    DRAWER_HOVER_DURATION: 0.3,
+    EASE: 'power3.inOut',
+    HOVER_EASE: 'power2.out'
+  },
+  NAVIGATION: {
+    SIDEBAR_WIDTH: 220
+  }
+};
 
 // === Scene Initialization ===
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x111111);
-const originalPosition = { x: 0, y: 5, z: 10 };
-const originalLookAtPosition = {x:0, y:0.5,z: 3}
-const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.05, 1000);
-camera.position.set(originalPosition.x, originalPosition.y, originalPosition.z);
-camera.lookAt(originalLookAtPosition.x, originalLookAtPosition.y, originalLookAtPosition.z);
+scene.background = new THREE.Color(CONFIG.SCENE.BACKGROUND_COLOR);
+
+const camera = new THREE.PerspectiveCamera(
+  CONFIG.CAMERA.FOV, 
+  window.innerWidth / window.innerHeight, 
+  CONFIG.CAMERA.NEAR, 
+  CONFIG.CAMERA.FAR
+);
+camera.position.set(
+  CONFIG.CAMERA.ORIGINAL_POSITION.x, 
+  CONFIG.CAMERA.ORIGINAL_POSITION.y, 
+  CONFIG.CAMERA.ORIGINAL_POSITION.z
+);
+camera.lookAt(
+  CONFIG.CAMERA.ORIGINAL_LOOK_AT.x, 
+  CONFIG.CAMERA.ORIGINAL_LOOK_AT.y, 
+  CONFIG.CAMERA.ORIGINAL_LOOK_AT.z
+);
 
 const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.shadowMap.enabled = true;
-renderer.shadowMap.type = THREE.PCFSoftShadowMap; // Soft shadows for better quality
-renderer.toneMapping = THREE.ACESFilmicToneMapping; // Better tone mapping
-renderer.toneMappingExposure = 1.2; // Slightly brighter exposure
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = CONFIG.RENDERER.TONE_MAPPING_EXPOSURE;
 renderer.outputColorSpace = THREE.SRGBColorSpace;
-renderer.physicallyCorrectLights = true; // Enable physically correct lighting
+renderer.useLegacyLights = false; // Modern lighting
 document.body.appendChild(renderer.domElement);
 
-//const controls = new OrbitControls(camera, renderer.domElement);
+// === Mouse and Raycaster Setup ===
+const mouse = new THREE.Vector2();
+const raycaster = new THREE.Raycaster();
+let hoveredDrawer = null;
+
+// === Application State Variables ===
+let currentActiveHexType = null; // Tracks the currently active hex type for navigation sync
+let lookAtTarget = { 
+  x: CONFIG.CAMERA.ORIGINAL_LOOK_AT.x, 
+  y: CONFIG.CAMERA.ORIGINAL_LOOK_AT.y, 
+  z: CONFIG.CAMERA.ORIGINAL_LOOK_AT.z 
+};
+
+// === Error Handling ===
+class ErrorHandler {
+  static logError(error, context = '') {
+    console.error(`[Portfolio Error${context ? ` - ${context}` : ''}]:`, error);
+    
+    // Show user-friendly error message if needed
+    if (context.includes('Critical')) {
+      this.showUserError('An error occurred while loading the portfolio. Please refresh the page.');
+    }
+  }
+  
+  static showUserError(message) {
+    const errorDiv = document.createElement('div');
+    errorDiv.style.cssText = `
+      position: fixed; top: 20px; right: 20px; z-index: 10000;
+      background: #ff4444; color: white; padding: 15px; border-radius: 8px;
+      font-family: Arial, sans-serif; max-width: 300px;
+    `;
+    errorDiv.textContent = message;
+    document.body.appendChild(errorDiv);
+    
+    setTimeout(() => errorDiv.remove(), 5000);
+  }
+  
+  static handleAsyncError(promise, context = '') {
+    return promise.catch(error => {
+      this.logError(error, context);
+      return null; // Return null instead of throwing to allow graceful degradation
+    });
+  }
+}
+
+// === Performance Monitor ===
+class PerformanceMonitor {
+  constructor() {
+    this.frameCount = 0;
+    this.lastTime = performance.now();
+    this.fps = 0;
+    this.enabled = false; // Only enable in development
+  }
+
+  update() {
+    if (!this.enabled) return;
+    
+    this.frameCount++;
+    const currentTime = performance.now();
+    
+    if (currentTime >= this.lastTime + 1000) {
+      this.fps = Math.round((this.frameCount * 1000) / (currentTime - this.lastTime));
+      this.frameCount = 0;
+      this.lastTime = currentTime;
+      
+      if (this.fps < 30) {
+        console.warn(`Low FPS detected: ${this.fps}`);
+      }
+    }
+  }
+
+  getFPS() {
+    return this.fps;
+  }
+}
+
+const performanceMonitor = new PerformanceMonitor();
+
+// === Modal State Tracking ===
+let virtualModalClosed = false; // Track if user has manually closed the virtual modal
+let steeringWheelClicked = false; // Track if user actually clicked on the steering wheel
+
+// === Drawer Management ===
+const drawerModels = ['drawer1', 'drawer2', 'drawer3', 'drawer4', 'steering', 'pc', 'forge'];
+const drawers = [];
+const drawerOriginalPositions = new Map();
+const unreadDrawers = new Set(['drawer1', 'drawer2', 'drawer3', 'drawer4', 'steering', 'forge']);
+
+// === Drawer Configuration ===
+const animatedDrawers = ['drawer1', 'drawer2', 'drawer3', 'drawer4']; // Drawers that animate on hover
+const clickAnimatedDrawers = ['pc', 'steering']; // Drawers that animate camera on click
+const drawerInfoFiles = {
+  drawer1: "project1.html",
+  drawer2: "project2.html", 
+  drawer3: "project3.html",
+  drawer4: "project4.html"
+};
+
+// === Theme Configuration ===
+const drawerThemes = {
+  'drawer1': 'home',
+  'drawer2': 'home',
+  'drawer3': 'home', 
+  'drawer4': 'home',
+  'steering': 'home',
+  'forge': 'forge'
+};
+
+// Camera target positions for click-animated drawers
+const drawerCameraTargets = {
+  pc: {
+    x: -0.05, y: 0.05, z: -0.15,
+    lookAt: { x: -0.25, y: -0.04, z: -0.35 }
+  },
+  steering: {
+    x: -0.1, y: 0.005, z: 0.16,
+    lookAt: { x: -0.16, y: 0.005, z: 0.24 }
+  }
+};
 
 // === Lighting Setup ===
 function setupLighting() {
-  // Main directional light (sun) - improved settings
-  const directionalLight = new THREE.DirectionalLight(0xfff4e6, 3.2); // Warm sunlight
-  directionalLight.position.set(20, 25, 15);
+  // Main directional light (golden hour sun) - warm golden tones
+  const directionalLight = new THREE.DirectionalLight(0xffb347, 3.8); // Slightly reduced intensity
+  directionalLight.position.set(15, 20, 10); // Lower angle for golden hour
   directionalLight.castShadow = true;
   
   // Improved shadow settings
@@ -48,13 +219,13 @@ function setupLighting() {
   directionalLight.shadow.normalBias = 0.02;
   scene.add(directionalLight);
 
-  // Ambient light for overall illumination - reduced intensity for more dramatic shadows
-  const ambientLight = new THREE.AmbientLight(0x4a5568, 0.4);
+  // Ambient light with golden hour warmth
+  const ambientLight = new THREE.AmbientLight(0xffd4a3, 0.8); // Warm golden ambient
   scene.add(ambientLight);
 
-  // Key fill light - warmer tone
-  const keyLight = new THREE.PointLight(0xfff8dc, 2.0, 60);
-  keyLight.position.set(12, 15, 8);
+  // Key fill light - golden rim lighting
+  const keyLight = new THREE.PointLight(0xffa500, 3.0, 60); // Orange golden light
+  keyLight.position.set(10, 18, 12);
   keyLight.castShadow = true;
   keyLight.shadow.mapSize.width = 1024;
   keyLight.shadow.mapSize.height = 1024;
@@ -63,30 +234,30 @@ function setupLighting() {
   keyLight.shadow.bias = -0.0001;
   scene.add(keyLight);
 
-  // Rim light for better object definition - cooler tone
-  const rimLight = new THREE.PointLight(0xa8d8ff, 1.5, 40);
-  rimLight.position.set(-15, 12, -12);
-  rimLight.castShadow = true;
-  rimLight.shadow.mapSize.width = 512;
-  rimLight.shadow.mapSize.height = 512;
-  rimLight.shadow.camera.near = 0.1;
-  rimLight.shadow.camera.far = 40;
-  scene.add(rimLight);
+  // Secondary warm light for depth
+  const secondaryLight = new THREE.PointLight(0xff8c42, 2.5, 45);
+  secondaryLight.position.set(-8, 15, 8);
+  scene.add(secondaryLight);
 
-  // Hemisphere light for natural outdoor lighting - adjusted colors
-  const hemiLight = new THREE.HemisphereLight(0x87ceeb, 0x8b6914, 0.5);
+  // Hemisphere light for natural golden hour atmosphere
+  const hemiLight = new THREE.HemisphereLight(0xffd4a3, 0xd2691e, 0.7); // Golden sky to warm ground
   hemiLight.position.set(0, 50, 0);
   scene.add(hemiLight);
 
-  // Additional accent light for underwater/mystic effect
-  const accentLight = new THREE.PointLight(0x00ffff, 0.8, 25);
-  accentLight.position.set(0, -2, 0); // Below the water level
+  // Warm back light for atmospheric glow
+  const backLight = new THREE.PointLight(0xffc649, 2.0, 35);
+  backLight.position.set(-12, 8, -15);
+  scene.add(backLight);
+
+  // Subtle accent light for underwater areas
+  const accentLight = new THREE.PointLight(0x4da6ff, 1.2, 25); // Cooler blue for contrast
+  accentLight.position.set(0, -1, 0);
   scene.add(accentLight);
 }
 setupLighting();
 
 // === Fog Setup for Better Atmosphere ===
-scene.fog = new THREE.Fog(0x87ceeb, 10, 50); // Light blue fog, starts at 10 units, fully opaque at 50 units
+scene.fog = new THREE.Fog(CONFIG.SCENE.FOG_COLOR, CONFIG.SCENE.FOG_NEAR, CONFIG.SCENE.FOG_FAR);
 
 // === Hex Map Setup ===
 const hexMap = [
@@ -121,179 +292,192 @@ const hexMap = [
 const loader = new GLTFLoader();
 const hexObjects = [];
 
-// === Drawer Models & Drawers Array (move these up before any usage) ===
-const drawerModels = ['drawer1', 'drawer2', 'drawer3', 'drawer4', 'steering', 'pc', 'forge'];
-const drawers = [];
+// Load hex objects with error handling
+let loadedHexCount = 0;
+const totalHexCount = hexMap.length;
 
-// === List of drawers that should animate on hover ===
-const animatedDrawers = ['drawer1', 'drawer2', 'drawer3', 'drawer4'];
-
-// === List of drawers that should animate camera on click ===
-const clickAnimatedDrawers = ['pc', 'steering'];
-
-// Camera target positions for click-animated drawers
-const drawerCameraTargets = {
-  pc: {
-    x: -0.05, y: 0.05, z: -0.15,
-    lookAt: { x: -0.25, y: -0.04, z: -0.35 } // exemple, ajuste selon besoin
-  },
-  steering: {
-    x: -0.1, y: 0.005, z: 0.16,
-    lookAt: { x: -0.16, y: 0.005, z: 0.24 } // exemple, ajuste selon besoin
-  },
-  // Ajoute d'autres objets ici si besoin, ex:
-  // steering: { x: 1, y: 2, z: 3, lookAt: { x: 0, y: 0, z: 0 } }
-};
-
-// Adjust hex map elements to be lower
 hexMap.forEach(({ q, r, type }) => {
   const { x, z } = hexToWorld(q, r);
-  loader.load(`./models/Hex-${type}.glb`, (gltf) => {
-    processGLBMaterials(gltf); // Apply improved material processing
-    const hex = gltf.scene;
-    hex.position.set(x, 0, z);
-    hex.scale.set(1, 1, 1);
-    hex.userData = { type, q, r };
-    scene.add(hex);
-    hexObjects.push(hex);
-  });
+  
+  ErrorHandler.handleAsyncError(
+    new Promise((resolve, reject) => {
+      loader.load(
+        `./models/Hex-${type}.glb`,
+        (gltf) => {
+          try {
+            processGLBMaterials(gltf);
+            const hex = gltf.scene;
+            hex.position.set(x, 0, z);
+            hex.scale.set(1, 1, 1);
+            hex.userData = { type, q, r };
+            scene.add(hex);
+            hexObjects.push(hex);
+            
+            loadedHexCount++;
+            if (loadedHexCount === totalHexCount) {
+              console.log('All hex objects loaded successfully');
+            }
+            resolve(hex);
+          } catch (error) {
+            reject(error);
+          }
+        },
+        undefined,
+        reject
+      );
+    }),
+    `Hex loading - ${type}`
+  );
 });
 
+// === Ocean Setup ===
+function createOcean() {
+  try {
+    const geometry = new THREE.PlaneGeometry(100, 100, 50, 50);
+    geometry.rotateX(-Math.PI / 2);
+
+    const vertData = [];
+    const v3 = new THREE.Vector3();
+
+    for (let i = 0; i < geometry.attributes.position.count; i++) {
+      v3.fromBufferAttribute(geometry.attributes.position, i);
+
+      const distanceFromCenter = Math.sqrt(v3.x * v3.x + v3.z * v3.z);
+      const waveHeight = Math.sin(distanceFromCenter * 0.2 + Math.PI / 4) * 0.5;
+      v3.y += waveHeight;
+
+      vertData.push({
+        initH: v3.y,
+        amplitude: THREE.MathUtils.randFloatSpread(0.5),
+        phase: THREE.MathUtils.randFloat(0, Math.PI),
+      });
+
+      geometry.attributes.position.setXYZ(i, v3.x, v3.y, v3.z);
+    }
+    geometry.attributes.position.needsUpdate = true;
+
+    // Create ocean texture
+    const canvas = document.createElement('canvas');
+    canvas.width = 1;
+    canvas.height = 256;
+    const ctx = canvas.getContext('2d');
+
+    const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+    gradient.addColorStop(0, '#1a82f7');
+    gradient.addColorStop(0.7, '#1e3a8a');
+    gradient.addColorStop(1, '#1f2937');
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.wrapS = THREE.ClampToEdgeWrapping;
+    texture.wrapT = THREE.ClampToEdgeWrapping;
+
+    // Improved ocean material with better lighting response
+    const material = new THREE.MeshStandardMaterial({ 
+      map: texture,
+      transparent: true,
+      opacity: 0.9,
+      roughness: 0.1,
+      metalness: 0.0,
+      envMapIntensity: 0.8
+    });
+    
+    // Apply environment map if available
+    if (scene.environment) {
+      material.envMap = scene.environment;
+    }
+    
+    const mesh = new THREE.Mesh(geometry, material);
+    mesh.position.y = -1;
+    mesh.receiveShadow = true;
+    scene.add(mesh);
+
+    return { geometry, vertData };
+  } catch (error) {
+    ErrorHandler.logError(error, 'Ocean creation');
+    // Return minimal ocean if creation fails
+    const geometry = new THREE.PlaneGeometry(10, 10);
+    return { geometry, vertData: [] };
+  }
+}
+const { geometry: oceanGeometry, vertData: oceanVertData } = createOcean();
+
+// === Display Text Update Function ===
+function updateDisplayText(text) {
+  // Update page title and potentially other UI elements
+  document.title = `Portfolio - ${text}`;
+}
+
+// === Utility Functions ===
 function hexToWorld(q, r, size = 1) {
   const x = size * Math.sqrt(3) * (q + r / 2);
   const z = size * 1.5 * r;
   return { x, z };
 }
 
-// === Ocean Setup ===
-function createOcean() {
-  const geometry = new THREE.PlaneGeometry(100, 100, 50, 50);
-  geometry.rotateX(-Math.PI / 2);
-
-  const vertData = [];
-  const v3 = new THREE.Vector3();
-
-  for (let i = 0; i < geometry.attributes.position.count; i++) {
-    v3.fromBufferAttribute(geometry.attributes.position, i);
-
-    const distanceFromCenter = Math.sqrt(v3.x * v3.x + v3.z * v3.z);
-    const waveHeight = Math.sin(distanceFromCenter * 0.2 + Math.PI / 4) * 0.5;
-    v3.y += waveHeight;
-
-    vertData.push({
-      initH: v3.y,
-      amplitude: THREE.MathUtils.randFloatSpread(0.5),
-      phase: THREE.MathUtils.randFloat(0, Math.PI),
-    });
-
-    geometry.attributes.position.setXYZ(i, v3.x, v3.y, v3.z);
-  }
-  geometry.attributes.position.needsUpdate = true;
-
-  const canvas = document.createElement('canvas');
-  canvas.width = 1;
-  canvas.height = 256;
-  const ctx = canvas.getContext('2d');
-
-  const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
-  gradient.addColorStop(0, '#1a82f7');
-  gradient.addColorStop(0.7, '#1e3a8a');
-  gradient.addColorStop(1, '#1f2937');
-  ctx.fillStyle = gradient;
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-  const texture = new THREE.CanvasTexture(canvas);
-  texture.wrapS = THREE.ClampToEdgeWrapping;
-  texture.wrapT = THREE.ClampToEdgeWrapping;
-
-  // Improved ocean material with better lighting response
-  const material = new THREE.MeshStandardMaterial({ 
-    map: texture,
-    transparent: true,
-    opacity: 0.9,
-    roughness: 0.1,
-    metalness: 0.0,
-    envMapIntensity: 0.8
+// === Helper Functions for Unread Tracking ===
+function getUnreadCountForTheme(themeId) {
+  let count = 0;
+  unreadDrawers.forEach(drawer => {
+    if (drawerThemes[drawer] === themeId) {
+      count++;
+    }
   });
-  
-  // Apply environment map if available
-  if (scene.environment) {
-    material.envMap = scene.environment;
-  }
-  
-  const mesh = new THREE.Mesh(geometry, material);
-  mesh.position.y = -1; // Lowered ocean position further
-  mesh.receiveShadow = true; // Enable shadow receiving
-  scene.add(mesh);
-
-  return { geometry, vertData };
+  return count;
 }
-const { geometry: oceanGeometry, vertData: oceanVertData } = createOcean();
 
-// circular text 
-//const circularTextContainer = document.createElement("div");
-//circularTextContainer.id = "circularTextContainer";
-//circularTextContainer.style.position = "absolute"; // Use absolute positioning
-//circularTextContainer.style.top = "120px"; // Further down
-//circularTextContainer.style.left = "120px"; // Further to the right
-//circularTextContainer.style.transform = "translate(0, 0)"; // No centering needed
-//circularTextContainer.style.pointerEvents = "none"; // Ensure it doesn't block interactions
-//circularTextContainer.style.zIndex = "1"; // Ensure it appears above the canvas
-//renderer.domElement.parentElement.style.position = "relative"; // Ensure the canvas container is positioned relative
-//renderer.domElement.parentElement.appendChild(circularTextContainer);
-//
-//const root = ReactDOM.createRoot(circularTextContainer);
-//root.render(
-//  <CircularText
-//    text="MENU*THOMAS*PORTFOLIO*"
-//    spinDuration={30}
-//    onHover="speedUp"
-//    className="small-circular-text" 
-//  />
-//);
-
-// Create rotating text container with fixed text
-const rotatingTextContainer = document.createElement("div");
-rotatingTextContainer.id = "rotatingTextContainer";
-rotatingTextContainer.style.position = "absolute";
-rotatingTextContainer.style.top = "5px"; // Top middle of the screen
-rotatingTextContainer.style.left = "50%";
-rotatingTextContainer.style.transform = "translateX(-50%)"; // Center horizontally
-rotatingTextContainer.style.pointerEvents = "none";
-rotatingTextContainer.style.zIndex = "1";
-renderer.domElement.parentElement.appendChild(rotatingTextContainer);
-
-const fixedText = "Welcome to my"; // Fixed text
-let currentRotatingText = 'Portfolio'; // Default rotating text
-
-const rootRotating = ReactDOM.createRoot(rotatingTextContainer);
-function renderRotatingText() {
-  rootRotating.render(
-    <div className="rotating-text-container" style={{ position: "relative", textAlign: "center", gap: "0.5rem" }}>
-      <span className="fixed-text" style={{ fontWeight: "bold", color: "#ffffff" }}>{fixedText}</span>
-      <div>
-        <RotatingText
-          texts={[currentRotatingText,currentRotatingText]}
-          staggerFrom={"last"}
-          initial={{ y: "100%" }}
-          animate={{ y: 0 }}
-          loop={false}
-          exit={{ y: "-120%" }}
-          staggerDuration={0.025}
-          splitLevelClassName="overflow-hidden pb-0.5 sm:pb-1 md:pb-1"
-          transition={{ type: "spring", damping: 30, stiffness: 400 }}
-          rotationInterval={2000}
-        />
-      </div>
-    </div>
-  );
+function updateThemeUnreadBadges() {
+  const themes = ['home', 'forge'];
+  themes.forEach(themeId => {
+    const count = getUnreadCountForTheme(themeId);
+    const badge = document.getElementById(`unread-badge-${themeId}`);
+    if (badge) {
+      if (count > 0) {
+        badge.textContent = count;
+        badge.style.opacity = '1';
+      } else {
+        badge.style.opacity = '0';
+      }
+    }
+  });
 }
-renderRotatingText(); // Initial render
 
-// Update rotating text on hex hover and handle drawer hover animation
-const mouse = new THREE.Vector2();
-const raycaster = new THREE.Raycaster();
-let hoveredDrawer = null;
+// === Label Positioning Helper ===
+function positionDrawerLabel(mouseX, mouseY) {
+  // Initial position
+  drawerLabel.style.left = `${mouseX + 60}px`;
+  drawerLabel.style.top = `${mouseY - 180}px`;
+  
+  // Adjust if out of viewport
+  requestAnimationFrame(() => {
+    const rect = drawerLabel.getBoundingClientRect();
+    let left = rect.left, top = rect.top;
+    let needUpdate = false;
+    
+    if (rect.right > window.innerWidth) {
+      left = Math.max(window.innerWidth - rect.width - 8, 8);
+      needUpdate = true;
+    }
+    if (rect.left < 0) {
+      left = 8;
+      needUpdate = true;
+    }
+    if (rect.bottom > window.innerHeight) {
+      top = Math.max(window.innerHeight - rect.height - 8, 8);
+      needUpdate = true;
+    }
+    if (rect.top < 0) {
+      top = 8;
+      needUpdate = true;
+    }
+    
+    if (needUpdate) {
+      drawerLabel.style.left = `${left}px`;
+      drawerLabel.style.top = `${top}px`;
+    }
+  });
+}
 
 // === Drawer Hover Label Setup ===
 const drawerLabel = document.createElement("div");
@@ -314,14 +498,6 @@ drawerLabel.style.lineHeight = "1.5";
 drawerLabel.style.border = "1px solid #eee";
 drawerLabel.style.transition = "opacity 0.2s";
 document.body.appendChild(drawerLabel);
-
-// Drawer info file mapping for each drawer
-const drawerInfoFiles = {
-  drawer1: "project1.html",
-  drawer2: "project2.html",
-  drawer3: "project3.html",
-  drawer4: "project4.html"
-};
 
 window.addEventListener('mousemove', (event) => {
   // Check if mouse is over the navigation sidebar
@@ -356,8 +532,7 @@ window.addEventListener('mousemove', (event) => {
     while (object.parent && !hexObjects.includes(object) && !drawers.includes(object)) object = object.parent;
 
     if (object.userData.type) {
-      currentRotatingText = object.userData.type;
-      renderRotatingText();
+      updateDisplayText(object.userData.type);
 
       // Drawer hover logic
       if (drawers.includes(object)) {
@@ -371,16 +546,16 @@ window.addEventListener('mousemove', (event) => {
               gsap.to(hoveredDrawer.position, {
                 x: orig.x,
                 z: orig.z,
-                duration: 0.3,
-                ease: 'power2.out',
+                duration: CONFIG.ANIMATION.DRAWER_HOVER_DURATION,
+                ease: CONFIG.ANIMATION.HOVER_EASE,
               });
             }
             // Animate new hovered drawer
             gsap.to(foundDrawer.position, {
               x: 0.029,
               z: -0.0374,
-              duration: 0.3,
-              ease: 'power2.out',
+              duration: CONFIG.ANIMATION.DRAWER_HOVER_DURATION,
+              ease: CONFIG.ANIMATION.HOVER_EASE,
             });
             hoveredDrawer = foundDrawer;
           }
@@ -402,94 +577,56 @@ window.addEventListener('mousemove', (event) => {
           }
           hoveredDrawer = foundDrawer;
         }
-        // Show label much further up and right of mouse with per-drawer HTML content
+        // Show label with better positioning logic
         const infoFile = drawerInfoFiles[object.userData.type];
         if (infoFile) {
           fetch(infoFile)
-            .then(res => res.text())
+            .then(res => {
+              if (!res.ok) throw new Error(`HTTP ${res.status}`);
+              return res.text();
+            })
             .then(html => {
               // Add unread indicator if drawer is unread
               const isUnread = unreadDrawers.has(object.userData.type);
-              const unreadIndicator = isUnread ? `<div style="background: #ff4444; color: #fff; padding: 4px 8px; border-radius: 6px; font-size: 0.8rem; font-weight: bold; margin-bottom: 8px; text-align: center;">UNREAD</div>` : '';
+              const unreadIndicator = isUnread ? 
+                `<div style="background: #ff4444; color: #fff; padding: 4px 8px; border-radius: 6px; font-size: 0.8rem; font-weight: bold; margin-bottom: 8px; text-align: center;">UNREAD</div>` : '';
               
               drawerLabel.innerHTML = unreadIndicator + html;
               drawerLabel.style.display = "block";
-              // Add border color based on read status
               drawerLabel.style.border = isUnread ? "2px solid #ff4444" : "1px solid #eee";
-              // Initial position
-              drawerLabel.style.left = `${event.clientX + 60}px`;
-              drawerLabel.style.top = `${event.clientY - 180}px`;
-              // After rendering, adjust if out of viewport
-              requestAnimationFrame(() => {
-                const rect = drawerLabel.getBoundingClientRect();
-                let left = rect.left, top = rect.top;
-                let needUpdate = false;
-                if (rect.right > window.innerWidth) {
-                  left = Math.max(window.innerWidth - rect.width - 8, 8);
-                  needUpdate = true;
-                }
-                if (rect.left < 0) {
-                  left = 8;
-                  needUpdate = true;
-                }
-                if (rect.bottom > window.innerHeight) {
-                  top = Math.max(window.innerHeight - rect.height - 8, 8);
-                  needUpdate = true;
-                }
-                if (rect.top < 0) {
-                  top = 8;
-                  needUpdate = true;
-                }
-                if (needUpdate) {
-                  drawerLabel.style.left = `${left}px`;
-                  drawerLabel.style.top = `${top}px`;
-                }
-              });          // === Mark drawer as read (except forge and steering) ===
-          if (unreadDrawers.has(object.userData.type) && object.userData.type !== 'forge' && object.userData.type !== 'steering') {
-            unreadDrawers.delete(object.userData.type);
-            updateThemeUnreadBadges();
-          }
+              
+              // Better positioning logic
+              positionDrawerLabel(event.clientX, event.clientY);
+              
+              // Mark drawer as read (except forge and steering)
+              if (isUnread && object.userData.type !== 'forge' && object.userData.type !== 'steering') {
+                unreadDrawers.delete(object.userData.type);
+                updateThemeUnreadBadges();
+              }
+            })
+            .catch(error => {
+              console.warn('Failed to load drawer info:', error);
+              drawerLabel.innerHTML = '<div>Content unavailable</div>';
+              drawerLabel.style.display = "block";
+              positionDrawerLabel(event.clientX, event.clientY);
             });
         } else {
           // Custom messages for specific drawers
           let message = `<div>No info available.</div>`;
           if (object.userData.type === 'forge') {
-            message = `<div>My conception bigger experience</div>`;
+            message = `<div>most significant conception experience</div>`;
           } else if (object.userData.type === 'steering') {
-            message = `<div>My biggest dev project</div>`;
+            message = `<div>most significant dev project</div>`;
           }
           
           drawerLabel.innerHTML = message;
           drawerLabel.style.display = "block";
-          drawerLabel.style.left = `${event.clientX + 60}px`;
-          drawerLabel.style.top = `${event.clientY - 180}px`;
-          requestAnimationFrame(() => {
-            const rect = drawerLabel.getBoundingClientRect();
-            let left = rect.left, top = rect.top;
-            let needUpdate = false;
-            if (rect.right > window.innerWidth) {
-              left = Math.max(window.innerWidth - rect.width - 8, 8);
-              needUpdate = true;
-            }
-            if (rect.left < 0) {
-              left = 8;
-              needUpdate = true;
-            }
-            if (rect.bottom > window.innerHeight) {
-              top = Math.max(window.innerHeight - rect.height - 8, 8);
-              needUpdate = true;
-            }
-            if (rect.top < 0) {
-              top = 8;
-              needUpdate = true;
-            }
-            if (needUpdate) {
-              drawerLabel.style.left = `${left}px`;
-              drawerLabel.style.top = `${top}px`;
-            }
-          });
-          // === Mark drawer as read (except forge and steering) ===
-          if (unreadDrawers.has(object.userData.type) && object.userData.type !== 'forge' && object.userData.type !== 'steering') {
+          positionDrawerLabel(event.clientX, event.clientY);
+          
+          // Mark drawer as read
+          if (unreadDrawers.has(object.userData.type) && 
+              object.userData.type !== 'forge' && 
+              object.userData.type !== 'steering') {
             unreadDrawers.delete(object.userData.type);
             updateThemeUnreadBadges();
           }
@@ -516,8 +653,7 @@ window.addEventListener('mousemove', (event) => {
       }
     }
   } else {
-    currentRotatingText = 'Portfolio';
-    renderRotatingText();
+    updateDisplayText('Portfolio');
     // Animate previous hovered drawer back (only if animated)
     if (
       hoveredDrawer &&
@@ -599,92 +735,83 @@ function processGLBMaterials(gltf) {
   });
 }
 
-// === Background Setup ===
+// === Environment Texture Loading ===
 const textureLoader = new THREE.TextureLoader();
-textureLoader.load('./textures/env.jpg', (texture) => {
-  texture.mapping = THREE.EquirectangularReflectionMapping;
-  texture.colorSpace = THREE.SRGBColorSpace;
-  
-  // Set as both background and environment for reflections
-  scene.background = texture;
-  scene.environment = texture;
-  
-  // Process existing materials to use the new environment
-  scene.traverse((child) => {
-    if (child.isMesh && child.material) {
-      if (child.material.isMeshStandardMaterial || child.material.isMeshPhysicalMaterial) {
-        child.material.envMap = texture;
-        child.material.envMapIntensity = 0.8;
-        child.material.needsUpdate = true;
-      }
-      if (Array.isArray(child.material)) {
-        child.material.forEach(mat => {
-          if (mat.isMeshStandardMaterial || mat.isMeshPhysicalMaterial) {
-            mat.envMap = texture;
-            mat.envMapIntensity = 0.8;
-            mat.needsUpdate = true;
-          }
-        });
-      }
-    }
-  });
-});
+ErrorHandler.handleAsyncError(
+  new Promise((resolve, reject) => {
+    textureLoader.load(
+      './textures/env.jpg',
+      (texture) => {
+        try {
+          texture.mapping = THREE.EquirectangularReflectionMapping;
+          texture.colorSpace = THREE.SRGBColorSpace;
+          
+          // Set as both background and environment for reflections
+          scene.background = texture;
+          scene.environment = texture;
+          
+          // Process existing materials to use the new environment
+          scene.traverse((child) => {
+            if (child.isMesh && child.material) {
+              if (child.material.isMeshStandardMaterial || child.material.isMeshPhysicalMaterial) {
+                child.material.envMap = texture;
+                child.material.envMapIntensity = 0.8;
+                child.material.needsUpdate = true;
+              }
+              if (Array.isArray(child.material)) {
+                child.material.forEach(mat => {
+                  if (mat.isMeshStandardMaterial || mat.isMeshPhysicalMaterial) {
+                    mat.envMap = texture;
+                    mat.envMapIntensity = 0.8;
+                    mat.needsUpdate = true;
+                  }
+                });
+              }
+            }
+          });
+          
+          console.log('Environment texture loaded successfully');
+          resolve(texture);
+        } catch (error) {
+          reject(error);
+        }
+      },
+      undefined,
+      reject
+    );
+  }),
+  'Environment texture loading'
+);
 
 // === Animation Loop ===
 const clock = new THREE.Clock();
 function animate() {
   requestAnimationFrame(animate);
-  const time = clock.getElapsedTime();
+  
+  try {
+    const time = clock.getElapsedTime();
 
-  // Animate ocean waves
-  oceanVertData.forEach((vd, idx) => {
-    const y = vd.initH + Math.sin(time + vd.phase) * vd.amplitude;
-    oceanGeometry.attributes.position.setY(idx, y);
-  });
-  oceanGeometry.attributes.position.needsUpdate = true;
-  oceanGeometry.computeVertexNormals();
+    // Animate ocean waves if ocean data is available
+    if (oceanVertData && oceanVertData.length > 0) {
+      oceanVertData.forEach((vd, idx) => {
+        const y = vd.initH + Math.sin(time + vd.phase) * vd.amplitude;
+        oceanGeometry.attributes.position.setY(idx, y);
+      });
+      oceanGeometry.attributes.position.needsUpdate = true;
+      oceanGeometry.computeVertexNormals();
+    }
 
-  renderer.render(scene, camera);
+    // Update performance monitor
+    performanceMonitor.update();
+
+    renderer.render(scene, camera);
+  } catch (error) {
+    ErrorHandler.logError(error, 'Animation loop');
+  }
 }
 animate();
 
-
-// === Helper Object ===
-const helperGeometry = new THREE.SphereGeometry(0.05, 10, 10); // Small sphere
-const helperMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000 });
-const helper = new THREE.Mesh(helperGeometry, helperMaterial);
-scene.add(helper);
-
-// Set the helper's position
-helper.position.set(0, 3, 0); // Replace with the desired coordinates
-
-window.addEventListener('keydown', (event) => {
-  const step = 0.02; // Movement step size
-  switch (event.key) {
-    case 'a': // Move up
-      helper.position.y += step;
-      break;
-    case 'e': // Move down
-      helper.position.y -= step;
-      break;
-    case 'q': // Move left
-      helper.position.x -= step;
-      break;
-    case 'd': // Move right
-      helper.position.x += step;
-      break;
-    case 'z': // Move forward
-      helper.position.z -= step;
-      break;
-    case 's': // Move backward
-      helper.position.z += step;
-      break;
-  }
-  console.log(helper.position); // Log the new position
-});
-
-
-let lookAtTarget = { x: originalLookAtPosition.x, y: originalLookAtPosition.y, z: originalLookAtPosition.z }; 
+// === Event Listeners === 
 
 window.addEventListener('wheel', (event) => {
   if (event.deltaY > 0) { // Detect scroll down
@@ -697,22 +824,22 @@ window.addEventListener('wheel', (event) => {
     steeringWheelClicked = false;
     
     gsap.to(camera.position, {
-      x: originalPosition.x,
-      y: originalPosition.y,
-      z: originalPosition.z,
-      duration: 2, // Duration of the animation in seconds
-      ease: 'power3.inOut',
+      x: CONFIG.CAMERA.ORIGINAL_POSITION.x,
+      y: CONFIG.CAMERA.ORIGINAL_POSITION.y,
+      z: CONFIG.CAMERA.ORIGINAL_POSITION.z,
+      duration: CONFIG.ANIMATION.CAMERA_DURATION,
+      ease: CONFIG.ANIMATION.EASE,
     });
 
     // Smoothly interpolate the lookAt position
     gsap.to(lookAtTarget, {
-      x: originalLookAtPosition.x,
-      y: originalLookAtPosition.y,
-      z: originalLookAtPosition.z, // Reset lookAt to the original target
-      duration: 2, // Match duration with camera movement
-      ease: 'power3.inOut',
+      x: CONFIG.CAMERA.ORIGINAL_LOOK_AT.x,
+      y: CONFIG.CAMERA.ORIGINAL_LOOK_AT.y,
+      z: CONFIG.CAMERA.ORIGINAL_LOOK_AT.z,
+      duration: CONFIG.ANIMATION.CAMERA_DURATION,
+      ease: CONFIG.ANIMATION.EASE,
       onUpdate: () => {
-        camera.lookAt(lookAtTarget.x, lookAtTarget.y, lookAtTarget.z); // Update lookAt dynamically
+        camera.lookAt(lookAtTarget.x, lookAtTarget.y, lookAtTarget.z);
       },
     });
   }
@@ -752,16 +879,16 @@ window.addEventListener('click', (event) => {
         x: cameraPos.x,
         y: cameraPos.y,
         z: cameraPos.z,
-        duration: 2,
-        ease: 'power3.inOut',
+        duration: CONFIG.ANIMATION.CAMERA_DURATION,
+        ease: CONFIG.ANIMATION.EASE,
       });
 
       gsap.to(lookAtTarget, {
         x: hexPosition.x,
         y: hexPosition.y,
         z: hexPosition.z,
-        duration: 2,
-        ease: 'power3.inOut',
+        duration: CONFIG.ANIMATION.CAMERA_DURATION,
+        ease: CONFIG.ANIMATION.EASE,
         onUpdate: () => {
           camera.lookAt(lookAtTarget.x, lookAtTarget.y, lookAtTarget.z);
         },
@@ -783,8 +910,8 @@ window.addEventListener('click', (event) => {
           x: camTarget.x,
           y: camTarget.y,
           z: camTarget.z,
-          duration: 2,
-          ease: 'power3.inOut',
+          duration: CONFIG.ANIMATION.CAMERA_DURATION,
+          ease: CONFIG.ANIMATION.EASE,
           onComplete: () => {
             if (object.userData.type === 'steering' && steeringWheelClicked && !virtualModalClosed) {
               showVirtualModal();
@@ -798,8 +925,8 @@ window.addEventListener('click', (event) => {
           x: lookAt.x,
           y: lookAt.y,
           z: lookAt.z,
-          duration: 2,
-          ease: 'power3.inOut',
+          duration: CONFIG.ANIMATION.CAMERA_DURATION,
+          ease: CONFIG.ANIMATION.EASE,
           onUpdate: () => {
             camera.lookAt(lookAtTarget.x, lookAtTarget.y, lookAtTarget.z);
           },
@@ -818,165 +945,157 @@ window.addEventListener('click', (event) => {
   }
 });
 
-// === Modal state tracking ===
-let virtualModalClosed = false; // Track if user has manually closed the virtual modal
-let steeringWheelClicked = false; // Track if user actually clicked on the steering wheel
-
-// === Modal for forge.html ===
-function showForgeModal() {
-  let modal = document.getElementById('forgeModal');
-  if (modal) return; // Already open
-  modal = document.createElement('div');
-  modal.id = 'forgeModal';
-  modal.style.position = 'fixed';
-  modal.style.top = '0';
-  modal.style.left = '0';
-  modal.style.width = '100vw';
-  modal.style.height = '100vh';
-  modal.style.background = 'rgba(0,0,0,0.65)';
-  modal.style.display = 'flex';
-  modal.style.alignItems = 'center';
-  modal.style.justifyContent = 'center';
-  modal.style.zIndex = '9999';
+// === Modal Functions ===
+function createModalBase(id, onClose = null) {
+  const modal = document.createElement('div');
+  modal.id = id;
+  modal.style.cssText = `
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0,0,0,0.65);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+  `;
 
   const content = document.createElement('div');
-  content.style.background = '#222';
-  content.style.borderRadius = '18px';
-  content.style.boxShadow = '0 8px 32px rgba(0,0,0,0.25)';
-  content.style.overflow = 'hidden';
-  content.style.position = 'relative';
-  content.style.width = 'min(90vw, 900px)';
-  content.style.height = 'min(80vh, 600px)';
-  content.style.display = 'flex';
-  content.style.flexDirection = 'column';
+  content.style.cssText = `
+    background: #222;
+    border-radius: 18px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+    overflow: hidden;
+    position: relative;
+    width: min(90vw, 900px);
+    height: min(80vh, 600px);
+    display: flex;
+    flex-direction: column;
+  `;
 
   const closeBtn = document.createElement('button');
   closeBtn.textContent = '✕';
-  closeBtn.style.position = 'absolute';
-  closeBtn.style.top = '10px';
-  closeBtn.style.right = '16px';
-  closeBtn.style.background = 'rgba(0,0,0,0.5)';
-  closeBtn.style.color = '#fff';
-  closeBtn.style.border = 'none';
-  closeBtn.style.fontSize = '1.5rem';
-  closeBtn.style.cursor = 'pointer';
-  closeBtn.style.zIndex = '2';
-  closeBtn.onclick = () => modal.remove();
-
-  const iframe = document.createElement('iframe');
-  iframe.src = 'forge.html';
-  iframe.style.width = '100%';
-  iframe.style.height = '100%';
-  iframe.style.border = 'none';
-  iframe.style.background = '#fff';
-
-  content.appendChild(closeBtn);
-  content.appendChild(iframe);
-  modal.appendChild(content);
-  document.body.appendChild(modal);
-}
-
-// === Modal for virtual.html ===
-function showVirtualModal() {
-  let modal = document.getElementById('virtualModal');
-  if (modal) return; // Already open
-  modal = document.createElement('div');
-  modal.id = 'virtualModal';
-  modal.style.position = 'fixed';
-  modal.style.top = '0';
-  modal.style.left = '0';
-  modal.style.width = '100vw';
-  modal.style.height = '100vh';
-  modal.style.background = 'rgba(0,0,0,0.65)';
-  modal.style.display = 'flex';
-  modal.style.alignItems = 'center';
-  modal.style.justifyContent = 'center';
-  modal.style.zIndex = '9999';
-
-  const content = document.createElement('div');
-  content.style.background = '#222';
-  content.style.borderRadius = '18px';
-  content.style.boxShadow = '0 8px 32px rgba(0,0,0,0.25)';
-  content.style.overflow = 'hidden';
-  content.style.position = 'relative';
-  content.style.width = 'min(90vw, 900px)';
-  content.style.height = 'min(80vh, 600px)';
-  content.style.display = 'flex';
-  content.style.flexDirection = 'column';
-
-  const closeBtn = document.createElement('button');
-  closeBtn.textContent = '✕';
-  closeBtn.style.position = 'absolute';
-  closeBtn.style.top = '10px';
-  closeBtn.style.right = '16px';
-  closeBtn.style.background = 'rgba(0,0,0,0.5)';
-  closeBtn.style.color = '#fff';
-  closeBtn.style.border = 'none';
-  closeBtn.style.fontSize = '1.5rem';
-  closeBtn.style.cursor = 'pointer';
-  closeBtn.style.zIndex = '2';
+  closeBtn.style.cssText = `
+    position: absolute;
+    top: 10px;
+    right: 16px;
+    background: rgba(0,0,0,0.5);
+    color: #fff;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    z-index: 2;
+    border-radius: 4px;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  `;
+  
   closeBtn.onclick = () => {
-    virtualModalClosed = true; // Mark that user has closed the modal
+    if (onClose) onClose();
     modal.remove();
   };
 
+  content.appendChild(closeBtn);
+  modal.appendChild(content);
+  
+  return { modal, content };
+}
+
+function showForgeModal() {
+  let existingModal = document.getElementById('forgeModal');
+  if (existingModal) return; // Already open
+  
+  const { modal, content } = createModalBase('forgeModal');
+  
+  const iframe = document.createElement('iframe');
+  iframe.src = 'forge.html';
+  iframe.style.cssText = `
+    width: 100%;
+    height: 100%;
+    border: none;
+    background: #fff;
+  `;
+  
+  iframe.onerror = () => {
+    content.innerHTML = '<div style="color: white; padding: 20px; text-align: center;">Error loading content</div>';
+  };
+
+  content.appendChild(iframe);
+  document.body.appendChild(modal);
+}
+
+function showVirtualModal() {
+  let existingModal = document.getElementById('virtualModal');
+  if (existingModal) return; // Already open
+  
+  const { modal, content } = createModalBase('virtualModal', () => {
+    virtualModalClosed = true; // Mark that user has closed the modal
+  });
+  
   const iframe = document.createElement('iframe');
   iframe.src = 'virtual.html';
-  iframe.style.width = '100%';
-  iframe.style.height = '100%';
-  iframe.style.border = 'none';
-  iframe.style.background = '#fff';
+  iframe.style.cssText = `
+    width: 100%;
+    height: 100%;
+    border: none;
+    background: #fff;
+  `;
+  
+  iframe.onerror = () => {
+    content.innerHTML = '<div style="color: white; padding: 20px; text-align: center;">Error loading virtual content</div>';
+  };
 
-  content.appendChild(closeBtn);
   content.appendChild(iframe);
-  modal.appendChild(content);
   document.body.appendChild(modal);
 }
 
 // Store original positions of drawers
-const drawerOriginalPositions = new Map();
+// (drawerOriginalPositions already declared at top)
 
-// === Unread Drawers Tracking ===
-const unreadDrawers = new Set(['drawer1', 'drawer2', 'drawer3', 'drawer4','steering','forge']); // All drawers start as unread
+// === Unread Drawers Tracking Functions ===
+// (Functions already declared at top)
 
-// Function to get unread count for a specific theme
-function getUnreadCountForTheme(themeId) {
-  let count = 0;
-  unreadDrawers.forEach(drawer => {
-    if (drawerThemes[drawer] === themeId) {
-      count++;
-    }
-  });
-  return count;
-}
-
-// Function to update all theme unread badges
-function updateThemeUnreadBadges() {
-  const themes = ['home', 'forge'];
-  themes.forEach(themeId => {
-    const count = getUnreadCountForTheme(themeId);
-    const badge = document.getElementById(`unread-badge-${themeId}`);
-    if (badge) {
-      if (count > 0) {
-        badge.textContent = count;
-        badge.style.opacity = '1';
-      } else {
-        badge.style.opacity = '0';
-      }
-    }
-  });
-}
+// === Load Drawer Models ===
+let loadedDrawerCount = 0;
+const totalDrawerCount = drawerModels.length;
 
 drawerModels.forEach((model) => {
-  loader.load(`./models/${model}.glb`, (gltf) => {
-    processGLBMaterials(gltf); // Apply improved material processing
-    const drawer = gltf.scene;
-    drawer.scale.set(1, 1, 1);
-    drawer.userData.type = model; // Store model name in userData
-    scene.add(drawer);
-    drawers.push(drawer);
-    drawerOriginalPositions.set(drawer, drawer.position.clone()); // Ensure original position is stored
-  });
+  ErrorHandler.handleAsyncError(
+    new Promise((resolve, reject) => {
+      loader.load(
+        `./models/${model}.glb`,
+        (gltf) => {
+          try {
+            processGLBMaterials(gltf);
+            const drawer = gltf.scene;
+            drawer.scale.set(1, 1, 1);
+            drawer.userData.type = model;
+            scene.add(drawer);
+            drawers.push(drawer);
+            drawerOriginalPositions.set(drawer, drawer.position.clone());
+            
+            loadedDrawerCount++;
+            if (loadedDrawerCount === totalDrawerCount) {
+              console.log('All drawer models loaded successfully');
+              // Initialize unread badges after all drawers are loaded
+              updateThemeUnreadBadges();
+            }
+            resolve(drawer);
+          } catch (error) {
+            reject(error);
+          }
+        },
+        undefined,
+        reject
+      );
+    }),
+    `Drawer loading - ${model}`
+  );
 });
 
 // === Navigation Sidebar for Zones ===
@@ -988,15 +1107,7 @@ const mainZones = [
   { type: 'forge2', label: 'Conception', themeId: 'forge' },
 ];
 
-// Define drawer-to-theme mapping
-const drawerThemes = {
-  'drawer1': 'home',
-  'drawer2': 'home', 
-  'drawer3': 'home',
-  'drawer4': 'home',
-  'steering': 'home',
-  'forge': 'forge'
-};
+// Define drawer-to-theme mapping (already declared at top)
 
 const navSidebar = document.createElement('nav');
 navSidebar.id = 'zoneNavSidebar';
@@ -1004,7 +1115,7 @@ navSidebar.style.position = 'fixed';
 navSidebar.style.top = '0';
 navSidebar.style.left = '0';
 navSidebar.style.height = '100vh';
-navSidebar.style.width = '220px';
+navSidebar.style.width = CONFIG.NAVIGATION.SIDEBAR_WIDTH + 'px';
 navSidebar.style.background = 'rgba(20, 20, 30, 0.97)';
 navSidebar.style.color = '#fff';
 navSidebar.style.padding = '36px 0 24px 0';
@@ -1027,9 +1138,9 @@ navSidebar.style.pointerEvents = 'auto';
 
 // Décale le canvas 3D pour ne pas être sous la nav
 renderer.domElement.style.position = 'absolute';
-renderer.domElement.style.left = '220px';
+renderer.domElement.style.left = CONFIG.NAVIGATION.SIDEBAR_WIDTH + 'px';
 renderer.domElement.style.top = '0';
-renderer.domElement.style.width = `calc(100vw - 220px)`;
+renderer.domElement.style.width = `calc(100vw - ${CONFIG.NAVIGATION.SIDEBAR_WIDTH}px)`;
 renderer.domElement.style.height = '100vh';
 
 const navList = document.getElementById('zoneNavList');
@@ -1195,7 +1306,7 @@ updateThemeUnreadBadges();
 
 // === Responsive 3D Canvas: Only fill area right of nav bar ===
 function resize3DView() {
-  const navWidth = 220;
+  const navWidth = CONFIG.NAVIGATION.SIDEBAR_WIDTH;
   const width = window.innerWidth - navWidth;
   const height = window.innerHeight;
   renderer.setSize(width, height);
@@ -1206,6 +1317,4 @@ function resize3DView() {
 }
 window.addEventListener('resize', resize3DView);
 resize3DView(); // Initial call
-
-let currentActiveHexType = null; // Tracks the currently active hex type for navigation sync
 

@@ -34,7 +34,7 @@ const CircularText = ({
     const start = rotation.get();
     controls.start({
       rotate: start + 360,
-      scale: 1,
+      scale: 0.8,
       transition: getTransition(spinDuration, start),
     });
   }, [spinDuration, text, onHover, controls, rotation]);
@@ -58,7 +58,7 @@ const CircularText = ({
           rotate: { type: "spring", damping: 20, stiffness: 300 },
           scale: { type: "spring", damping: 20, stiffness: 300 },
         };
-        scaleVal = 1;
+        scaleVal = 0.8;
         break;
       case "goBonkers":
         transitionConfig = getTransition(spinDuration / 20, start);

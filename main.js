@@ -48,6 +48,135 @@ const CONFIG = {
   }
 };
 
+// === LOADING COMPLETION SYSTEM ===
+let totalAssetsToLoad = 0;
+let assetsLoaded = 0;
+let allAssetsLoaded = false;
+let cinematicMode = false;
+
+function incrementTotalAssets() {
+  totalAssetsToLoad++;
+}
+
+function markAssetLoaded() {
+  assetsLoaded++;
+  console.log(`Asset loaded: ${assetsLoaded}/${totalAssetsToLoad}`);
+  
+  if (assetsLoaded === totalAssetsToLoad && !allAssetsLoaded) {
+    allAssetsLoaded = true;
+    console.log('All assets loaded successfully');
+    
+    // Signal to loading page that portfolio assets are ready
+    sessionStorage.setItem('portfolioAssetsLoaded', 'true');
+    
+    onAllAssetsLoaded();
+  }
+}
+
+// === Cinematic Entrance Animation ===
+function startCinematicEntrance() {
+  console.log('=== STARTING CINEMATIC ENTRANCE ANIMATION ===');
+  console.log('Call stack:', new Error().stack);
+  
+  // Set cinematic mode and disable cursor interactions
+  cinematicMode = true;
+  document.body.style.cursor = 'wait';
+  
+  // Simple orbit parameters
+  const centerX = 0;
+  const centerZ = 0;
+  const radius = 9; // Reduced from 12 to 9 for closer view
+  const height = 6;
+  const orbitDuration = 3; // 3 seconds for half turn
+  
+  // Start behind the island (270° or -90°)
+  const startAngle = -Math.PI / 2;
+  // End in front of the island (90°)
+  const endAngle = Math.PI / 2;
+  
+  // Camera is already positioned correctly from initialization
+  // Look at center of the island - adjusted to feel more centered on screen
+  const lookAtCenter = { x: centerX, y: 0.3, z: centerZ };
+  // Don't call camera.lookAt here since it's already set correctly during initialization
+  
+  // Create simple orbit animation starting from current position
+  gsap.to({}, {
+    duration: orbitDuration,
+    ease: "power2.inOut",
+    onUpdate: function() {
+      const progress = this.progress();
+      // Interpolate from start angle (behind) to end angle (front)
+      const currentAngle = startAngle + (endAngle - startAngle) * progress;
+      
+      // Update camera position
+      camera.position.x = centerX + radius * Math.cos(currentAngle);
+      camera.position.z = centerZ + radius * Math.sin(currentAngle);
+      camera.position.y = height;
+      
+      // Always look at the center
+      camera.lookAt(lookAtCenter.x, lookAtCenter.y, lookAtCenter.z);
+    },
+    onComplete: () => {
+      // Animation complete - enable controls
+      console.log('Cinematic entrance complete - controls enabled');
+      cinematicMode = false;
+      document.body.style.cursor = 'default';
+      
+      // Update orbital camera angle to current position
+      updateCameraAngleFromPosition();
+      
+      // Sync lookAtTarget with the actual camera look-at direction
+      lookAtTarget.x = lookAtCenter.x;
+      lookAtTarget.y = lookAtCenter.y;
+      lookAtTarget.z = lookAtCenter.z;
+    }
+  });
+  
+  return true; // Animation started
+}
+
+function onAllAssetsLoaded() {
+  // Signal that portfolio assets are loaded
+  sessionStorage.setItem('portfolioAssetsLoaded', 'true');
+  console.log('Assets loaded, waiting for overlay to be manually dismissed...');
+  
+  // Wait for loading overlay to be hidden before starting cinematic animation
+  function checkAndStartCinematic() {
+    const overlayHidden = sessionStorage.getItem('loadingOverlayHidden');
+    const overlayElement = document.getElementById('loadingOverlay');
+    
+    // Double check - ensure overlay is actually hidden
+    const isOverlayActuallyHidden = overlayHidden === 'true' && 
+      (!overlayElement || overlayElement.classList.contains('hidden'));
+    
+    if (isOverlayActuallyHidden) {
+      console.log('Overlay confirmed hidden, starting cinematic animation...');
+      // Start cinematic animation if conditions are met
+      if (!virtualModalOpened || virtualModalClosed) {
+        // Small delay to ensure everything is ready
+        setTimeout(() => {
+          startCinematicEntrance();
+        }, 500); // 500ms delay after overlay is hidden
+      }
+    } else {
+      // Check again in 100ms
+      setTimeout(checkAndStartCinematic, 100);
+    }
+  }
+  
+  // Start checking for overlay hidden signal
+  checkAndStartCinematic();
+}
+
+// === Orbital Camera Controls Variables ===
+let isOrbiting = false;
+let previousMouseX = 0;
+let currentCameraAngle = Math.PI / 2; // Start at front of island (end position of cinematic)
+const orbitRadius = 9; // Same radius as cinematic animation
+const orbitHeight = 6; // Same height as cinematic animation
+const orbitCenter = { x: 0, y: 0.3, z: 0 }; // Same center as cinematic animation
+const orbitSensitivity = 0.005; // How fast the camera rotates
+
 // === Scene Initialization ===
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(CONFIG.SCENE.BACKGROUND_COLOR);
@@ -58,16 +187,45 @@ const camera = new THREE.PerspectiveCamera(
   CONFIG.CAMERA.NEAR, 
   CONFIG.CAMERA.FAR
 );
-camera.position.set(
-  CONFIG.CAMERA.ORIGINAL_POSITION.x, 
-  CONFIG.CAMERA.ORIGINAL_POSITION.y, 
-  CONFIG.CAMERA.ORIGINAL_POSITION.z
-);
-camera.lookAt(
-  CONFIG.CAMERA.ORIGINAL_LOOK_AT.x, 
-  CONFIG.CAMERA.ORIGINAL_LOOK_AT.y, 
-  CONFIG.CAMERA.ORIGINAL_LOOK_AT.z
-);
+
+// Check if we should use cinematic camera position (when loading overlay is present)
+const loadingOverlay = document.getElementById('loadingOverlay');
+const shouldUseCinematicStart = loadingOverlay && !loadingOverlay.classList.contains('hidden');
+
+if (shouldUseCinematicStart) {
+  // Use exact same parameters as cinematic animation to prevent any jumps
+  const centerX = 0;
+  const centerZ = 0;
+  const radius = 9; // Same as cinematic animation
+  const height = 6; // Same as cinematic animation
+  const startAngle = -Math.PI / 2; // Behind the island - same as cinematic
+  
+  // Position camera at exact starting position of cinematic animation
+  camera.position.set(
+    centerX + radius * Math.cos(startAngle),
+    height,
+    centerZ + radius * Math.sin(startAngle)
+  );
+  
+  // Look at exact same center as cinematic animation
+  const lookAtCenter = { x: centerX, y: 0.3, z: centerZ };
+  camera.lookAt(lookAtCenter.x, lookAtCenter.y, lookAtCenter.z);
+  
+  // Set currentCameraAngle to match the starting position (prevents orbital controls from moving camera)
+  currentCameraAngle = startAngle;
+} else {
+  // Normal position for direct access
+  camera.position.set(
+    CONFIG.CAMERA.ORIGINAL_POSITION.x, 
+    CONFIG.CAMERA.ORIGINAL_POSITION.y, 
+    CONFIG.CAMERA.ORIGINAL_POSITION.z
+  );
+  camera.lookAt(
+    CONFIG.CAMERA.ORIGINAL_LOOK_AT.x, 
+    CONFIG.CAMERA.ORIGINAL_LOOK_AT.y, 
+    CONFIG.CAMERA.ORIGINAL_LOOK_AT.z
+  );
+}
 
 const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
@@ -87,9 +245,9 @@ let hoveredDrawer = null;
 // === Application State Variables ===
 let currentActiveHexType = null; // Tracks the currently active hex type for navigation sync
 let lookAtTarget = { 
-  x: CONFIG.CAMERA.ORIGINAL_LOOK_AT.x, 
-  y: CONFIG.CAMERA.ORIGINAL_LOOK_AT.y, 
-  z: CONFIG.CAMERA.ORIGINAL_LOOK_AT.z 
+  x: 0, // Will be set to orbitCenter.x after cinematic or orbital center
+  y: 0.3, // Will be set to orbitCenter.y after cinematic or orbital center  
+  z: 0 // Will be set to orbitCenter.z after cinematic or orbital center
 };
 
 // === Error Handling ===
@@ -159,6 +317,7 @@ const performanceMonitor = new PerformanceMonitor();
 
 // === Modal State Tracking ===
 let virtualModalClosed = false; // Track if user has manually closed the virtual modal
+let virtualModalOpened = false; // Track if the virtual modal was ever opened
 let steeringWheelClicked = false; // Track if user actually clicked on the steering wheel
 
 // === Drawer Management ===
@@ -296,6 +455,9 @@ const hexObjects = [];
 let loadedHexCount = 0;
 const totalHexCount = hexMap.length;
 
+// Register hex assets for loading tracking
+hexMap.forEach(() => incrementTotalAssets());
+
 hexMap.forEach(({ q, r, type }) => {
   const { x, z } = hexToWorld(q, r);
   
@@ -314,6 +476,8 @@ hexMap.forEach(({ q, r, type }) => {
             hexObjects.push(hex);
             
             loadedHexCount++;
+            markAssetLoaded(); // Mark this asset as loaded
+            
             if (loadedHexCount === totalHexCount) {
               console.log('All hex objects loaded successfully');
             }
@@ -500,6 +664,9 @@ drawerLabel.style.transition = "opacity 0.2s";
 document.body.appendChild(drawerLabel);
 
 window.addEventListener('mousemove', (event) => {
+  // Skip interactions during cinematic mode
+  if (cinematicMode) return;
+  
   // Check if mouse is over the navigation sidebar
   const navSidebar = document.getElementById('zoneNavSidebar');
   if (navSidebar && navSidebar.contains(event.target)) {
@@ -595,6 +762,7 @@ window.addEventListener('mousemove', (event) => {
               drawerLabel.style.display = "block";
               drawerLabel.style.border = isUnread ? "2px solid #ff4444" : "1px solid #eee";
               
+
               // Better positioning logic
               positionDrawerLabel(event.clientX, event.clientY);
               
@@ -737,6 +905,10 @@ function processGLBMaterials(gltf) {
 
 // === Environment Texture Loading ===
 const textureLoader = new THREE.TextureLoader();
+
+// Register environment texture for loading tracking
+incrementTotalAssets();
+
 ErrorHandler.handleAsyncError(
   new Promise((resolve, reject) => {
     textureLoader.load(
@@ -771,6 +943,7 @@ ErrorHandler.handleAsyncError(
           });
           
           console.log('Environment texture loaded successfully');
+          markAssetLoaded(); // Mark this asset as loaded
           resolve(texture);
         } catch (error) {
           reject(error);
@@ -814,6 +987,9 @@ animate();
 // === Event Listeners === 
 
 window.addEventListener('wheel', (event) => {
+  // Skip interactions during cinematic mode
+  if (cinematicMode) return;
+  
   if (event.deltaY > 0) { // Detect scroll down
     // Reset active nav state since we're going back to overview
     currentActiveHexType = null;
@@ -821,31 +997,47 @@ window.addEventListener('wheel', (event) => {
     
     // Reset virtual modal state when going back to overview
     virtualModalClosed = false;
+    virtualModalOpened = false;
     steeringWheelClicked = false;
     
+    // Return to orbital position instead of fixed original position
+    const orbitalPosition = {
+      x: orbitCenter.x + orbitRadius * Math.cos(currentCameraAngle),
+      y: orbitHeight,
+      z: orbitCenter.z + orbitRadius * Math.sin(currentCameraAngle)
+    };
+    
+    // Animate camera position
     gsap.to(camera.position, {
-      x: CONFIG.CAMERA.ORIGINAL_POSITION.x,
-      y: CONFIG.CAMERA.ORIGINAL_POSITION.y,
-      z: CONFIG.CAMERA.ORIGINAL_POSITION.z,
+      x: orbitalPosition.x,
+      y: orbitalPosition.y,
+      z: orbitalPosition.z,
       duration: CONFIG.ANIMATION.CAMERA_DURATION,
       ease: CONFIG.ANIMATION.EASE,
     });
 
-    // Smoothly interpolate the lookAt position
+    // Smoothly animate look-at target to the center of the island (orbital mode)
     gsap.to(lookAtTarget, {
-      x: CONFIG.CAMERA.ORIGINAL_LOOK_AT.x,
-      y: CONFIG.CAMERA.ORIGINAL_LOOK_AT.y,
-      z: CONFIG.CAMERA.ORIGINAL_LOOK_AT.z,
+      x: orbitCenter.x,
+      y: orbitCenter.y,
+      z: orbitCenter.z,
       duration: CONFIG.ANIMATION.CAMERA_DURATION,
       ease: CONFIG.ANIMATION.EASE,
       onUpdate: () => {
         camera.lookAt(lookAtTarget.x, lookAtTarget.y, lookAtTarget.z);
       },
+      onComplete: () => {
+        // Update orbital camera angle to match the current position
+        updateCameraAngleFromPosition();
+      }
     });
   }
 });
 
 window.addEventListener('click', (event) => {
+  // Skip interactions during cinematic mode or if currently orbiting
+  if (cinematicMode || isOrbiting) return;
+  
   // Check if click is on the navigation sidebar
   const navSidebar = document.getElementById('zoneNavSidebar');
   if (navSidebar && navSidebar.contains(event.target)) {
@@ -867,13 +1059,25 @@ window.addEventListener('click', (event) => {
     if (object.userData.q !== undefined && object.userData.r !== undefined) {
       currentActiveHexType = object.userData.type; // Update active type on 3D click
       
+      // Stop any ongoing orbital movement
+      isOrbiting = false;
+      document.body.style.cursor = 'default';
+      
       // Reset virtual modal state when navigating to different areas
       virtualModalClosed = false;
+      virtualModalOpened = false;
       steeringWheelClicked = false;
       
       const hexPosition = object.position;
       const hexData = hexMap.find(hex => hex.q === object.userData.q && hex.r === object.userData.r);
       const cameraPos = hexData?.cameraPos || { x: 0, y: 5, z: 10 }; // Default camera position
+
+      // Store current camera position to ensure smooth transition
+      const currentPos = {
+        x: camera.position.x,
+        y: camera.position.y,
+        z: camera.position.z
+      };
 
       gsap.to(camera.position, {
         x: cameraPos.x,
@@ -1033,8 +1237,58 @@ function showVirtualModal() {
   let existingModal = document.getElementById('virtualModal');
   if (existingModal) return; // Already open
   
+  virtualModalOpened = true; // Mark that the modal was opened
+  
   const { modal, content } = createModalBase('virtualModal', () => {
     virtualModalClosed = true; // Mark that user has closed the modal
+    
+    // Check if we should start the cinematic animation
+    const urlParams = new URLSearchParams(window.location.search);
+    const fromLoading = urlParams.get('from') === 'loading' || document.referrer.includes('index.html');
+    const overlayHidden = sessionStorage.getItem('loadingOverlayHidden') === 'true';
+    const overlayElement = document.getElementById('loadingOverlay');
+    const isOverlayActuallyHidden = overlayHidden && (!overlayElement || overlayElement.classList.contains('hidden'));
+    
+    if (fromLoading && isOverlayActuallyHidden) {
+      // Only start cinematic animation if loading overlay has been manually dismissed
+      console.log('Virtual modal closed and overlay already dismissed, starting cinematic animation');
+      startCinematicEntrance();
+    } else if (!isOverlayActuallyHidden) {
+      // If overlay is still visible, don't start animation
+      console.log('Virtual modal closed but loading overlay still visible, not starting animation');
+    } else {
+      // Return to orbital position instead of fixed original position
+      const orbitalPosition = {
+        x: orbitCenter.x + orbitRadius * Math.cos(currentCameraAngle),
+        y: orbitHeight,
+        z: orbitCenter.z + orbitRadius * Math.sin(currentCameraAngle)
+      };
+      
+      // Animate camera position
+      gsap.to(camera.position, {
+        x: orbitalPosition.x,
+        y: orbitalPosition.y,
+        z: orbitalPosition.z,
+        duration: CONFIG.ANIMATION.CAMERA_DURATION,
+        ease: CONFIG.ANIMATION.EASE,
+      });
+      
+      // Smoothly animate look-at target to orbital center
+      gsap.to(lookAtTarget, {
+        x: orbitCenter.x,
+        y: orbitCenter.y,
+        z: orbitCenter.z,
+        duration: CONFIG.ANIMATION.CAMERA_DURATION,
+        ease: CONFIG.ANIMATION.EASE,
+        onUpdate: () => {
+          camera.lookAt(lookAtTarget.x, lookAtTarget.y, lookAtTarget.z);
+        },
+        onComplete: () => {
+          // Update orbital camera angle to match the current position
+          updateCameraAngleFromPosition();
+        }
+      });
+    }
   });
   
   const iframe = document.createElement('iframe');
@@ -1057,12 +1311,17 @@ function showVirtualModal() {
 // Store original positions of drawers
 // (drawerOriginalPositions already declared at top)
 
+
 // === Unread Drawers Tracking Functions ===
 // (Functions already declared at top)
+
 
 // === Load Drawer Models ===
 let loadedDrawerCount = 0;
 const totalDrawerCount = drawerModels.length;
+
+// Register drawer assets for loading tracking
+drawerModels.forEach(() => incrementTotalAssets());
 
 drawerModels.forEach((model) => {
   ErrorHandler.handleAsyncError(
@@ -1080,6 +1339,8 @@ drawerModels.forEach((model) => {
             drawerOriginalPositions.set(drawer, drawer.position.clone());
             
             loadedDrawerCount++;
+            markAssetLoaded(); // Mark this asset as loaded
+            
             if (loadedDrawerCount === totalDrawerCount) {
               console.log('All drawer models loaded successfully');
               // Initialize unread badges after all drawers are loaded
@@ -1317,4 +1578,92 @@ function resize3DView() {
 }
 window.addEventListener('resize', resize3DView);
 resize3DView(); // Initial call
+
+// Cinematic entrance will be triggered by onAllAssetsLoaded() when appropriate
+
+// === Orbital Camera Controls ===
+// Variables declared earlier in the file near scene initialization
+
+// Mouse down event - start orbiting
+window.addEventListener('mousedown', (event) => {
+  // Skip if in cinematic mode or clicking on UI elements
+  if (cinematicMode) return;
+  
+  // Skip if currently viewing a hex (not in orbital mode)
+  if (currentActiveHexType !== null) return;
+  
+  // Check if click is on the navigation sidebar
+  const navSidebar = document.getElementById('zoneNavSidebar');
+  if (navSidebar && navSidebar.contains(event.target)) {
+    return; // Don't start orbiting if clicking on nav
+  }
+  
+  // Only allow orbiting with left mouse button
+  if (event.button === 0) {
+    previousMouseX = event.clientX;
+    // We'll set isOrbiting to true in mousemove if the mouse actually moves
+  }
+});
+
+// Mouse move event - update orbit rotation
+window.addEventListener('mousemove', (event) => {
+  if (cinematicMode) return;
+  
+  // Skip if currently viewing a hex (not in orbital mode)
+  if (currentActiveHexType !== null) return;
+  
+  // Start orbiting if mouse is pressed and moved (drag detected)
+  if (!isOrbiting && event.buttons === 1 && previousMouseX !== 0) {
+    const deltaX = Math.abs(event.clientX - previousMouseX);
+    if (deltaX > 3) { // Only start orbiting if mouse moved more than 3 pixels
+      isOrbiting = true;
+      document.body.style.cursor = 'grabbing';
+    }
+  }
+  
+  if (!isOrbiting) return;
+  
+  const deltaX = event.clientX - previousMouseX;
+  currentCameraAngle -= deltaX * orbitSensitivity; // Negative for natural feel
+  
+  // Update camera position based on angle
+  camera.position.x = orbitCenter.x + orbitRadius * Math.cos(currentCameraAngle);
+  camera.position.z = orbitCenter.z + orbitRadius * Math.sin(currentCameraAngle);
+  camera.position.y = orbitHeight;
+  
+  // Always look at the center of the island
+  camera.lookAt(orbitCenter.x, orbitCenter.y, orbitCenter.z);
+  
+  // Keep lookAtTarget synchronized with orbital look-at
+  lookAtTarget.x = orbitCenter.x;
+  lookAtTarget.y = orbitCenter.y;
+  lookAtTarget.z = orbitCenter.z;
+  
+  previousMouseX = event.clientX;
+});
+
+// Mouse up event - stop orbiting
+window.addEventListener('mouseup', (event) => {
+  if (event.button === 0) {
+    isOrbiting = false;
+    previousMouseX = 0;
+    document.body.style.cursor = 'default';
+  }
+});
+
+// Mouse leave event - stop orbiting if mouse leaves window
+window.addEventListener('mouseleave', () => {
+  if (isOrbiting) {
+    isOrbiting = false;
+    previousMouseX = 0;
+    document.body.style.cursor = 'default';
+  }
+});
+
+// Update camera angle when cinematic animation completes
+function updateCameraAngleFromPosition() {
+  const deltaX = camera.position.x - orbitCenter.x;
+  const deltaZ = camera.position.z - orbitCenter.z;
+  currentCameraAngle = Math.atan2(deltaZ, deltaX);
+}
 

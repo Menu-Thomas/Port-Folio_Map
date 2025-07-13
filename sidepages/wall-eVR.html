@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>T-ESP-800 Wall-E VR Interface</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #0f2027;
+      color: #f0f0f0;
+      margin: 0;
+      line-height: 1.6;
+    }
+    header {
+      background: #1c1c1c;
+      text-align: center;
+      padding: 3rem 2rem;
+    }
+    header h1 {
+      font-size: 3rem;
+      margin: 0;
+      color: #00e5ff;
+    }
+    header p {
+      font-size: 1.2rem;
+      color: #ccc;
+    }
+    main {
+      max-width: 960px;
+      margin: 2rem auto;
+      padding: 2rem;
+      background: #1b1f23;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.6);
+    }
+    h2 {
+      color: #00e5ff;
+      margin-top: 2rem;
+    }
+    ul, ol {
+      padding-left: 1.5rem;
+    }
+    .highlight, blockquote {
+      background: #263238;
+      padding: 1rem;
+      border-left: 4px solid #00e5ff;
+      margin-top: 1rem;
+      font-style: italic;
+    }
+    code {
+      background: #37474f;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: monospace;
+    }
+    footer {
+      text-align: center;
+      padding: 1.5rem;
+      color: #888;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>T-ESP-800: Wall-E VR Interface</h1>
+  <p>Immersive VR control for physical robots, drones, and RC systems</p>
+</header>
+
+<main>
+
+  <section>
+    <h2>🌐 Project Overview</h2>
+    <p><strong>Wall-E VR</strong> is a Unity-based VR interface allowing users to control real-world robots and RC vehicles in immersive 3D. Whether you're programming drone paths or manipulating robotic arms, Wall-E VR merges physical robotics with virtual creation environments.</p>
+  </section>
+
+  <section>
+    <h2>🎯 User-Centric Use Cases</h2>
+    <ul>
+      <li>Draw drone paths in VR to capture aerial footage for construction surveillance.</li>
+      <li>Control robotic arms on RC vehicles for race maintenance tasks.</li>
+      <li>Create collaborative aerial art by sketching shapes in VR that drones follow in the sky.</li>
+      <li>Use the system as the foundational interface for building a future robot project.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>⚙️ System Features</h2>
+    <ul>
+      <li>Live VR-based control of RC robots via hand gestures.</li>
+      <li>Drawing tool for path creation with real-time robot path execution.</li>
+      <li>Selection of connected robots via an intuitive in-headset menu.</li>
+      <li>Encrypted communication and user authentication for security.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>🧠 Architecture & Flow</h2>
+    <ul>
+      <li><strong>VR User</strong> interacts with Unity application</li>
+      <li>Unity sends serial commands to Arduino</li>
+      <li>Arduino executes real-world actions (movement, LED, motors)</li>
+      <li>Feedback (position, state) is sent back to Unity for display</li>
+    </ul>
+    <div class="highlight">
+      Modular sequence: <code>Start VR → Select Robot → Connect → Control → Visual Feedback</code>
+    </div>
+  </section>
+
+  <section>
+    <h2>📐 Technical Specifications</h2>
+    <ul>
+      <li><strong>Latency:</strong> Less than 100ms command response</li>
+      <li><strong>Precision:</strong> At least 95% motion fidelity</li>
+      <li><strong>Tools:</strong> Unity 2020.3+, Arduino Uno, USB Serial</li>
+      <li><strong>Communication:</strong> Serial COM via <code>System.IO.Ports</code></li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>🛠️ Developer Setup</h2>
+    <ol>
+      <li>Install Unity Hub and Unity 2020.3.10f1</li>
+      <li>Connect your Arduino via USB and verify the COM port</li>
+      <li>Use provided <code>ArduinoController.cs</code> to send "1"/"0" signals</li>
+      <li>Deploy code to Arduino for motion control</li>
+      <li>Build and run the Unity app in VR headset</li>
+    </ol>
+  </section>
+
+  <section>
+    <h2>✅ Definition of Done</h2>
+    <ul>
+      <li>Code written and peer-reviewed</li>
+      <li>All unit and integration tests passed</li>
+      <li>Manual feature test in VR environment</li>
+      <li>User feedback confirms usability</li>
+      <li>Documentation updated and feature secure</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>🔭 Future Development</h2>
+    <ul>
+      <li>AI-enhanced auto path planning</li>
+      <li>Shared multiplayer control for team robotics</li>
+      <li>Path saving and replay options</li>
+      <li>Voice-command integration in VR</li>
+    </ul>
+  </section>
+
+</main>
+
+<footer>
+  &copy; 2025 Wall-E VR - T-ESP-800 | Built for the creators of the physical-metaverse.
+</footer>
+
+</body>
+</html>

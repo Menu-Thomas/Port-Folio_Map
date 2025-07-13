@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>THE CONVEYOR - Automated Sorting System</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #f6eed6;
+      color: #2f2f2f;
+      margin: 0;
+      padding: 0;
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      background-color: #3b3a4f;
+      color: #f6eed6;
+      padding: 1.5rem 0 1rem 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      flex-shrink: 0;
+    }
+    
+    .main-container {
+      flex: 1;
+      overflow-y: auto;
+      padding: 0;
+    }
+    
+    /* Custom scrollbar styling */
+    .main-container::-webkit-scrollbar {
+      width: 12px;
+    }
+    
+    .main-container::-webkit-scrollbar-track {
+      background: #f6eed6;
+      border-radius: 10px;
+    }
+    
+    .main-container::-webkit-scrollbar-thumb {
+      background: #c9b92b;
+      border-radius: 10px;
+      border: 2px solid #f6eed6;
+    }
+    
+    .main-container::-webkit-scrollbar-thumb:hover {
+      background: #b8a625;
+    }
+
+    main {
+      max-width: 1000px;
+      margin: 2rem auto;
+      padding: 2rem 1.5rem 1.5rem 1.5rem;
+    }
+    
+    h1 {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      justify-content: center;
+      gap: 0.7rem;
+      font-size: 2rem;
+      font-weight: bold;
+      margin: 0;
+      width: 100%;
+    }
+    
+    .highlight {
+      background-color: #e9724c;
+      color: #fff;
+      padding: 0.2em 0.7em;
+      border-radius: 7px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.8rem;
+      font-weight: bold;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+    }
+    
+    header p {
+      margin: 0.8rem 0 0 0;
+      font-size: 1rem;
+      color: #f6eed6;
+      opacity: 0.92;
+      font-weight: 400;
+    }
+
+    h2 {
+      color: #3b3a4f;
+      margin-top: 1.8rem;
+      margin-bottom: 0.8rem;
+      font-size: 1.25rem;
+    }
+    
+    .card {
+      background-color: #f6eed6;
+      border-left: 5px solid #c9b92b;
+      margin: 1rem 0;
+      padding: 1rem 1.2rem;
+      box-shadow: 2px 2px 8px rgba(0,0,0,0.08);
+    }
+
+    ul, ol {
+      line-height: 1.8;
+      padding-left: 1.3rem;
+      margin-top: 0.5rem;
+      margin-bottom: 1.2rem;
+    }
+    
+    li {
+      margin-bottom: 0.5rem;
+    }
+    
+    section {
+      margin-bottom: 2rem;
+    }
+
+    .note {
+      background-color: #f6eed6;
+      border-left: 5px solid #c9b92b;
+      margin: 1rem 0;
+      padding: 1rem 1.2rem;
+      box-shadow: 2px 2px 8px rgba(0,0,0,0.08);
+    }
+
+    footer {
+      background-color: #783a4d;
+      color: white;
+      text-align: center;
+      padding: 1rem 0;
+      font-size: 0.9rem;
+      flex-shrink: 0;
+    }
+
+    code {
+      background-color: #eceff1;
+      padding: 2px 4px;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>Projet <span class="highlight">THE CONVEYOR</span></h1>
+  <p>Automated Sorting System with NFC & Dolibarr WMS Integration</p>
+</header>
+
+<div class="main-container">
+  <main>
+
+  <section>
+    <h2>Description du Projet</h2>
+    <div class="card">
+      <p>
+        <strong>THE CONVEYOR</strong> automates package sorting using an Arduino-based control system combined with NFC technology. 
+        It integrates directly with the <strong>Dolibarr Warehouse Management System (WMS)</strong> via its REST API to determine package routing 
+        based on NFC-tagged product references. Packages are automatically directed to one of three storage warehouses (C, D, or error B) 
+        while stock levels and movements are updated in real-time.
+      </p>
+    </div>
+  </section>
+
+  <section>
+    <h2>Processus de Fonctionnement</h2>
+    <ol>
+      <li>Conveyor belt starts, moving a package forward.</li>
+      <li>Infrared sensor detects the presence of a package.</li>
+      <li>The conveyor halts temporarily.</li>
+      <li>
+        <strong>If no NFC tag is detected:</strong> Servo motor redirects the package to error storage warehouse <strong>B</strong>.
+      </li>
+      <li>
+        <strong>If NFC tag is detected:</strong> UID is read, WMS is queried, and the servo redirects to warehouse <strong>C</strong> or <strong>D</strong> accordingly.
+      </li>
+      <li>The conveyor restarts, delivering the package to its designated path.</li>
+    </ol>
+  </section>
+
+  <section>
+    <h2>Technologies Utilisées</h2>
+    <div class="card">
+      <p><strong>Arduino C/C++</strong> (controller programming), <strong>NFC technology</strong> (package identification), <strong>Dolibarr ERP/CRM</strong> (WMS integration), and <strong>REST API</strong> communication.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>Fonctionnalités Clés</h2>
+    <ul>
+      <li><strong>NFC Reader:</strong> Reads product reference data from attached NFC tags.</li>
+      <li><strong>WMS Integration:</strong> Communicates with Dolibarr WMS to determine destination and update stock.</li>
+      <li><strong>Automated Sorting:</strong> Uses servo motor to direct packages to their assigned warehouse.</li>
+      <li><strong>Error Handling:</strong> Redirects untagged packages to an error zone (Warehouse B).</li>
+      <li><strong>Fast Recovery:</strong> System resumes normal operations after power loss or manual interruption.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Méthodologie</h2>
+    <ol>
+      <li>Hardware integration and controller setup</li>
+      <li>NFC communication protocol development</li>
+      <li>Dolibarr API integration and testing</li>
+      <li>Servo motor control and package routing logic</li>
+      <li>System validation and performance optimization</li>
+    </ol>
+  </section>
+
+  <section>
+    <h2>Résultats</h2>
+    <div class="card">
+      <p>Successfully developed a fully automated sorting system that reduces manual errors, integrates seamlessly with existing ERP systems, and provides real-time inventory tracking capabilities.</p>
+    </div>
+  </section>
+
+  <section class="note">
+    <strong>Note:</strong> This system enhances efficiency in logistics and warehouse environments by minimizing manual sorting errors, 
+    reducing labor costs, and integrating seamlessly with enterprise resource planning (ERP) systems.
+  </section>
+
+  </main>
+</div>
+
+<footer>
+  <p>Projet réalisé par Thomas Menu — Automation & WMS Integration 2024</p>
+</footer>
+
+</body>
+</html>

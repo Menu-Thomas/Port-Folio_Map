@@ -11,16 +11,21 @@
       padding: 0;
       background-color: #f6eed6;
       color: #2f2f2f;
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
     }
     header {
       background-color: #3b3a4f;
       color: #f6eed6;
-      padding: 2.5rem 0 2rem 0;
+      padding: 1.5rem 0 1rem 0;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
       text-align: center;
+      flex-shrink: 0;
     }
     header h1 {
       display: flex;
@@ -28,7 +33,7 @@
       align-items: center;
       justify-content: center;
       gap: 0.7rem;
-      font-size: 2.3rem;
+      font-size: 2rem;
       font-weight: bold;
       margin: 0;
       width: 100%;
@@ -41,27 +46,53 @@
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      font-size: 2.1rem;
+      font-size: 1.8rem;
       font-weight: bold;
       box-shadow: 0 2px 12px rgba(0,0,0,0.08);
     }
     header p {
-      margin: 1.2rem 0 0 0;
-      font-size: 1.15rem;
+      margin: 0.8rem 0 0 0;
+      font-size: 1rem;
       color: #f6eed6;
       opacity: 0.92;
       font-weight: 400;
     }
+    
+    .main-container {
+      flex: 1;
+      overflow-y: auto;
+      padding: 0;
+    }
+    
+    /* Custom scrollbar styling */
+    .main-container::-webkit-scrollbar {
+      width: 12px;
+    }
+    
+    .main-container::-webkit-scrollbar-track {
+      background: #f6eed6;
+      border-radius: 10px;
+    }
+    
+    .main-container::-webkit-scrollbar-thumb {
+      background: #c9b92b;
+      border-radius: 10px;
+      border: 2px solid #f6eed6;
+    }
+    
+    .main-container::-webkit-scrollbar-thumb:hover {
+      background: #b8a625;
+    }
     section {
-      padding: 2.5rem 1.5rem 2rem 1.5rem;
+      padding: 2rem 1.5rem 1.5rem 1.5rem;
       max-width: 1000px;
       margin: 0 auto;
     }
     h2 {
       color: #3b3a4f;
-      margin-top: 2.2rem;
-      margin-bottom: 1rem;
-      font-size: 1.35rem;
+      margin-top: 1.8rem;
+      margin-bottom: 0.8rem;
+      font-size: 1.25rem;
     }
     .card {
       background-color: #f6eed6;
@@ -82,9 +113,9 @@
       background-color: #783a4d;
       color: white;
       text-align: center;
-      padding: 1.2rem 0 1rem 0;
-      font-size: 1.05rem;
-      margin-top: 2.5rem;
+      padding: 1rem 0;
+      font-size: 0.9rem;
+      flex-shrink: 0;
     }
   </style>
 </head>
@@ -95,7 +126,8 @@
   <p>Un simulateur automobile immersif pour EPICNPOC</p>
 </header>
 
-<section>
+<div class="main-container">
+  <section>
   <h2>Contexte</h2>
   <div class="card">
     <p>Dans le cadre de mon alternance chez EPICNPOC, j’ai conçu un simulateur réaliste destiné à visualiser et tester des prototypes technologiques en environnement virtuel.</p>
@@ -132,7 +164,8 @@
     <li>Mode réalité virtuelle (VR)</li>
     <li>Changer de véhicule en cours de simulation</li>
   </ul>
-</section>
+  </section>
+</div>
 
 <footer>
   <p>Projet réalisé par Thomas Menu — EPICNPOC 2022–2024</p>

@@ -34,7 +34,7 @@ const CONFIG = {
     NEAR: 0.05,
     FAR: 1000,
     ORIGINAL_POSITION: { x: 0, y: 4.5, z: 8 },
-    ORIGINAL_LOOK_AT: { x: 0, y: 0.5, z: 3 }
+    ORIGINAL_LOOK_AT: { x: 0, y: 0, z: 0 }
   },
   RENDERER: {
     TONE_MAPPING_EXPOSURE: 1.4,
@@ -88,7 +88,7 @@ function startCinematicEntrance() {
   // Simple orbit parameters
   const centerX = 0;
   const centerZ = 0;
-  const radius = 9; // Reduced from 12 to 9 for closer view
+  const radius = 7.5; // Reduced from 12 to 9 for closer view
   const height = 6;
   const orbitDuration = 3; // 3 seconds for half turn
   
@@ -179,7 +179,7 @@ function onAllAssetsLoaded() {
 let isOrbiting = false;
 let previousMouseX = 0;
 let currentCameraAngle = Math.PI / 2; // Start at front of island (end position of cinematic)
-const orbitRadius = 9; // Same radius as cinematic animation
+const orbitRadius = 7.5; // Same radius as cinematic animation
 const orbitHeight = 6; // Same height as cinematic animation
 const orbitCenter = { x: 0, y: 0.3, z: 0 }; // Same center as cinematic animation
 const orbitSensitivity = 0.005; // How fast the camera rotates
@@ -203,7 +203,7 @@ if (shouldUseCinematicStart) {
   // Use exact same parameters as cinematic animation to prevent any jumps
   const centerX = 0;
   const centerZ = 0;
-  const radius = 9; // Same as cinematic animation
+  const radius = 7.5; // Same as cinematic animation
   const height = 6; // Same as cinematic animation
   const startAngle = -Math.PI / 2; // Behind the island - same as cinematic
   
@@ -331,16 +331,24 @@ const performanceMonitor = new PerformanceMonitor();
 let virtualModalClosed = false; // Track if user has manually closed the virtual modal
 let virtualModalOpened = false; // Track if the virtual modal was ever opened
 let steeringWheelClicked = false; // Track if user actually clicked on the steering wheel
+let trashModalClosed = false; // Track if user has manually closed the trash modal
+let trashModalOpened = false; // Track if the trash modal was ever opened
+let trashTruckClicked = false; // Track if user actually clicked on the trash truck
+let convoyeurModalClosed = false; // Track if user has manually closed the convoyeur modal
+let convoyeurModalOpened = false; // Track if the convoyeur modal was ever opened
+let convoyeurClicked = false; // Track if user actually clicked on the convoyeur
+let sensorSenseiModalClosed = false; // Track if user has manually closed the sensorSensei modal
+let sensorSenseiModalOpened = false; // Track if the sensorSensei modal was ever opened
 
 // === Drawer Management ===
-const drawerModels = ['drawer1', 'drawer2', 'drawer3', 'drawer4', 'steering', 'pc', 'forge'];
+const drawerModels = ['drawer1', 'drawer2', 'drawer3', 'drawer4', 'steering', 'pc', 'forge', 'mail-box', 'trashTruck', 'convoyeur', 'sensorSensei', 'skillFlower1', 'skillFlower2', 'skillFlower3', 'skillFlower4', 'skillFlower5', 'skillFlower6', 'skillFlower7', 'skillFlower8', 'skillFlower9'];
 const drawers = [];
 const drawerOriginalPositions = new Map();
-const unreadDrawers = new Set(['drawer1', 'drawer2', 'drawer3', 'drawer4', 'steering', 'forge']);
+const unreadDrawers = new Set(['drawer1', 'drawer2', 'drawer3', 'drawer4', 'steering', 'forge', 'mail-box', 'trashTruck', 'convoyeur', 'sensorSensei', 'skillFlower1', 'skillFlower2', 'skillFlower3', 'skillFlower4', 'skillFlower5', 'skillFlower6', 'skillFlower7', 'skillFlower8', 'skillFlower9']);
 
 // === Drawer Configuration ===
-const animatedDrawers = ['drawer1', 'drawer2', 'drawer3', 'drawer4']; // Drawers that animate on hover
-const clickAnimatedDrawers = ['pc', 'steering']; // Drawers that animate camera on click
+const animatedDrawers = ['drawer1', 'drawer2', 'drawer3', 'drawer4', 'skillFlower1', 'skillFlower2', 'skillFlower3', 'skillFlower4', 'skillFlower5', 'skillFlower6', 'skillFlower7', 'skillFlower8', 'skillFlower9']; // Drawers that animate on hover
+const clickAnimatedDrawers = ['pc', 'steering', 'trashTruck', 'convoyeur', 'sensorSensei']; // Drawers that animate camera on click
 const drawerInfoFiles = {
   drawer1: "project1.html",
   drawer2: "project2.html", 
@@ -356,7 +364,20 @@ const drawerThemes = {
   'drawer4': 'home',
   'steering': 'home',
   'pc': 'home',
-  'forge': 'forge'
+  'forge': 'forge',
+  'mail-box': 'contact',
+  'trashTruck': 'home',
+  'convoyeur': 'home',
+  'sensorSensei': 'projects',
+  'skillFlower1': 'cv',
+  'skillFlower2': 'cv',
+  'skillFlower3': 'cv',
+  'skillFlower4': 'cv',
+  'skillFlower5': 'cv',
+  'skillFlower6': 'cv',
+  'skillFlower7': 'cv',
+  'skillFlower8': 'cv',
+  'skillFlower9': 'cv'
 };
 
 // Camera target positions for click-animated drawers
@@ -368,6 +389,14 @@ const drawerCameraTargets = {
   steering: {
     x: -0.1, y: 0.005, z: 0.16,
     lookAt: { x: -0.16, y: 0.005, z: 0.24 }
+  },
+  trashTruck: {
+    x: 0, y: 0, z: 0,
+    lookAt: { x: 0, y: 0, z: 0 }
+  },
+  convoyeur: {
+    x: 0, y: 0, z: 0,
+    lookAt: { x: 0, y: 0, z: 0 }
   }
 };
 
@@ -605,7 +634,7 @@ function getUnreadCountForTheme(themeId) {
 }
 
 function updateThemeUnreadBadges() {
-  const themes = ['home', 'forge'];
+  const themes = ['home', 'forge', 'contact', 'projects', 'cv'];
   themes.forEach(themeId => {
     const count = getUnreadCountForTheme(themeId);
     const badge = document.getElementById(`unread-badge-${themeId}`);
@@ -641,9 +670,9 @@ function getCurrentHexTheme(hexType) {
   // Define which hex types belong to which themes
   const hexThemes = {
     'home': 'home',
-    'cv': 'home', 
-    'projects': 'home',
-    'contact': 'home',
+    'cv': 'cv', 
+    'projects': 'projects',
+    'contact': 'contact',
     'bridge': 'home',
     'champ1': 'home',
     'champ2': 'home',
@@ -734,12 +763,23 @@ window.addEventListener('mousemove', (event) => {
     drawerLabel.style.display = "none";
     if (hoveredDrawer && drawerOriginalPositions.has(hoveredDrawer) && animatedDrawers.includes(hoveredDrawer.userData.type)) {
       const orig = drawerOriginalPositions.get(hoveredDrawer);
-      gsap.to(hoveredDrawer.position, {
-        x: orig.x,
-        z: orig.z,
-        duration: 0.3,
-        ease: 'power2.out',
-      });
+      // Check if it's a skillFlower
+      if (hoveredDrawer.userData.type.startsWith('skillFlower')) {
+        gsap.to(hoveredDrawer.position, {
+          x: orig.x,
+          y: orig.y, // Return to original Y position
+          z: orig.z,
+          duration: 0.3,
+          ease: 'power2.out',
+        });
+      } else {
+        gsap.to(hoveredDrawer.position, {
+          x: orig.x,
+          z: orig.z,
+          duration: 0.3,
+          ease: 'power2.out',
+        });
+      }
       hoveredDrawer = null;
     }
     return; // Don't process 3D canvas hover if over nav
@@ -791,20 +831,44 @@ window.addEventListener('mousemove', (event) => {
             // Animate previous hovered drawer back
             if (hoveredDrawer && drawerOriginalPositions.has(hoveredDrawer)) {
               const orig = drawerOriginalPositions.get(hoveredDrawer);
-              gsap.to(hoveredDrawer.position, {
+              // Check if previous drawer was a skillFlower
+              if (hoveredDrawer.userData.type.startsWith('skillFlower')) {
+                gsap.to(hoveredDrawer.position, {
+                  x: orig.x,
+                  y: orig.y, // Return to original Y position
+                  z: orig.z,
+                  duration: CONFIG.ANIMATION.DRAWER_HOVER_DURATION,
+                  ease: CONFIG.ANIMATION.HOVER_EASE,
+                });
+              } else {
+                gsap.to(hoveredDrawer.position, {
+                  x: orig.x,
+                  z: orig.z,
+                  duration: CONFIG.ANIMATION.DRAWER_HOVER_DURATION,
+                  ease: CONFIG.ANIMATION.HOVER_EASE,
+                });
+              }
+            }
+            // Animate new hovered drawer
+            if (foundDrawer.userData.type.startsWith('skillFlower')) {
+              // For skillFlowers, move up on Y axis
+              const orig = drawerOriginalPositions.get(foundDrawer);
+              gsap.to(foundDrawer.position, {
                 x: orig.x,
+                y: orig.y + 0.15, // Move up by 0.15 units (increased from 0.05)
                 z: orig.z,
                 duration: CONFIG.ANIMATION.DRAWER_HOVER_DURATION,
                 ease: CONFIG.ANIMATION.HOVER_EASE,
               });
+            } else {
+              // For regular drawers, use the old movement
+              gsap.to(foundDrawer.position, {
+                x: 0.029,
+                z: -0.0374,
+                duration: CONFIG.ANIMATION.DRAWER_HOVER_DURATION,
+                ease: CONFIG.ANIMATION.HOVER_EASE,
+              });
             }
-            // Animate new hovered drawer
-            gsap.to(foundDrawer.position, {
-              x: 0.029,
-              z: -0.0374,
-              duration: CONFIG.ANIMATION.DRAWER_HOVER_DURATION,
-              ease: CONFIG.ANIMATION.HOVER_EASE,
-            });
             hoveredDrawer = foundDrawer;
           }
         } else {
@@ -816,12 +880,23 @@ window.addEventListener('mousemove', (event) => {
             animatedDrawers.includes(hoveredDrawer.userData.type)
           ) {
             const orig = drawerOriginalPositions.get(hoveredDrawer);
-            gsap.to(hoveredDrawer.position, {
-              x: orig.x,
-              z: orig.z,
-              duration: 0.3,
-              ease: 'power2.out',
-            });
+            // Check if previous drawer was a skillFlower
+            if (hoveredDrawer.userData.type.startsWith('skillFlower')) {
+              gsap.to(hoveredDrawer.position, {
+                x: orig.x,
+                y: orig.y, // Return to original Y position
+                z: orig.z,
+                duration: 0.3,
+                ease: 'power2.out',
+              });
+            } else {
+              gsap.to(hoveredDrawer.position, {
+                x: orig.x,
+                z: orig.z,
+                duration: 0.3,
+                ease: 'power2.out',
+              });
+            }
           }
           hoveredDrawer = foundDrawer;
         }
@@ -869,6 +944,30 @@ window.addEventListener('mousemove', (event) => {
             message = `<div>most significant conception experience</div>`;
           } else if (object.userData.type === 'steering') {
             message = `<div>most significant dev project</div>`;
+          } else if (object.userData.type === 'trashTruck') {
+            message = `<div>IoT + AR trash management project</div>`;
+          } else if (object.userData.type === 'convoyeur') {
+            message = `<div>Automated sorting system with NFC & WMS</div>`;
+          } else if (object.userData.type === 'sensorSensei') {
+            message = `<div>LoRa-powered environmental data relay</div>`;
+          } else if (object.userData.type === 'skillFlower1') {
+            message = `<div><strong>JavaScript & TypeScript</strong><br/>Advanced front-end and back-end development with modern frameworks</div>`;
+          } else if (object.userData.type === 'skillFlower2') {
+            message = `<div><strong>Cloud Architecture (AWS/Azure)</strong><br/>Design and implement scalable cloud solutions and migrations</div>`;
+          } else if (object.userData.type === 'skillFlower3') {
+            message = `<div><strong>Data Analytics & Business Intelligence</strong><br/>Transform data into actionable insights with modern BI tools</div>`;
+          } else if (object.userData.type === 'skillFlower4') {
+            message = `<div><strong>DevOps & CI/CD</strong><br/>Automate deployments and streamline development workflows</div>`;
+          } else if (object.userData.type === 'skillFlower5') {
+            message = `<div><strong>Cybersecurity & Compliance</strong><br/>Implement security frameworks and ensure regulatory compliance</div>`;
+          } else if (object.userData.type === 'skillFlower6') {
+            message = `<div><strong>Project Management (Agile/Scrum)</strong><br/>Lead cross-functional teams and deliver projects on time</div>`;
+          } else if (object.userData.type === 'skillFlower7') {
+            message = `<div><strong>Enterprise Integration</strong><br/>Connect systems and optimize business processes</div>`;
+          } else if (object.userData.type === 'skillFlower8') {
+            message = `<div><strong>AI/ML Solutions</strong><br/>Implement intelligent automation and predictive analytics</div>`;
+          } else if (object.userData.type === 'skillFlower9') {
+            message = `<div><strong>Digital Transformation</strong><br/>Lead organizational change and modernization initiatives</div>`;
           }
           
           drawerLabel.innerHTML = message;
@@ -892,12 +991,23 @@ window.addEventListener('mousemove', (event) => {
           animatedDrawers.includes(hoveredDrawer.userData.type)
         ) {
           const orig = drawerOriginalPositions.get(hoveredDrawer);
-          gsap.to(hoveredDrawer.position, {
-            x: orig.x,
-            z: orig.z,
-            duration: 0.3,
-            ease: 'power2.out',
-          });
+          // Check if it's a skillFlower
+          if (hoveredDrawer.userData.type.startsWith('skillFlower')) {
+            gsap.to(hoveredDrawer.position, {
+              x: orig.x,
+              y: orig.y, // Return to original Y position
+              z: orig.z,
+              duration: 0.3,
+              ease: 'power2.out',
+            });
+          } else {
+            gsap.to(hoveredDrawer.position, {
+              x: orig.x,
+              z: orig.z,
+              duration: 0.3,
+              ease: 'power2.out',
+            });
+          }
           hoveredDrawer = null;
         } else if (hoveredDrawer && !animatedDrawers.includes(hoveredDrawer.userData.type)) {
           hoveredDrawer = null;
@@ -914,12 +1024,23 @@ window.addEventListener('mousemove', (event) => {
       animatedDrawers.includes(hoveredDrawer.userData.type)
     ) {
       const orig = drawerOriginalPositions.get(hoveredDrawer);
-      gsap.to(hoveredDrawer.position, {
-        x: orig.x,
-        z: orig.z,
-        duration: 0.3,
-        ease: 'power2.out',
-      });
+      // Check if it's a skillFlower
+      if (hoveredDrawer.userData.type.startsWith('skillFlower')) {
+        gsap.to(hoveredDrawer.position, {
+          x: orig.x,
+          y: orig.y, // Return to original Y position
+          z: orig.z,
+          duration: 0.3,
+          ease: 'power2.out',
+        });
+      } else {
+        gsap.to(hoveredDrawer.position, {
+          x: orig.x,
+          z: orig.z,
+          duration: 0.3,
+          ease: 'power2.out',
+        });
+      }
       hoveredDrawer = null;
     } else if (hoveredDrawer && !animatedDrawers.includes(hoveredDrawer.userData.type)) {
       hoveredDrawer = null;
@@ -1085,6 +1206,20 @@ window.addEventListener('wheel', (event) => {
     virtualModalOpened = false;
     steeringWheelClicked = false;
     
+    // Reset trash modal state when going back to overview
+    trashModalClosed = false;
+    trashModalOpened = false;
+    trashTruckClicked = false;
+    
+    // Reset convoyeur modal state when going back to overview
+    convoyeurModalClosed = false;
+    convoyeurModalOpened = false;
+    convoyeurClicked = false;
+    
+    // Reset sensorSensei modal state when going back to overview
+    sensorSenseiModalClosed = false;
+    sensorSenseiModalOpened = false;
+    
     // Return to orbital position instead of fixed original position
     const orbitalPosition = {
       x: orbitCenter.x + orbitRadius * Math.cos(currentCameraAngle),
@@ -1168,6 +1303,20 @@ window.addEventListener('click', (event) => {
       virtualModalOpened = false;
       steeringWheelClicked = false;
       
+      // Reset trash modal state when navigating to different areas
+      trashModalClosed = false;
+      trashModalOpened = false;
+      trashTruckClicked = false;
+      
+      // Reset convoyeur modal state when navigating to different areas
+      convoyeurModalClosed = false;
+      convoyeurModalOpened = false;
+      convoyeurClicked = false;
+      
+      // Reset sensorSensei modal state when navigating to different areas
+      sensorSenseiModalClosed = false;
+      sensorSenseiModalOpened = false;
+      
       const hexPosition = object.position;
       const hexData = hexMap.find(hex => hex.q === object.userData.q && hex.r === object.userData.r);
       const cameraPos = hexData?.cameraPos || { x: 0, y: 5, z: 10 }; // Default camera position
@@ -1209,14 +1358,28 @@ window.addEventListener('click', (event) => {
         return; // Don't allow interaction if not at correct theme
       }
       
+      // Mark drawer as read when clicked (except forge)
+      if (unreadDrawers.has(object.userData.type) && object.userData.type !== 'forge') {
+        unreadDrawers.delete(object.userData.type);
+        updateThemeUnreadBadges();
+      }
+      
+      // Handle objects that don't need camera movement (trashTruck, convoyeur, sensorSensei)
+      if (object.userData.type === 'trashTruck' || object.userData.type === 'convoyeur' || object.userData.type === 'sensorSensei') {
+        if (object.userData.type === 'trashTruck' && !trashModalClosed) {
+          showTrashModal();
+        }
+        if (object.userData.type === 'convoyeur' && !convoyeurModalClosed) {
+          showConvoyeurModal();
+        }
+        if (object.userData.type === 'sensorSensei' && !sensorSenseiModalClosed) {
+          showSensorSenseiModal();
+        }
+        return; // Don't animate camera for these objects
+      }
+      
       const camTarget = drawerCameraTargets[object.userData.type];
       if (camTarget) {
-        // Mark drawer as read when clicked (except forge)
-        if (unreadDrawers.has(object.userData.type) && object.userData.type !== 'forge') {
-          unreadDrawers.delete(object.userData.type);
-          updateThemeUnreadBadges();
-        }
-        
         // Set flag only if user clicked on steering wheel
         if (object.userData.type === 'steering') {
           steeringWheelClicked = true;
@@ -1264,6 +1427,23 @@ window.addEventListener('click', (event) => {
       }
       showForgeModal();
     }
+    // Handle mail-box click for contact theme
+    else if (object.userData.type === 'mail-box') {
+      // Check if mail-box is clickable at the current location/theme
+      if (!isDrawerClickableAtCurrentLocation('mail-box')) {
+        console.log('Mail-box not clickable at current location/theme');
+        return; // Don't allow interaction if not at correct theme
+      }
+      
+      // Mark mail-box as read
+      if (unreadDrawers.has('mail-box')) {
+        unreadDrawers.delete('mail-box');
+        updateThemeUnreadBadges();
+      }
+      
+      // Show contact modal instead of navigating to a new page
+      showContactModal();
+    }
   }
 });
 
@@ -1291,8 +1471,8 @@ function createModalBase(id, onClose = null) {
     box-shadow: 0 8px 32px rgba(0,0,0,0.25);
     overflow: hidden;
     position: relative;
-    width: min(90vw, 900px);
-    height: min(80vh, 600px);
+    width: min(95vw, 1200px);
+    height: min(90vh, 800px);
     display: flex;
     flex-direction: column;
   `;
@@ -1345,6 +1525,29 @@ function showForgeModal() {
   
   iframe.onerror = () => {
     content.innerHTML = '<div style="color: white; padding: 20px; text-align: center;">Error loading content</div>';
+  };
+
+  content.appendChild(iframe);
+  document.body.appendChild(modal);
+}
+
+function showContactModal() {
+  let existingModal = document.getElementById('contactModal');
+  if (existingModal) return; // Already open
+  
+  const { modal, content } = createModalBase('contactModal');
+  
+  const iframe = document.createElement('iframe');
+  iframe.src = 'sidepages/contact.html';
+  iframe.style.cssText = `
+    width: 100%;
+    height: 100%;
+    border: none;
+    background: #fff;
+  `;
+  
+  iframe.onerror = () => {
+    content.innerHTML = '<div style="color: white; padding: 20px; text-align: center;">Error loading contact form</div>';
   };
 
   content.appendChild(iframe);
@@ -1426,6 +1629,183 @@ function showVirtualModal() {
   document.body.appendChild(modal);
 }
 
+function showTrashModal() {
+  let existingModal = document.getElementById('trashModal');
+  if (existingModal) return; // Already open
+  
+  trashModalOpened = true; // Mark that the modal was opened
+  
+  const { modal, content } = createModalBase('trashModal', () => {
+    trashModalClosed = true; // Mark that user has closed the modal
+    
+    // Return to orbital position instead of fixed original position
+    const orbitalPosition = {
+      x: orbitCenter.x + orbitRadius * Math.cos(currentCameraAngle),
+      y: orbitHeight,
+      z: orbitCenter.z + orbitRadius * Math.sin(currentCameraAngle)
+    };
+    
+    // Animate camera position
+    gsap.to(camera.position, {
+      x: orbitalPosition.x,
+      y: orbitalPosition.y,
+      z: orbitalPosition.z,
+      duration: CONFIG.ANIMATION.CAMERA_DURATION,
+      ease: CONFIG.ANIMATION.EASE,
+    });
+    
+    // Smoothly animate look-at target to orbital center
+    gsap.to(lookAtTarget, {
+      x: orbitCenter.x,
+      y: orbitCenter.y,
+      z: orbitCenter.z,
+      duration: CONFIG.ANIMATION.CAMERA_DURATION,
+      ease: CONFIG.ANIMATION.EASE,
+      onUpdate: () => {
+        camera.lookAt(lookAtTarget.x, lookAtTarget.y, lookAtTarget.z);
+      },
+      onComplete: () => {
+        // Update orbital camera angle to match the current position
+        updateCameraAngleFromPosition();
+      }
+    });
+  });
+  
+  const iframe = document.createElement('iframe');
+  iframe.src = 'sidepages/trashProject.html';
+  iframe.style.cssText = `
+    width: 100%;
+    height: 100%;
+    border: none;
+    background: #fff;
+  `;
+  
+  iframe.onerror = () => {
+    content.innerHTML = '<div style="color: white; padding: 20px; text-align: center;">Error loading trash project content</div>';
+  };
+
+  content.appendChild(iframe);
+  document.body.appendChild(modal);
+}
+
+function showConvoyeurModal() {
+  let existingModal = document.getElementById('convoyeurModal');
+  if (existingModal) return; // Already open
+  
+  convoyeurModalOpened = true; // Mark that the modal was opened
+  
+  const { modal, content } = createModalBase('convoyeurModal', () => {
+    convoyeurModalClosed = true; // Mark that user has closed the modal
+    
+    // Return to orbital position instead of fixed original position
+    const orbitalPosition = {
+      x: orbitCenter.x + orbitRadius * Math.cos(currentCameraAngle),
+      y: orbitHeight,
+      z: orbitCenter.z + orbitRadius * Math.sin(currentCameraAngle)
+    };
+    
+    // Animate camera position
+    gsap.to(camera.position, {
+      x: orbitalPosition.x,
+      y: orbitalPosition.y,
+      z: orbitalPosition.z,
+      duration: CONFIG.ANIMATION.CAMERA_DURATION,
+      ease: CONFIG.ANIMATION.EASE,
+    });
+    
+    // Smoothly animate look-at target to orbital center
+    gsap.to(lookAtTarget, {
+      x: orbitCenter.x,
+      y: orbitCenter.y,
+      z: orbitCenter.z,
+      duration: CONFIG.ANIMATION.CAMERA_DURATION,
+      ease: CONFIG.ANIMATION.EASE,
+      onUpdate: () => {
+        camera.lookAt(lookAtTarget.x, lookAtTarget.y, lookAtTarget.z);
+      },
+      onComplete: () => {
+        // Update orbital camera angle to match the current position
+        updateCameraAngleFromPosition();
+      }
+    });
+  });
+  
+  const iframe = document.createElement('iframe');
+  iframe.src = 'sidepages/convoyeur.html';
+  iframe.style.cssText = `
+    width: 100%;
+    height: 100%;
+    border: none;
+    background: #fff;
+  `;
+  
+  iframe.onerror = () => {
+    content.innerHTML = '<div style="color: white; padding: 20px; text-align: center;">Error loading convoyeur project content</div>';
+  };
+
+  content.appendChild(iframe);
+  document.body.appendChild(modal);
+}
+
+function showSensorSenseiModal() {
+  let existingModal = document.getElementById('sensorSenseiModal');
+  if (existingModal) return; // Already open
+  
+  sensorSenseiModalOpened = true; // Mark that the modal was opened
+  
+  const { modal, content } = createModalBase('sensorSenseiModal', () => {
+    sensorSenseiModalClosed = true; // Mark that user has closed the modal
+    
+    // Return to orbital position instead of fixed original position
+    const orbitalPosition = {
+      x: orbitCenter.x + orbitRadius * Math.cos(currentCameraAngle),
+      y: orbitHeight,
+      z: orbitCenter.z + orbitRadius * Math.sin(currentCameraAngle)
+    };
+    
+    // Animate camera position
+    gsap.to(camera.position, {
+      x: orbitalPosition.x,
+      y: orbitalPosition.y,
+      z: orbitalPosition.z,
+      duration: CONFIG.ANIMATION.CAMERA_DURATION,
+      ease: CONFIG.ANIMATION.EASE,
+    });
+    
+    // Smoothly animate look-at target to orbital center
+    gsap.to(lookAtTarget, {
+      x: orbitCenter.x,
+      y: orbitCenter.y,
+      z: orbitCenter.z,
+      duration: CONFIG.ANIMATION.CAMERA_DURATION,
+      ease: CONFIG.ANIMATION.EASE,
+      onUpdate: () => {
+        camera.lookAt(lookAtTarget.x, lookAtTarget.y, lookAtTarget.z);
+      },
+      onComplete: () => {
+        // Update orbital camera angle to match the current position
+        updateCameraAngleFromPosition();
+      }
+    });
+  });
+  
+  const iframe = document.createElement('iframe');
+  iframe.src = 'sidepages/sensorSensei.html';
+  iframe.style.cssText = `
+    width: 100%;
+    height: 100%;
+    border: none;
+    background: #fff;
+  `;
+  
+  iframe.onerror = () => {
+    content.innerHTML = '<div style="color: white; padding: 20px; text-align: center;">Error loading sensor sensei project content</div>';
+  };
+
+  content.appendChild(iframe);
+  document.body.appendChild(modal);
+}
+
 // Store original positions of drawers
 // (drawerOriginalPositions already declared at top)
 
@@ -1452,6 +1832,40 @@ drawerModels.forEach((model) => {
             const drawer = gltf.scene;
             drawer.scale.set(1, 1, 1);
             drawer.userData.type = model;
+            
+            // Position mail-box at contact hex location
+            if (model === 'mail-box') {
+              // Get contact hex position (q: 2, r: 2)
+              const { x, z } = hexToWorld(2, 2);
+              drawer.position.set(x, 0, z);
+            }
+            
+            // Position trash truck at default position (matches hex coordinate system)
+            if (model === 'trashTruck') {
+              // Use default position (0, 0, 0) as it's already aligned to hex coordinates
+              drawer.position.set(0, 0, 0);
+            }
+            
+            // Position convoyeur at default position (matches hex coordinate system)
+            if (model === 'convoyeur') {
+              // Use default position (0, 0, 0) as it's already aligned to hex coordinates
+              drawer.position.set(0, 0, 0);
+            }
+            
+            // Position sensorSensei at projects hex location
+            if (model === 'sensorSensei') {
+              // Get projects hex position (q: 0, r: 1)
+              const { x, z } = hexToWorld(0, 1);
+              drawer.position.set(x, 0, z);
+            }
+            
+            // Position skillFlowers at CV hex location (q: 1, r: 0)
+            if (model.startsWith('skillFlower')) {
+              const { x, z } = hexToWorld(1, 0); // CV hex position
+              // Initialize all skillFlowers at the center of CV hex (0,0,0 relative to hex)
+              drawer.position.set(x, 0, z);
+            }
+            
             scene.add(drawer);
             drawers.push(drawer);
             drawerOriginalPositions.set(drawer, drawer.position.clone());
@@ -1482,7 +1896,7 @@ const mainZones = [
   { type: 'home', label: 'Accueil', themeId: 'home' },
   { type: 'cv', label: 'CV', themeId: 'home' },
   { type: 'projects', label: 'Projets', themeId: 'home' },
-  { type: 'contact', label: 'Contact', themeId: 'home' },
+  { type: 'contact', label: 'Contact', themeId: 'contact' },
   { type: 'forge2', label: 'Conception', themeId: 'forge' },
 ];
 
@@ -1581,7 +1995,10 @@ function updateNavActiveState(activeType) {
 // Group zones by theme for better organization
 const groupedZones = {
   'home': mainZones.filter(zone => zone.themeId === 'home'),
-  'forge': mainZones.filter(zone => zone.themeId === 'forge')
+  'forge': mainZones.filter(zone => zone.themeId === 'forge'),
+  'contact': mainZones.filter(zone => zone.themeId === 'contact'),
+  'projects': mainZones.filter(zone => zone.themeId === 'projects'),
+  'cv': mainZones.filter(zone => zone.themeId === 'cv')
 };
 
 // Create navigation items grouped by theme

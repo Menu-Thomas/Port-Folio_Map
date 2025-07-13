@@ -254,10 +254,31 @@
   <div id="app"></div>
   <script type="module" src="./main.js"></script>
   <script>
-    // Clear flags immediately when starting to prevent race conditions
-    sessionStorage.removeItem('portfolioAssetsLoaded');
-    sessionStorage.removeItem('loadingOverlayHidden');
-    console.log('Portfolio starting to load assets...');
+    // Check if returning from contact page
+    const returningFromContact = sessionStorage.getItem('returningFromContact');
+    
+    if (returningFromContact === 'true') {
+      // Clean up the flag
+      sessionStorage.removeItem('returningFromContact');
+      
+      // Set flags to skip loading overlay
+      sessionStorage.setItem('portfolioAssetsLoaded', 'true');
+      sessionStorage.setItem('loadingOverlayHidden', 'true');
+      
+      // Hide loading overlay immediately
+      const loadingOverlay = document.getElementById('loadingOverlay');
+      if (loadingOverlay) {
+        loadingOverlay.classList.add('hidden');
+        loadingOverlay.style.display = 'none';
+      }
+      
+      console.log('Returning from contact page - loading overlay skipped');
+    } else {
+      // Clear flags immediately when starting to prevent race conditions
+      sessionStorage.removeItem('portfolioAssetsLoaded');
+      sessionStorage.removeItem('loadingOverlayHidden');
+      console.log('Portfolio starting to load assets...');
+    }
     
     // Loading overlay management
     const loadingOverlay = document.getElementById('loadingOverlay');

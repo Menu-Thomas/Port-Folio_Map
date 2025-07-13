@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Sensor Sensei - LoRa Extension for Sensor.Community</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #f6eed6;
+      color: #2f2f2f;
+      margin: 0;
+      padding: 0;
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      line-height: 1.6;
+    }
+    header {
+      background-color: #3b3a4f;
+      color: #f6eed6;
+      padding: 1.5rem 0 1rem 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      flex-shrink: 0;
+    }
+    
+    .main-container {
+      flex: 1;
+      overflow-y: auto;
+      padding: 0;
+    }
+    
+    /* Custom scrollbar styling */
+    .main-container::-webkit-scrollbar {
+      width: 12px;
+    }
+    
+    .main-container::-webkit-scrollbar-track {
+      background: #f6eed6;
+      border-radius: 10px;
+    }
+    
+    .main-container::-webkit-scrollbar-thumb {
+      background: #c9b92b;
+      border-radius: 10px;
+      border: 2px solid #f6eed6;
+    }
+    
+    .main-container::-webkit-scrollbar-thumb:hover {
+      background: #b8a625;
+    }
+    header h1 {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      justify-content: center;
+      gap: 0.7rem;
+      font-size: 2rem;
+      font-weight: bold;
+      margin: 0;
+      width: 100%;
+    }
+    
+    .highlight-title {
+      background-color: #e9724c;
+      color: #fff;
+      padding: 0.2em 0.7em;
+      border-radius: 7px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.8rem;
+      font-weight: bold;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+    }
+    
+    header p {
+      margin: 0.8rem 0 0 0;
+      font-size: 1rem;
+      color: #f6eed6;
+      opacity: 0.92;
+      font-weight: 400;
+    }
+    main {
+      max-width: 1000px;
+      margin: 2rem auto;
+      padding: 2rem 1.5rem 1.5rem 1.5rem;
+    }
+    
+    h2 {
+      color: #3b3a4f;
+      margin-top: 1.8rem;
+      margin-bottom: 0.8rem;
+      font-size: 1.25rem;
+    }
+    
+    h3 {
+      color: #3b3a4f;
+      margin-top: 1.5rem;
+      margin-bottom: 0.6rem;
+      font-size: 1.1rem;
+    }
+    
+    .card {
+      background-color: #f6eed6;
+      border-left: 5px solid #c9b92b;
+      margin: 1rem 0;
+      padding: 1rem 1.2rem;
+      box-shadow: 2px 2px 8px rgba(0,0,0,0.08);
+    }
+    ul, ol {
+      padding-left: 1.3rem;
+      margin-top: 0.5rem;
+      margin-bottom: 1.2rem;
+    }
+    
+    li {
+      margin-bottom: 0.5rem;
+    }
+    
+    section {
+      margin-bottom: 2rem;
+    }
+    
+    .highlight {
+      background-color: #f6eed6;
+      border-left: 5px solid #c9b92b;
+      margin: 1rem 0;
+      padding: 1rem 1.2rem;
+      box-shadow: 2px 2px 8px rgba(0,0,0,0.08);
+    }
+    code {
+      background: #eceff1;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: monospace;
+    }
+    footer {
+      background-color: #783a4d;
+      color: white;
+      text-align: center;
+      padding: 1rem 0;
+      font-size: 0.9rem;
+      flex-shrink: 0;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>Projet <span class="highlight-title">Sensor Sensei</span></h1>
+  <p>LoRa-Powered Environmental Data Relay for Sensor.Community</p>
+</header>
+
+<div class="main-container">
+  <main>
+
+  <section>
+    <h2>🌍 Introduction</h2>
+    <div class="card">
+      <p><strong>Sensor Sensei</strong> extends the <a href="https://sensor.community/en/" target="_blank">Sensor.Community</a> project by enabling LoRa communication between sensors and a central WiFi relay node. This makes it ideal for deploying in remote or distributed environments where direct WiFi is unavailable for every sensor node.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>🔧 Technologies Utilisées</h2>
+    <div class="card">
+      <p><strong>ESP32</strong> (LoRa communication), <strong>DHT11 sensor</strong> (temperature & humidity), <strong>LoRa 433MHz</strong> (long-range wireless), and <strong>Sensor.Community API</strong> integration.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>🔧 Fonctionnalités Clés</h2>
+    <ul>
+      <li>Collects <strong>temperature, humidity, and noise levels</strong> from sensors.</li>
+      <li>Uses <strong>LoRa (433 MHz)</strong> for long-range communication between client and server ESP32s.</li>
+      <li><strong>WiFi relay node</strong> receives LoRa packets and forwards them to the <em>sensor.community</em> API using HTTP POST.</li>
+      <li>Health checks via LoRa ensure ongoing connectivity and reliability.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>📦 Méthodologie</h2>
+    <ol>
+      <li>Hardware setup with dual ESP32 configuration</li>
+      <li>LoRa communication protocol development</li>
+      <li>Sensor data collection and processing</li>
+      <li>API integration with Sensor.Community platform</li>
+      <li>Field testing and reliability validation</li>
+    </ol>
+  </section>
+
+  <section>
+    <h2>📡 Architecture Système</h2>
+    <ol>
+      <li><strong>Client Node:</strong>
+        <ul>
+          <li>Reads data from DHT11 and sound sensor</li>
+          <li>Sends JSON data via LoRa if values change or thresholds are exceeded</li>
+          <li>Responds to health check pings from the server</li>
+        </ul>
+      </li>
+      <li><strong>Server Node:</strong>
+        <ul>
+          <li>Receives LoRa packets</li>
+          <li>Extracts sender address and sensor values</li>
+          <li>Authenticates and forwards data to <em>sensor.community</em> via HTTP POST</li>
+        </ul>
+      </li>
+    </ol>
+  </section>
+
+  <section>
+    <h2>🚀 Résultats</h2>
+    <div class="card">
+      <p>Successfully deployed a cost-effective solution for extending environmental monitoring capabilities in remote areas, contributing valuable data to the global Sensor.Community network while maintaining reliable long-range communication.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>🔒 Axes d'Amélioration</h2>
+    <ul>
+      <li>Encryption for LoRa payloads</li>
+      <li>Auto-registration of sensors with the Sensor.Community API</li>
+      <li>Support for PM2.5/PM10 air quality sensors</li>
+      <li>OLED feedback display for client</li>
+    </ul>
+    <div class="highlight">
+      Sensor Sensei offers a robust, low-cost way to extend environmental sensing into areas where WiFi isn't feasible — empowering the Sensor.Community with smarter connectivity.
+    </div>
+  </section>
+
+  </main>
+</div>
+
+<footer>
+  <p>Projet réalisé par Thomas Menu — Open IoT for Smarter Communities 2024</p>
+</footer>
+
+</body>
+</html>

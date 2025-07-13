@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Expérience – Aubert & Duval</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      height: 100vh;
+      background-color: #f6eed6;
+      color: #2f2f2f;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    
+    header {
+      background-color: #3b3a4f;
+      color: #f6eed6;
+      padding: 1.5rem 1rem;
+      text-align: center;
+      flex-shrink: 0;
+    }
+    
+    header h1 {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      font-size: 1.8rem;
+      font-weight: bold;
+      margin: 0;
+      width: 100%;
+    }
+    
+    .highlight {
+      background-color: #e9724c;
+      color: #fff;
+      padding: 0.2em 0.5em;
+      border-radius: 7px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.6rem;
+      font-weight: bold;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+    }
+    
+    header p {
+      margin: 0.8rem 0 0 0;
+      font-size: 1rem;
+      color: #f6eed6;
+      opacity: 0.92;
+      font-weight: 400;
+    }
+    
+    .content-container {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+    
+    .content-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      flex: 1;
+      min-height: 0;
+    }
+    
+    .section {
+      background: white;
+      border-radius: 12px;
+      padding: 1rem;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+    }
+    
+    .section h2 {
+      color: #3b3a4f;
+      margin-bottom: 0.8rem;
+      font-size: 1.1rem;
+      flex-shrink: 0;
+    }
+    
+    .section-content {
+      flex: 1;
+      overflow-y: auto;
+      font-size: 0.9rem;
+      line-height: 1.4;
+    }
+    
+    .card {
+      background-color: #f8f5ec;
+      border-left: 4px solid #c9b92b;
+      margin: 0.5rem 0;
+      padding: 0.8rem;
+      border-radius: 6px;
+    }
+    
+    ul, ol {
+      padding-left: 1rem;
+      margin: 0;
+    }
+    
+    li {
+      margin-bottom: 0.3rem;
+    }
+    
+    footer {
+      background-color: #783a4d;
+      color: white;
+      text-align: center;
+      padding: 0.8rem;
+      font-size: 0.9rem;
+      flex-shrink: 0;
+    }
+    
+    /* Custom scrollbar for content areas */
+    .section-content::-webkit-scrollbar {
+      width: 6px;
+    }
+    
+    .section-content::-webkit-scrollbar-track {
+      background: #f1f1f1;
+      border-radius: 3px;
+    }
+    
+    .section-content::-webkit-scrollbar-thumb {
+      background: #c9b92b;
+      border-radius: 3px;
+    }
+    
+    .section-content::-webkit-scrollbar-thumb:hover {
+      background: #b8a526;
+    }
+    
+    @media (max-width: 768px) {
+      .content-grid {
+        grid-template-columns: 1fr;
+        gap: 0.8rem;
+      }
+      
+      header h1 {
+        font-size: 1.5rem;
+        flex-direction: column;
+        gap: 0.3rem;
+      }
+      
+      .highlight {
+        font-size: 1.4rem;
+      }
+      
+      header p {
+        font-size: 0.9rem;
+      }
+      
+      .section {
+        padding: 0.8rem;
+      }
+      
+      .section h2 {
+        font-size: 1rem;
+      }
+      
+      .section-content {
+        font-size: 0.8rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>Expérience chez <span class="highlight">Aubert & Duval</span></h1>
+  <p>Ingénierie en forge — Simulation, conception, production (5 ans)</p>
+</header>
+
+<div class="content-container">
+  <div class="content-grid">
+    <div class="section">
+      <h2>🏭 À propos de l'entreprise</h2>
+      <div class="section-content">
+        <div class="card">
+          <p><strong>Aubert & Duval</strong>, filiale du groupe Eramet (désormais contrôlée par Airbus, Safran et Tikehau Capital), est un acteur stratégique de la métallurgie, spécialisé dans les pièces forgées et les alliages complexes pour l'aéronautique, la défense, l'énergie et l'industrie.</p>
+          <p>Site de <strong>Pamiers (09)</strong> : 920 collaborateurs, équipements lourds (presses, fours, lignes d'usinage). Unité clé pour la production de pièces critiques à forte valeur ajoutée.</p>
+        </div>
+        
+        <h3 style="color: #3b3a4f; margin-top: 1rem; font-size: 1rem;">🛠 Activités complémentaires</h3>
+        <div class="card">
+          <p>Habillage de pièces pour la forge, analyse de dossiers de conception, gestion post-fabrication, validation fonctionnelle des pièces, création de plans de dissection et macroscopie pour expertise métallurgique.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>🔧 Missions techniques</h2>
+      <div class="section-content">
+        <ul>
+          <li>Simulation de déformation à chaud avec <strong>Forge</strong>, analyse des résultats</li>
+          <li>Conception de <strong>profils de pièces</strong> selon cahier des charges</li>
+          <li>Définition des <strong>processus de fabrication</strong> : sécurité, qualité, coûts, délais, ressources</li>
+          <li>Création de plans d'outillage, rédaction de documents techniques : modèles, P_mod, PPR (FR/EN)</li>
+          <li>Suivi des fabrications types, rédaction de comptes rendus</li>
+          <li>Support technique atelier et coordination avec les outilleurs</li>
+          <li>Respect des normes de sécurité, rédaction de fiches dédiées</li>
+          <li>Communication client régulière en <strong>anglais</strong></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>🚀 Impact & Résultats</h2>
+      <div class="section-content">
+        <ul>
+          <li>Mise en place de process fiables et industrialisables</li>
+          <li>Production de documentation claire, utile aux équipes</li>
+          <li>Participation à la montée en cadence des fabrications critiques</li>
+          <li>Collaboration directe avec les clients internationaux</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>🧠 Compétences développées</h2>
+      <div class="section-content">
+        <ul>
+          <li><strong>Simulation industrielle</strong> : Forge, analyse de flux et contraintes</li>
+          <li><strong>CAO/DAO</strong> et rédaction technique (modèles, consignes, PPR)</li>
+          <li><strong>Suivi de production</strong> et documentation qualité</li>
+          <li><strong>Communication bilingue</strong> (FR/EN), collaboration multi-intervenants</li>
+          <li><strong>Normes sécurité</strong> et pratiques atelier</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <p>Thomas Menu – Ingénieur en simulation et procédés – Aubert & Duval (Pamiers)</p>
+</footer>
+
+</body>
+</html>

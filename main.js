@@ -18,6 +18,9 @@ import * as THREE from 'https://esm.sh/three@0.150.1';
 import { GLTFLoader } from 'https://esm.sh/three@0.150.1/examples/jsm/loaders/GLTFLoader.js';
 import { gsap } from 'https://esm.sh/gsap@3.12.2';
 
+// === GLOBAL STATE VARIABLES ===
+let interactionsDisabled = false; // Global flag to disable all 3D interactions
+
 // === CONFIGURATION CONSTANTS ===
 const CONFIG = {
   SCENE: {
@@ -122,6 +125,10 @@ function startCinematicEntrance() {
       cinematicMode = false;
       document.body.style.cursor = 'default';
       
+      // Re-enable interactions after cinematic completes
+      interactionsDisabled = false;
+      window.interactionsDisabled = false;
+      
       // Update orbital camera angle to current position
       updateCameraAngleFromPosition();
       
@@ -213,6 +220,10 @@ if (shouldUseCinematicStart) {
   
   // Set currentCameraAngle to match the starting position (prevents orbital controls from moving camera)
   currentCameraAngle = startAngle;
+  
+  // Disable all interactions while loading overlay is visible
+  interactionsDisabled = true;
+  window.interactionsDisabled = true;
 } else {
   // Normal position for direct access
   camera.position.set(
@@ -249,6 +260,7 @@ let lookAtTarget = {
   y: 0.3, // Will be set to orbitCenter.y after cinematic or orbital center  
   z: 0 // Will be set to orbitCenter.z after cinematic or orbital center
 };
+window.interactionsDisabled = interactionsDisabled; // Expose to window for access from portfolio.html
 
 // === Error Handling ===
 class ErrorHandler {
@@ -343,6 +355,7 @@ const drawerThemes = {
   'drawer3': 'home', 
   'drawer4': 'home',
   'steering': 'home',
+  'pc': 'home',
   'forge': 'forge'
 };
 
@@ -607,6 +620,47 @@ function updateThemeUnreadBadges() {
   });
 }
 
+// === Theme-based Interaction Helper ===
+function isDrawerClickableAtCurrentLocation(drawerType) {
+  // If we're in orbital mode (no specific hex), only allow 'home' theme drawers
+  if (currentActiveHexType === null) {
+    return drawerThemes[drawerType] === 'home';
+  }
+  
+  // Get the theme of the current active hex
+  const currentTheme = getCurrentHexTheme(currentActiveHexType);
+  
+  // Get the theme required for this drawer
+  const drawerTheme = drawerThemes[drawerType];
+  
+  // Allow interaction if themes match
+  return currentTheme === drawerTheme;
+}
+
+function getCurrentHexTheme(hexType) {
+  // Define which hex types belong to which themes
+  const hexThemes = {
+    'home': 'home',
+    'cv': 'home', 
+    'projects': 'home',
+    'contact': 'home',
+    'bridge': 'home',
+    'champ1': 'home',
+    'champ2': 'home',
+    'forest1': 'home',
+    'forest2': 'home', 
+    'forest3': 'home',
+    'marais': 'home',
+    'marais2': 'home',
+    'desert1': 'home',
+    'desert2': 'home',
+    'plain1': 'home',
+    'forge2': 'forge'
+  };
+  
+  return hexThemes[hexType] || 'home'; // Default to 'home' theme
+}
+
 // === Label Positioning Helper ===
 function positionDrawerLabel(mouseX, mouseY) {
   // Initial position
@@ -667,6 +721,12 @@ window.addEventListener('mousemove', (event) => {
   // Skip interactions during cinematic mode
   if (cinematicMode) return;
   
+  // Skip 3D interactions if loading overlay is visible
+  const loadingOverlay = document.getElementById('loadingOverlay');
+  if (loadingOverlay && !loadingOverlay.classList.contains('hidden')) {
+    return; // Don't process 3D canvas hover if loading overlay is visible
+  }
+  
   // Check if mouse is over the navigation sidebar
   const navSidebar = document.getElementById('zoneNavSidebar');
   if (navSidebar && navSidebar.contains(event.target)) {
@@ -703,8 +763,29 @@ window.addEventListener('mousemove', (event) => {
 
       // Drawer hover logic
       if (drawers.includes(object)) {
+        // Check if this drawer is interactive at current location/theme
+        const isClickable = isDrawerClickableAtCurrentLocation(object.userData.type);
+        
+        // Only show hover effects and labels for clickable drawers
+        if (!isClickable) {
+          // Reset any existing hover state and don't show label
+          if (hoveredDrawer && drawerOriginalPositions.has(hoveredDrawer) && animatedDrawers.includes(hoveredDrawer.userData.type)) {
+            const orig = drawerOriginalPositions.get(hoveredDrawer);
+            gsap.to(hoveredDrawer.position, {
+              x: orig.x,
+              z: orig.z,
+              duration: 0.3,
+              ease: 'power2.out',
+            });
+            hoveredDrawer = null;
+          }
+          drawerLabel.style.display = "none";
+          return; // Don't process hover for non-clickable drawers
+        }
+        
         foundDrawer = object;
-        // === Only animate if in animatedDrawers ===
+        
+        // === Only animate if in animatedDrawers AND clickable ===
         if (animatedDrawers.includes(object.userData.type)) {
           if (hoveredDrawer !== foundDrawer) {
             // Animate previous hovered drawer back
@@ -744,7 +825,8 @@ window.addEventListener('mousemove', (event) => {
           }
           hoveredDrawer = foundDrawer;
         }
-        // Show label with better positioning logic
+        
+        // Show label for clickable drawers only
         const infoFile = drawerInfoFiles[object.userData.type];
         if (infoFile) {
           fetch(infoFile)
@@ -761,13 +843,13 @@ window.addEventListener('mousemove', (event) => {
               drawerLabel.innerHTML = unreadIndicator + html;
               drawerLabel.style.display = "block";
               drawerLabel.style.border = isUnread ? "2px solid #ff4444" : "1px solid #eee";
-              
+              drawerLabel.style.opacity = "1";
 
               // Better positioning logic
               positionDrawerLabel(event.clientX, event.clientY);
               
-              // Mark drawer as read (except forge and steering)
-              if (isUnread && object.userData.type !== 'forge' && object.userData.type !== 'steering') {
+              // Mark drawer as read (except forge - steering can be marked as read)
+              if (isUnread && object.userData.type !== 'forge') {
                 unreadDrawers.delete(object.userData.type);
                 updateThemeUnreadBadges();
               }
@@ -776,6 +858,8 @@ window.addEventListener('mousemove', (event) => {
               console.warn('Failed to load drawer info:', error);
               drawerLabel.innerHTML = '<div>Content unavailable</div>';
               drawerLabel.style.display = "block";
+              drawerLabel.style.border = "1px solid #eee";
+              drawerLabel.style.opacity = "1";
               positionDrawerLabel(event.clientX, event.clientY);
             });
         } else {
@@ -789,12 +873,13 @@ window.addEventListener('mousemove', (event) => {
           
           drawerLabel.innerHTML = message;
           drawerLabel.style.display = "block";
+          drawerLabel.style.border = "1px solid #eee";
+          drawerLabel.style.opacity = "1";
           positionDrawerLabel(event.clientX, event.clientY);
           
-          // Mark drawer as read
+          // Mark drawer as read (except forge - steering can be marked as read)
           if (unreadDrawers.has(object.userData.type) && 
-              object.userData.type !== 'forge' && 
-              object.userData.type !== 'steering') {
+              object.userData.type !== 'forge') {
             unreadDrawers.delete(object.userData.type);
             updateThemeUnreadBadges();
           }
@@ -1035,6 +1120,21 @@ window.addEventListener('wheel', (event) => {
 });
 
 window.addEventListener('click', (event) => {
+  // FIRST: Check global interactions disabled flag
+  if (interactionsDisabled) {
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    return false;
+  }
+  
+  // SECOND: Skip 3D interactions if loading overlay is visible
+  const loadingOverlay = document.getElementById('loadingOverlay');
+  if (loadingOverlay && !loadingOverlay.classList.contains('hidden')) {
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    return false;
+  }
+  
   // Skip interactions during cinematic mode or if currently orbiting
   if (cinematicMode || isOrbiting) return;
   
@@ -1103,8 +1203,20 @@ window.addEventListener('click', (event) => {
     }
     // Animation caméra pour objets spéciaux (ex: pc)
     else if (object.userData.type && clickAnimatedDrawers.includes(object.userData.type)) {
+      // Check if this drawer is clickable at the current location/theme
+      if (!isDrawerClickableAtCurrentLocation(object.userData.type)) {
+        console.log(`Drawer ${object.userData.type} not clickable at current location/theme`);
+        return; // Don't allow interaction if not at correct theme
+      }
+      
       const camTarget = drawerCameraTargets[object.userData.type];
       if (camTarget) {
+        // Mark drawer as read when clicked (except forge)
+        if (unreadDrawers.has(object.userData.type) && object.userData.type !== 'forge') {
+          unreadDrawers.delete(object.userData.type);
+          updateThemeUnreadBadges();
+        }
+        
         // Set flag only if user clicked on steering wheel
         if (object.userData.type === 'steering') {
           steeringWheelClicked = true;
@@ -1139,6 +1251,12 @@ window.addEventListener('click', (event) => {
     }
     // Affiche forge.html si on clique sur l'objet forge
     else if (object.userData.type === 'forge') {
+      // Check if forge is clickable at the current location/theme
+      if (!isDrawerClickableAtCurrentLocation('forge')) {
+        console.log('Forge not clickable at current location/theme');
+        return; // Don't allow interaction if not at correct theme
+      }
+      
       // Mark forge as read
       if (unreadDrawers.has('forge')) {
         unreadDrawers.delete('forge');

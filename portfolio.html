@@ -51,6 +51,7 @@
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       color: #fff;
       transition: opacity 0.8s ease, visibility 0.8s ease;
+      pointer-events: auto; /* Ensure it captures all pointer events when visible */
     }
     
     #loadingOverlay.hidden {
@@ -227,8 +228,8 @@
     <button class="close-btn" id="closeBtn" title="Skip loading">×</button>
     <div class="loading-container">
       <img src="./public/head.png" alt="Thomas Menu" class="profile-image">
-      <h1 class="welcome-text">Portfolio Interactif</h1>
-      <p class="subtitle">Découvrez mon univers créatif en 3D</p>
+      <h1 class="welcome-text">Thomas Menu</h1>
+      <p class="subtitle">Consultant Prototypage, Débug & Optimisation</p>
       
       <div class="feature-tags">
         <div class="feature-tag" style="--delay: 0s">Développement Web</div>
@@ -289,6 +290,11 @@
       
       // Signal to main.js that loading overlay is hidden
       sessionStorage.setItem('loadingOverlayHidden', 'true');
+      
+      // Re-enable 3D interactions (access global variable from main.js)
+      if (typeof window.interactionsDisabled !== 'undefined') {
+        window.interactionsDisabled = false;
+      }
     }
     
     // Close button handler

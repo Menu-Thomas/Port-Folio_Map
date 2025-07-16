@@ -147,6 +147,9 @@ function onAllAssetsLoaded() {
   sessionStorage.setItem('portfolioAssetsLoaded', 'true');
   console.log('Assets loaded, waiting for overlay to be manually dismissed...');
   
+  // Set global flag for guide system
+  window.allAssetsLoaded = true;
+  
   // Wait for loading overlay to be hidden before starting cinematic animation
   function checkAndStartCinematic() {
     const overlayHidden = sessionStorage.getItem('loadingOverlayHidden');
@@ -261,6 +264,11 @@ let lookAtTarget = {
   z: 0 // Will be set to orbitCenter.z after cinematic or orbital center
 };
 window.interactionsDisabled = interactionsDisabled; // Expose to window for access from portfolio.html
+
+// === Expose useful variables for guide system ===
+window.getCurrentActiveHexType = () => currentActiveHexType;
+window.getHoveredDrawer = () => hoveredDrawer;
+window.getUnreadDrawers = () => unreadDrawers;
 
 // === Error Handling ===
 class ErrorHandler {
@@ -925,9 +933,21 @@ window.addEventListener('mousemove', (event) => {
         
         foundDrawer = object;
         
+        // FIXED: For skillFlowers, treat collision box and target drawer as the same object
+        let normalizedDrawer = foundDrawer;
+        let gridIndex = foundDrawer.userData.gridIndex;
+        
+        if (foundDrawer.userData.type && foundDrawer.userData.type.startsWith('skillFlower') && foundDrawer.userData.targetDrawer) {
+          // If this is a collision box, use the target drawer for comparison and get gridIndex from either
+          normalizedDrawer = foundDrawer.userData.targetDrawer;
+          // Use gridIndex from collision box (foundDrawer) as it should be the same as target drawer
+          gridIndex = foundDrawer.userData.gridIndex;
+        }
+        
         // === Only animate if in animatedDrawers AND clickable ===
         if (animatedDrawers.includes(object.userData.type)) {
-          if (hoveredDrawer !== foundDrawer) {
+          // FIXED: Compare using normalized drawer to avoid flickering between collision box and mesh
+          if (hoveredDrawer !== normalizedDrawer) {
             // Animate previous hovered drawer back
             if (hoveredDrawer && drawerOriginalPositions.has(hoveredDrawer.userData.targetDrawer || hoveredDrawer)) {
               const targetDrawer = hoveredDrawer.userData.targetDrawer || hoveredDrawer;
@@ -972,11 +992,11 @@ window.addEventListener('mousemove', (event) => {
                 });
               }
               
-              // Show corresponding language flower when hovering any skillFlower
-              if (foundDrawer.userData.gridIndex !== undefined) {
-                const skillFlowerInfo = getLanguageFlowerInfo(foundDrawer.userData.gridIndex);
-                console.log(`SkillFlower hover detected - Grid Index: ${foundDrawer.userData.gridIndex}, Type: ${foundDrawer.userData.type}, Expected: ${skillFlowerInfo?.displayName}`);
-                showLanguageFlower(foundDrawer.userData.gridIndex);
+              // FIXED: Show corresponding language flower using grid index from any skillFlower component
+              if (gridIndex !== undefined) {
+                const skillFlowerInfo = getLanguageFlowerInfo(gridIndex);
+                console.log(`SkillFlower hover detected - Grid Index: ${gridIndex}, Type: ${foundDrawer.userData.type}, Expected: ${skillFlowerInfo?.displayName}`);
+                showLanguageFlower(gridIndex);
               }
             } else {
               // For regular drawers, use the old movement
@@ -987,13 +1007,13 @@ window.addEventListener('mousemove', (event) => {
                 ease: CONFIG.ANIMATION.HOVER_EASE,
               });
             }
-            hoveredDrawer = foundDrawer;
+            hoveredDrawer = normalizedDrawer; // Store the normalized drawer (target drawer for collision boxes)
           }
         } else {
           // For non-animated drawers, just update hoveredDrawer reference (no animation)
           if (
             hoveredDrawer &&
-            hoveredDrawer !== foundDrawer &&
+            hoveredDrawer !== normalizedDrawer &&
             drawerOriginalPositions.has(hoveredDrawer) &&
             animatedDrawers.includes(hoveredDrawer.userData.type)
           ) {
@@ -1016,7 +1036,7 @@ window.addEventListener('mousemove', (event) => {
               });
             }
           }
-          hoveredDrawer = foundDrawer;
+          hoveredDrawer = normalizedDrawer; // Store the normalized drawer
         }
         
         // Show label for clickable drawers only
@@ -1394,6 +1414,7 @@ function generateSkillFlowersGrid() {
               
               skillFlowers.push(skillFlower);
               drawers.push(collisionBox);
+              drawers.push(skillFlower); // FIXED: Add skillFlower mesh to drawers array too
               drawerOriginalPositions.set(skillFlower, skillFlower.position.clone());
               
               console.log(`SkillFlower ${index + 1} loaded at world position:`, skillFlower.position, `-> Maps to: ${expectedFlower?.displayName}`);

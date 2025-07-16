@@ -1,0 +1,286 @@
+/**
+ * Portfolio Guide Styles
+ * Responsive CSS for the interactive guide system
+ */
+
+/* Guide Character Animations */
+@keyframes guideFloat {
+  0%, 100% { 
+    transform: translateY(0px) scale(1); 
+  }
+  50% { 
+    transform: translateY(-10px) scale(1.05); 
+  }
+}
+
+@keyframes guidePulse {
+  0%, 100% { 
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3); 
+  }
+  50% { 
+    box-shadow: 0 4px 20px rgba(255, 212, 163, 0.6); 
+  }
+}
+
+@keyframes highlightPulse {
+  0%, 100% { 
+    box-shadow: 0 0 20px rgba(255, 212, 163, 0.4);
+    border-color: #ffd4a3;
+  }
+  50% { 
+    box-shadow: 0 0 30px rgba(255, 212, 163, 0.6);
+    border-color: #ff9a56;
+  }
+}
+
+/* Guide Elements Base Styles */
+#guide-character {
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
+  width: 60px;
+  height: 60px;
+  background: linear-gradient(135deg, #ffd4a3, #ff9a56);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  cursor: pointer;
+  z-index: 10000;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  transition: all 0.3s ease;
+  animation: guideFloat 3s ease-in-out infinite;
+  border: 3px solid rgba(255, 212, 163, 0.3);
+  user-select: none;
+}
+
+#guide-character:hover {
+  transform: scale(1.1);
+}
+
+#guide-character.guide-active {
+  animation: guidePulse 2s ease-in-out infinite;
+}
+
+#guide-bubble {
+  position: fixed;
+  max-width: 320px;
+  min-width: 280px;
+  background: rgba(20, 20, 30, 0.95);
+  color: #ffffff;
+  border: 2px solid rgba(255, 212, 163, 0.3);
+  border-radius: 16px;
+  padding: 20px;
+  z-index: 10001;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(10px);
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  opacity: 0;
+  transform: scale(0.8);
+  transition: all 0.3s ease;
+  pointer-events: auto;
+}
+
+#guide-bubble .bubble-arrow {
+  position: absolute;
+  width: 0;
+  height: 0;
+  border-left: 10px solid transparent;
+  border-right: 10px solid transparent;
+  border-top: 10px solid rgba(255, 212, 163, 0.3);
+  bottom: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+#guide-skip-button {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 2px solid rgba(255, 212, 163, 0.3);
+  color: #ffffff;
+  padding: 10px 20px;
+  border-radius: 25px;
+  cursor: pointer;
+  z-index: 10002;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-size: 14px;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+  user-select: none;
+}
+
+#guide-skip-button:hover {
+  background: rgba(255, 212, 163, 0.2);
+  transform: scale(1.05);
+}
+
+#guide-toggle {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  width: 45px;
+  height: 45px;
+  background: rgba(255, 212, 163, 0.1);
+  border: 2px solid rgba(255, 212, 163, 0.3);
+  color: #ffd4a3;
+  border-radius: 50%;
+  cursor: pointer;
+  z-index: 10000;
+  font-size: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+  user-select: none;
+}
+
+#guide-toggle:hover {
+  background: rgba(255, 212, 163, 0.2);
+  transform: scale(1.1);
+}
+
+#guide-highlight-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.7);
+  z-index: 9999;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+}
+
+/* Guide Button Styles */
+#guide-next-btn {
+  background: #ffd4a3;
+  color: #000;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 20px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+#guide-next-btn:hover {
+  background: #ff9a56;
+  transform: scale(1.05);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  #guide-character {
+    bottom: 20px;
+    right: 20px;
+    width: 50px;
+    height: 50px;
+    font-size: 24px;
+  }
+  
+  #guide-bubble {
+    max-width: 280px;
+    min-width: 240px;
+    padding: 16px;
+    font-size: 14px;
+  }
+  
+  #guide-bubble .bubble-title {
+    font-size: 16px !important;
+  }
+  
+  #guide-skip-button {
+    top: 15px;
+    right: 15px;
+    padding: 8px 16px;
+    font-size: 12px;
+  }
+  
+  #guide-toggle {
+    top: 15px;
+    right: 15px;
+    width: 40px;
+    height: 40px;
+    font-size: 18px;
+  }
+}
+
+@media (max-width: 480px) {
+  #guide-bubble {
+    left: 10px !important;
+    right: 10px !important;
+    top: auto !important;
+    bottom: 90px !important;
+    max-width: none !important;
+    min-width: none !important;
+    width: calc(100vw - 20px) !important;
+    transform: none !important;
+  }
+  
+  #guide-character {
+    bottom: 15px;
+    right: 15px;
+    width: 45px;
+    height: 45px;
+    font-size: 20px;
+  }
+}
+
+/* High DPI Display Support */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+  #guide-character {
+    border-width: 2px;
+  }
+  
+  #guide-bubble {
+    border-width: 1px;
+  }
+}
+
+/* Dark Mode Compatibility */
+@media (prefers-color-scheme: dark) {
+  #guide-bubble {
+    background: rgba(10, 10, 15, 0.95);
+    border-color: rgba(255, 212, 163, 0.4);
+  }
+}
+
+/* Reduced Motion Support */
+@media (prefers-reduced-motion: reduce) {
+  #guide-character {
+    animation: none;
+  }
+  
+  #guide-character.guide-active {
+    animation: none;
+  }
+  
+  .highlight-pulse {
+    animation: none !important;
+  }
+}
+
+/* Focus Accessibility */
+#guide-skip-button:focus,
+#guide-toggle:focus,
+#guide-next-btn:focus {
+  outline: 2px solid #ffd4a3;
+  outline-offset: 2px;
+}
+
+/* Print Styles */
+@media print {
+  #guide-character,
+  #guide-bubble,
+  #guide-skip-button,
+  #guide-toggle,
+  #guide-highlight-overlay {
+    display: none !important;
+  }
+}

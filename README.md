@@ -11,6 +11,7 @@ Fluid Animations: Animated ocean waves, hover effects on hexagons, and smooth tr
 Responsive Interface: Adapts to all screen sizes with a dynamic sidebar
 Immersive 3D Design: Complete 3D environment with dynamic lighting and 360° background
 Themed Content Areas: Each zone (forest, desert, swamp, fields) symbolically represents an aspect of my professional journey
+Interactive Guide System: Clippy-inspired tutorial guide for new users to learn the interface
 Map Sections
 Home: General introduction and overview
 CV: Professional background and skills

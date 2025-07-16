@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guide System Demo</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            color: white;
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        .demo-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+        .demo-section {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            border: 1px solid rgba(255, 212, 163, 0.3);
+        }
+        .demo-button {
+            background: linear-gradient(135deg, #ffd4a3, #ff9a56);
+            color: #000;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: bold;
+            margin: 10px;
+            transition: all 0.3s ease;
+        }
+        .demo-button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 15px rgba(255, 212, 163, 0.4);
+        }
+        .fake-sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 220px;
+            height: 100vh;
+            background: rgba(20, 20, 30, 0.97);
+            border-right: 2px solid rgba(255, 212, 163, 0.3);
+            padding: 20px;
+            z-index: 500;
+        }
+        .fake-object {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #ffd4a3, #ff9a56);
+            border-radius: 10px;
+            margin: 20px;
+            display: inline-block;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .fake-object:hover {
+            transform: scale(1.1) translateY(-5px);
+            box-shadow: 0 8px 20px rgba(255, 212, 163, 0.5);
+        }
+        h1, h2 {
+            color: #ffd4a3;
+        }
+    </style>
+    <link rel="stylesheet" href="./guide.css">
+</head>
+<body>
+    <!-- Fake sidebar to simulate portfolio interface -->
+    <div class="fake-sidebar">
+        <h3 style="color: #ffd4a3; margin-bottom: 20px;">Zones à explorer</h3>
+        <div style="color: #fff; padding: 10px; margin: 5px 0; border-radius: 5px; background: rgba(255,255,255,0.1);">🏠 Accueil</div>
+        <div style="color: #fff; padding: 10px; margin: 5px 0; border-radius: 5px; background: rgba(255,255,255,0.1);">📄 CV</div>
+        <div style="color: #fff; padding: 10px; margin: 5px 0; border-radius: 5px; background: rgba(255,255,255,0.1);">🚀 Projets</div>
+        <div style="color: #fff; padding: 10px; margin: 5px 0; border-radius: 5px; background: rgba(255,255,255,0.1);">📧 Contact</div>
+        <div style="color: #fff; padding: 10px; margin: 5px 0; border-radius: 5px; background: rgba(255,255,255,0.1);">🔨 Conception</div>
+    </div>
+
+    <div class="demo-container" style="margin-left: 240px;">
+        <h1>🧙‍♂️ Portfolio Guide System Demo</h1>
+        
+        <div class="demo-section">
+            <h2>Test du système de guide</h2>
+            <p>Cette démo simule l'environnement du portfolio pour tester le système de guide interactif.</p>
+            
+            <div>
+                <button class="demo-button" onclick="window.portfolioGuide?.start()">
+                    🚀 Démarrer le Guide
+                </button>
+                <button class="demo-button" onclick="window.portfolioGuide?.restart()">
+                    🔄 Redémarrer (Reset)
+                </button>
+                <button class="demo-button" onclick="window.portfolioGuide?.end()">
+                    ⏹️ Arrêter le Guide
+                </button>
+            </div>
+        </div>
+
+        <div class="demo-section">
+            <h2>Objets interactifs simulés</h2>
+            <p>Ces objets simulent les éléments 3D du portfolio :</p>
+            
+            <div class="fake-object" title="Objet interactif 1"></div>
+            <div class="fake-object" title="Objet interactif 2"></div>
+            <div class="fake-object" title="Objet interactif 3"></div>
+            
+            <div id="drawerLabel" style="display: none;"></div>
+        </div>
+
+        <div class="demo-section">
+            <h2>État du guide</h2>
+            <div id="guide-status">
+                <p>Status: <span id="status-text">Non démarré</span></p>
+                <p>Guide terminé précédemment: <span id="completion-status">Non</span></p>
+            </div>
+        </div>
+
+        <div class="demo-section">
+            <h2>Instructions</h2>
+            <ol>
+                <li>Cliquez sur "Démarrer le Guide" pour voir le système en action</li>
+                <li>Suivez les instructions du guide virtuel</li>
+                <li>Testez les interactions avec les objets simulés</li>
+                <li>Utilisez "Redémarrer" pour tester plusieurs fois</li>
+            </ol>
+        </div>
+    </div>
+
+    <script type="module" src="./guide.js"></script>
+    <script>
+        // Simulate portfolio environment
+        window.allAssetsLoaded = true;
+        window.interactionsDisabled = false;
+        
+        // Update status display
+        function updateStatus() {
+            const statusText = document.getElementById('status-text');
+            const completionStatus = document.getElementById('completion-status');
+            
+            if (window.portfolioGuide) {
+                statusText.textContent = window.portfolioGuide.isActive() ? 'Actif' : 'Inactif';
+            }
+            
+            const hasCompleted = localStorage.getItem('portfolio_guide_completed') === 'true';
+            completionStatus.textContent = hasCompleted ? 'Oui' : 'Non';
+        }
+        
+        // Update status every second
+        setInterval(updateStatus, 1000);
+        updateStatus();
+        
+        // Simulate drawer hover for guide testing
+        const fakeObjects = document.querySelectorAll('.fake-object');
+        const drawerLabel = document.getElementById('drawerLabel');
+        
+        fakeObjects.forEach((obj, index) => {
+            obj.addEventListener('mouseenter', (e) => {
+                if (drawerLabel) {
+                    drawerLabel.innerHTML = `
+                        <div style="background: rgba(0,0,0,0.8); color: white; padding: 10px; border-radius: 8px; position: fixed; z-index: 1000; pointer-events: none;">
+                            <strong>Objet Interactif ${index + 1}</strong><br>
+                            Ceci est un objet simulé pour le guide
+                        </div>
+                    `;
+                    drawerLabel.style.display = 'block';
+                    drawerLabel.style.left = (e.clientX + 10) + 'px';
+                    drawerLabel.style.top = (e.clientY - 50) + 'px';
+                }
+            });
+            
+            obj.addEventListener('mouseleave', () => {
+                if (drawerLabel) {
+                    drawerLabel.style.display = 'none';
+                }
+            });
+            
+            obj.addEventListener('click', () => {
+                // Simulate modal opening
+                const modal = document.createElement('div');
+                modal.style.cssText = `
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    width: 100vw;
+                    height: 100vh;
+                    background: rgba(0,0,0,0.8);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    z-index: 9999;
+                `;
+                modal.innerHTML = `
+                    <div style="background: white; color: black; padding: 30px; border-radius: 10px; max-width: 400px;">
+                        <h3>Modal Simulée</h3>
+                        <p>Ceci simule l'ouverture d'une modal de projet.</p>
+                        <button onclick="this.parentElement.parentElement.remove()" style="background: #ffd4a3; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer;">Fermer</button>
+                    </div>
+                `;
+                document.body.appendChild(modal);
+            });
+        });
+    </script>
+</body>
+</html>

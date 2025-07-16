@@ -9,6 +9,7 @@
   <link rel="icon" type="image/png" href="./public/head.png">
   <link rel="shortcut icon" type="image/png" href="./public/head.png">
   <link rel="apple-touch-icon" href="./public/head.png">
+  <link rel="stylesheet" href="./guide.css">
   <meta name="theme-color" content="#111111">
   <style>
     html, body {
@@ -253,6 +254,7 @@
   <canvas id="bgCanvas"></canvas>
   <div id="app"></div>
   <script type="module" src="./main.js"></script>
+  <script type="module" src="./guide.js"></script>
   <script>
     // Check if returning from contact page
     const returningFromContact = sessionStorage.getItem('returningFromContact');
@@ -311,6 +313,9 @@
       
       // Signal to main.js that loading overlay is hidden
       sessionStorage.setItem('loadingOverlayHidden', 'true');
+      
+      // Dispatch custom event for guide system
+      document.dispatchEvent(new CustomEvent('loadingOverlayHidden'));
       
       // Re-enable 3D interactions (access global variable from main.js)
       if (typeof window.interactionsDisabled !== 'undefined') {

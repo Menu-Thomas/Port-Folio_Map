@@ -428,6 +428,8 @@ const languageFlowerData = [
 
 const activeLanguageFlowers = new Set(); // Track which language flowers are currently visible
 const languageFlowerRotations = new Map(); // Track rotation animations
+const stayUpSkillFlowers = new Set(); // Track which skill flowers should stay up permanently
+const stayUpLanguageFlowers = new Set(); // Track which language flowers should stay up permanently
 
 // Helper function to get language flower info by grid index
 function getLanguageFlowerInfo(gridIndex) {
@@ -873,13 +875,16 @@ window.addEventListener('mousemove', (event) => {
       const orig = drawerOriginalPositions.get(hoveredDrawer);
       // Check if it's a skillFlower
       if (hoveredDrawer.userData.type.startsWith('skillFlower')) {
-        gsap.to(hoveredDrawer.position, {
-          x: orig.x,
-          y: orig.y, // Return to original Y position
-          z: orig.z,
-          duration: 0.3,
-          ease: 'power2.out',
-        });
+        // Only animate back down if this skillFlower is not marked to stay up
+        if (hoveredDrawer.userData.gridIndex === undefined || !stayUpSkillFlowers.has(hoveredDrawer.userData.gridIndex)) {
+          gsap.to(hoveredDrawer.position, {
+            x: orig.x,
+            y: orig.y, // Return to original Y position
+            z: orig.z,
+            duration: 0.3,
+            ease: 'power2.out',
+          });
+        }
       } else {
         gsap.to(hoveredDrawer.position, {
           x: orig.x,
@@ -955,13 +960,16 @@ window.addEventListener('mousemove', (event) => {
               
               // Check if previous drawer was a skillFlower
               if (hoveredDrawer.userData.type.startsWith('skillFlower')) {
-                gsap.to(targetDrawer.position, {
-                  x: orig.x,
-                  y: orig.y, // Return to original Y position
-                  z: orig.z,
-                  duration: CONFIG.ANIMATION.DRAWER_HOVER_DURATION,
-                  ease: CONFIG.ANIMATION.HOVER_EASE,
-                });
+                // Only animate back down if this skillFlower is not marked to stay up
+                if (hoveredDrawer.userData.gridIndex === undefined || !stayUpSkillFlowers.has(hoveredDrawer.userData.gridIndex)) {
+                  gsap.to(targetDrawer.position, {
+                    x: orig.x,
+                    y: orig.y, // Return to original Y position
+                    z: orig.z,
+                    duration: CONFIG.ANIMATION.DRAWER_HOVER_DURATION,
+                    ease: CONFIG.ANIMATION.HOVER_EASE,
+                  });
+                }
                 
                 // Hide language flower when stopping hover on any skillFlower
                 if (hoveredDrawer.userData.type.startsWith('skillFlower') && hoveredDrawer.userData.gridIndex !== undefined) {
@@ -983,13 +991,31 @@ window.addEventListener('mousemove', (event) => {
               const orig = drawerOriginalPositions.get(targetDrawer);
               
               if (orig) {
-                gsap.to(targetDrawer.position, {
-                  x: orig.x,
-                  y: orig.y + 0.15, // Move up by 0.15 units
-                  z: orig.z,
-                  duration: CONFIG.ANIMATION.DRAWER_HOVER_DURATION,
-                  ease: CONFIG.ANIMATION.HOVER_EASE,
-                });
+                // Mark this skillFlower to stay up permanently
+                if (gridIndex !== undefined) {
+                  stayUpSkillFlowers.add(gridIndex);
+                  
+                  // Only animate up if it's not already in the up position
+                  // Check if the flower is not already elevated (y position higher than original)
+                  if (targetDrawer.position.y <= orig.y + 0.05) { // Small tolerance for floating point precision
+                    gsap.to(targetDrawer.position, {
+                      x: orig.x,
+                      y: orig.y + 0.15, // Move up by 0.15 units
+                      z: orig.z,
+                      duration: CONFIG.ANIMATION.DRAWER_HOVER_DURATION,
+                      ease: CONFIG.ANIMATION.HOVER_EASE,
+                    });
+                  }
+                } else {
+                  // Fallback if gridIndex is undefined
+                  gsap.to(targetDrawer.position, {
+                    x: orig.x,
+                    y: orig.y + 0.15, // Move up by 0.15 units
+                    z: orig.z,
+                    duration: CONFIG.ANIMATION.DRAWER_HOVER_DURATION,
+                    ease: CONFIG.ANIMATION.HOVER_EASE,
+                  });
+                }
               }
               
               // FIXED: Show corresponding language flower using grid index from any skillFlower component
@@ -1020,13 +1046,16 @@ window.addEventListener('mousemove', (event) => {
             const orig = drawerOriginalPositions.get(hoveredDrawer);
             // Check if previous drawer was a skillFlower
             if (hoveredDrawer.userData.type.startsWith('skillFlower')) {
-              gsap.to(hoveredDrawer.position, {
-                x: orig.x,
-                y: orig.y, // Return to original Y position
-                z: orig.z,
-                duration: 0.3,
-                ease: 'power2.out',
-              });
+              // Only animate back down if this skillFlower is not marked to stay up
+              if (hoveredDrawer.userData.gridIndex === undefined || !stayUpSkillFlowers.has(hoveredDrawer.userData.gridIndex)) {
+                gsap.to(hoveredDrawer.position, {
+                  x: orig.x,
+                  y: orig.y, // Return to original Y position
+                  z: orig.z,
+                  duration: 0.3,
+                  ease: 'power2.out',
+                });
+              }
             } else {
               gsap.to(hoveredDrawer.position, {
                 x: orig.x,
@@ -1133,13 +1162,16 @@ window.addEventListener('mousemove', (event) => {
           
           // Check if it's a skillFlower
           if (hoveredDrawer.userData.type.startsWith('skillFlower')) {
-            gsap.to(targetDrawer.position, {
-              x: orig.x,
-              y: orig.y, // Return to original Y position
-              z: orig.z,
-              duration: 0.3,
-              ease: 'power2.out',
-            });
+            // Only animate back down if this skillFlower is not marked to stay up
+            if (hoveredDrawer.userData.gridIndex === undefined || !stayUpSkillFlowers.has(hoveredDrawer.userData.gridIndex)) {
+              gsap.to(targetDrawer.position, {
+                x: orig.x,
+                y: orig.y, // Return to original Y position
+                z: orig.z,
+                duration: 0.3,
+                ease: 'power2.out',
+              });
+            }
             
             // Hide language flower when stopping hover on any skillFlower
             if (hoveredDrawer.userData.type.startsWith('skillFlower') && hoveredDrawer.userData.gridIndex !== undefined) {
@@ -1171,13 +1203,16 @@ window.addEventListener('mousemove', (event) => {
       const orig = drawerOriginalPositions.get(hoveredDrawer);
       // Check if it's a skillFlower
       if (hoveredDrawer.userData.type.startsWith('skillFlower')) {
-        gsap.to(hoveredDrawer.position, {
-          x: orig.x,
-          y: orig.y, // Return to original Y position
-          z: orig.z,
-          duration: 0.3,
-          ease: 'power2.out',
-        });
+        // Only animate back down if this skillFlower is not marked to stay up
+        if (hoveredDrawer.userData.gridIndex === undefined || !stayUpSkillFlowers.has(hoveredDrawer.userData.gridIndex)) {
+          gsap.to(hoveredDrawer.position, {
+            x: orig.x,
+            y: orig.y, // Return to original Y position
+            z: orig.z,
+            duration: 0.3,
+            ease: 'power2.out',
+          });
+        }
         
         // Hide language flower when stopping hover on any skillFlower
         if (hoveredDrawer.userData.type.startsWith('skillFlower') && hoveredDrawer.userData.gridIndex !== undefined) {
@@ -1508,6 +1543,7 @@ function showLanguageFlower(gridIndex) {
   }
   
   activeLanguageFlowers.add(gridIndex);
+  stayUpLanguageFlowers.add(gridIndex); // Mark this language flower to stay up permanently
   languageFlower.visible = true;
   
   // Log what we're showing
@@ -1545,6 +1581,12 @@ function hideLanguageFlower(gridIndex) {
   const flowerInfo = getLanguageFlowerInfo(gridIndex);
   
   if (!languageFlower || !activeLanguageFlowers.has(gridIndex)) return;
+  
+  // Don't hide if marked to stay up permanently
+  if (stayUpLanguageFlowers.has(gridIndex)) {
+    console.log(`Language flower ${flowerInfo?.displayName || 'Unknown'} at grid ${gridIndex} marked to stay up - not hiding`);
+    return;
+  }
   
   console.log(`Hiding language flower: ${flowerInfo?.displayName || 'Unknown'} (${flowerInfo?.name || 'unknown'}) at grid position ${gridIndex}`);
   

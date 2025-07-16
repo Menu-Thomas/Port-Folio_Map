@@ -341,10 +341,98 @@ let sensorSenseiModalClosed = false; // Track if user has manually closed the se
 let sensorSenseiModalOpened = false; // Track if the sensorSensei modal was ever opened
 
 // === Drawer Management ===
-const drawerModels = ['drawer1', 'drawer2', 'drawer3', 'drawer4', 'steering', 'pc', 'forge', 'mail-box', 'trashTruck', 'convoyeur', 'sensorSensei', 'skillFlower1', 'skillFlower2', 'skillFlower3', 'skillFlower4', 'skillFlower5', 'skillFlower6', 'skillFlower7', 'skillFlower8', 'skillFlower9'];
+const drawerModels = ['drawer1', 'drawer2', 'drawer3', 'drawer4', 'steering', 'pc', 'forge', 'mail-box', 'trashTruck', 'convoyeur', 'sensorSensei'];
 const drawers = [];
 const drawerOriginalPositions = new Map();
-const unreadDrawers = new Set(['drawer1', 'drawer2', 'drawer3', 'drawer4', 'steering', 'forge', 'mail-box', 'trashTruck', 'convoyeur', 'sensorSensei', 'skillFlower1', 'skillFlower2', 'skillFlower3', 'skillFlower4', 'skillFlower5', 'skillFlower6', 'skillFlower7', 'skillFlower8', 'skillFlower9']);
+const unreadDrawers = new Set(['drawer1', 'drawer2', 'drawer3', 'drawer4', 'steering', 'forge', 'mail-box', 'trashTruck', 'convoyeur', 'sensorSensei', 'skillFlower']);
+
+// === Skill Flowers and Language Flowers Management ===
+const skillFlowers = []; // Array to store the 9 skillFlowers
+const languageFlowers = []; // Array to store the 9 language flowers
+
+// FIXED flower configuration based on actual user testing
+// Mapping based on grid positions: (-1,1), (0,1), (1,1), (-1,0), (0,0), (1,0), (-1,-1), (0,-1), (1,-1)
+const languageFlowerData = [
+  { 
+    name: 'unity', 
+    model: 'unityFlower.glb',
+    displayName: 'Unity Engine',
+    category: 'Game Development',
+    gridPosition: 'position-0'
+  },        
+  { 
+    name: 'unreal', 
+    model: 'UnrealFlower.glb',
+    displayName: 'Unreal Engine',
+    category: 'Game Development', 
+    gridPosition: 'position-1'
+  },      
+  { 
+    name: 'cpp', 
+    model: 'c++Flower.glb',
+    displayName: 'C++',
+    category: 'Programming Language',
+    gridPosition: 'position-2'
+  },            
+  { 
+    name: 'csharp', 
+    model: 'CFlower.glb',
+    displayName: 'C#',
+    category: 'Programming Language',
+    gridPosition: 'position-3'
+  },           
+  { 
+    name: 'python', 
+    model: 'pythonFlower.glb',
+    displayName: 'Python',
+    category: 'Programming Language',
+    gridPosition: 'position-4'
+  },      
+  { 
+    name: 'java', 
+    model: 'javaFlower.glb',
+    displayName: 'Java',
+    category: 'Programming Language',
+    gridPosition: 'position-5'
+  },          
+  { 
+    name: 'git', 
+    model: 'gitFlower.glb',
+    displayName: 'Git',
+    category: 'Version Control',
+    gridPosition: 'position-6'
+  },            
+  { 
+    name: 'arduino', 
+    model: 'arduinoFlower.glb',
+    displayName: 'Arduino',
+    category: 'Hardware Development',
+    gridPosition: 'position-7'
+  },    
+  { 
+    name: 'meta', 
+    model: 'MetaFlower.glb',
+    displayName: 'Meta Quest SDK',
+    category: 'VR/AR Development',
+    gridPosition: 'position-8'
+  }           
+];
+
+const activeLanguageFlowers = new Set(); // Track which language flowers are currently visible
+const languageFlowerRotations = new Map(); // Track rotation animations
+
+// Helper function to get language flower info by grid index
+function getLanguageFlowerInfo(gridIndex) {
+  if (gridIndex >= 0 && gridIndex < languageFlowerData.length) {
+    return languageFlowerData[gridIndex];
+  }
+  return null;
+}
+
+// Helper function to get language flower info by name
+function getLanguageFlowerByName(name) {
+  return languageFlowerData.find(flower => flower.name === name);
+}
 
 // === Drawer Configuration ===
 const animatedDrawers = ['drawer1', 'drawer2', 'drawer3', 'drawer4', 'skillFlower1', 'skillFlower2', 'skillFlower3', 'skillFlower4', 'skillFlower5', 'skillFlower6', 'skillFlower7', 'skillFlower8', 'skillFlower9']; // Drawers that animate on hover
@@ -369,15 +457,7 @@ const drawerThemes = {
   'trashTruck': 'home',
   'convoyeur': 'home',
   'sensorSensei': 'projects',
-  'skillFlower1': 'cv',
-  'skillFlower2': 'cv',
-  'skillFlower3': 'cv',
-  'skillFlower4': 'cv',
-  'skillFlower5': 'cv',
-  'skillFlower6': 'cv',
-  'skillFlower7': 'cv',
-  'skillFlower8': 'cv',
-  'skillFlower9': 'cv'
+  'skillFlower': 'cv' // All skillFlowers belong to CV theme
 };
 
 // Camera target positions for click-animated drawers
@@ -468,9 +548,9 @@ const hexMap = [
   { q: 2, r: 2, type: 'contact', cameraPos: { x: 5.2, y: 0.8, z: 4.5 } },
   { q: 1, r: 2, type: 'bridge', cameraPos: { x: -1.5, y: 0.5, z: 0.4 } },
   { q: -2, r: 0, type: 'plain1' },
-  { q: -1, r: 2, type: 'plain1' },
+  //{ q: -1, r: 2, type: 'plain1' },
   { q: 0, r: 2, type: 'plain1' },
-  { q: -1, r: 1, type: 'plain1' },
+  //{ q: -1, r: 1, type: 'plain1' },
   { q: -2, r: -1, type: 'plain1' },
   { q: 0, r: -1, type: 'champ1', cameraPos: { x: -0.7, y: 0.7, z: -0.9 } },
   { q: -1, r: 0, type: 'champ2', cameraPos: { x: -1.5, y: 0.4, z: 0.4 } },
@@ -626,7 +706,14 @@ function hexToWorld(q, r, size = 1) {
 function getUnreadCountForTheme(themeId) {
   let count = 0;
   unreadDrawers.forEach(drawer => {
-    if (drawerThemes[drawer] === themeId) {
+    let drawerTheme = drawerThemes[drawer];
+    
+    // Handle skillFlowers - they all belong to CV theme
+    if (drawer.startsWith('skillFlower')) {
+      drawerTheme = 'cv';
+    }
+    
+    if (drawerTheme === themeId) {
       count++;
     }
   });
@@ -653,6 +740,7 @@ function updateThemeUnreadBadges() {
 function isDrawerClickableAtCurrentLocation(drawerType) {
   // If we're in orbital mode (no specific hex), only allow 'home' theme drawers
   if (currentActiveHexType === null) {
+    console.log(`Drawer ${drawerType}: currentActiveHexType is null, allowing only home theme`);
     return drawerThemes[drawerType] === 'home';
   }
   
@@ -660,7 +748,19 @@ function isDrawerClickableAtCurrentLocation(drawerType) {
   const currentTheme = getCurrentHexTheme(currentActiveHexType);
   
   // Get the theme required for this drawer
-  const drawerTheme = drawerThemes[drawerType];
+  let drawerTheme = drawerThemes[drawerType];
+  
+  // Handle skillFlowers - they all belong to CV theme
+  if (drawerType.startsWith('skillFlower')) {
+    drawerTheme = 'cv';
+  }
+  
+  console.log(`Drawer ${drawerType}: currentActiveHexType="${currentActiveHexType}", currentTheme="${currentTheme}", drawerTheme="${drawerTheme}"`);
+  
+  // Special debug for skillFlowers
+  if (drawerType.startsWith('skillFlower')) {
+    console.log(`SkillFlower debug: ${drawerType} - currentActiveHexType="${currentActiveHexType}", currentTheme="${currentTheme}", drawerTheme="${drawerTheme}", match: ${currentTheme === drawerTheme}`);
+  }
   
   // Allow interaction if themes match
   return currentTheme === drawerTheme;
@@ -814,8 +914,8 @@ window.addEventListener('mousemove', (event) => {
             gsap.to(hoveredDrawer.position, {
               x: orig.x,
               z: orig.z,
-              duration: 0.3,
-              ease: 'power2.out',
+              duration: CONFIG.ANIMATION.DRAWER_HOVER_DURATION,
+              ease: CONFIG.ANIMATION.HOVER_EASE,
             });
             hoveredDrawer = null;
           }
@@ -829,17 +929,24 @@ window.addEventListener('mousemove', (event) => {
         if (animatedDrawers.includes(object.userData.type)) {
           if (hoveredDrawer !== foundDrawer) {
             // Animate previous hovered drawer back
-            if (hoveredDrawer && drawerOriginalPositions.has(hoveredDrawer)) {
-              const orig = drawerOriginalPositions.get(hoveredDrawer);
+            if (hoveredDrawer && drawerOriginalPositions.has(hoveredDrawer.userData.targetDrawer || hoveredDrawer)) {
+              const targetDrawer = hoveredDrawer.userData.targetDrawer || hoveredDrawer;
+              const orig = drawerOriginalPositions.get(targetDrawer);
+              
               // Check if previous drawer was a skillFlower
               if (hoveredDrawer.userData.type.startsWith('skillFlower')) {
-                gsap.to(hoveredDrawer.position, {
+                gsap.to(targetDrawer.position, {
                   x: orig.x,
                   y: orig.y, // Return to original Y position
                   z: orig.z,
                   duration: CONFIG.ANIMATION.DRAWER_HOVER_DURATION,
                   ease: CONFIG.ANIMATION.HOVER_EASE,
                 });
+                
+                // Hide language flower when stopping hover on any skillFlower
+                if (hoveredDrawer.userData.type.startsWith('skillFlower') && hoveredDrawer.userData.gridIndex !== undefined) {
+                  hideLanguageFlower(hoveredDrawer.userData.gridIndex);
+                }
               } else {
                 gsap.to(hoveredDrawer.position, {
                   x: orig.x,
@@ -851,15 +958,26 @@ window.addEventListener('mousemove', (event) => {
             }
             // Animate new hovered drawer
             if (foundDrawer.userData.type.startsWith('skillFlower')) {
-              // For skillFlowers, move up on Y axis
-              const orig = drawerOriginalPositions.get(foundDrawer);
-              gsap.to(foundDrawer.position, {
-                x: orig.x,
-                y: orig.y + 0.15, // Move up by 0.15 units (increased from 0.05)
-                z: orig.z,
-                duration: CONFIG.ANIMATION.DRAWER_HOVER_DURATION,
-                ease: CONFIG.ANIMATION.HOVER_EASE,
-              });
+              // Handle collision boxes by animating the target drawer
+              const targetDrawer = foundDrawer.userData.targetDrawer || foundDrawer;
+              const orig = drawerOriginalPositions.get(targetDrawer);
+              
+              if (orig) {
+                gsap.to(targetDrawer.position, {
+                  x: orig.x,
+                  y: orig.y + 0.15, // Move up by 0.15 units
+                  z: orig.z,
+                  duration: CONFIG.ANIMATION.DRAWER_HOVER_DURATION,
+                  ease: CONFIG.ANIMATION.HOVER_EASE,
+                });
+              }
+              
+              // Show corresponding language flower when hovering any skillFlower
+              if (foundDrawer.userData.gridIndex !== undefined) {
+                const skillFlowerInfo = getLanguageFlowerInfo(foundDrawer.userData.gridIndex);
+                console.log(`SkillFlower hover detected - Grid Index: ${foundDrawer.userData.gridIndex}, Type: ${foundDrawer.userData.type}, Expected: ${skillFlowerInfo?.displayName}`);
+                showLanguageFlower(foundDrawer.userData.gridIndex);
+              }
             } else {
               // For regular drawers, use the old movement
               gsap.to(foundDrawer.position, {
@@ -951,23 +1069,23 @@ window.addEventListener('mousemove', (event) => {
           } else if (object.userData.type === 'sensorSensei') {
             message = `<div>LoRa-powered environmental data relay</div>`;
           } else if (object.userData.type === 'skillFlower1') {
-            message = `<div><strong>JavaScript & TypeScript</strong><br/>Advanced front-end and back-end development with modern frameworks</div>`;
+            message = `<div><strong>Unity Game Engine</strong><br/>3D game development and interactive experiences</div>`;
           } else if (object.userData.type === 'skillFlower2') {
-            message = `<div><strong>Cloud Architecture (AWS/Azure)</strong><br/>Design and implement scalable cloud solutions and migrations</div>`;
+            message = `<div><strong>Unreal Engine</strong><br/>Advanced real-time 3D creation and visualization</div>`;
           } else if (object.userData.type === 'skillFlower3') {
-            message = `<div><strong>Data Analytics & Business Intelligence</strong><br/>Transform data into actionable insights with modern BI tools</div>`;
+            message = `<div><strong>C++ Programming</strong><br/>High-performance system and game development</div>`;
           } else if (object.userData.type === 'skillFlower4') {
-            message = `<div><strong>DevOps & CI/CD</strong><br/>Automate deployments and streamline development workflows</div>`;
+            message = `<div><strong>C# Development</strong><br/>Enterprise applications and Unity scripting</div>`;
           } else if (object.userData.type === 'skillFlower5') {
-            message = `<div><strong>Cybersecurity & Compliance</strong><br/>Implement security frameworks and ensure regulatory compliance</div>`;
+            message = `<div><strong>Python Programming</strong><br/>Data science, automation, and backend development</div>`;
           } else if (object.userData.type === 'skillFlower6') {
-            message = `<div><strong>Project Management (Agile/Scrum)</strong><br/>Lead cross-functional teams and deliver projects on time</div>`;
+            message = `<div><strong>Java Development</strong><br/>Enterprise applications and cross-platform solutions</div>`;
           } else if (object.userData.type === 'skillFlower7') {
-            message = `<div><strong>Enterprise Integration</strong><br/>Connect systems and optimize business processes</div>`;
+            message = `<div><strong>Git Version Control</strong><br/>Source code management and collaborative development</div>`;
           } else if (object.userData.type === 'skillFlower8') {
-            message = `<div><strong>AI/ML Solutions</strong><br/>Implement intelligent automation and predictive analytics</div>`;
+            message = `<div><strong>Arduino & IoT</strong><br/>Embedded systems and Internet of Things development</div>`;
           } else if (object.userData.type === 'skillFlower9') {
-            message = `<div><strong>Digital Transformation</strong><br/>Lead organizational change and modernization initiatives</div>`;
+            message = `<div><strong>Meta & VR Development</strong><br/>Virtual reality and metaverse applications</div>`;
           }
           
           drawerLabel.innerHTML = message;
@@ -987,21 +1105,28 @@ window.addEventListener('mousemove', (event) => {
         // Not hovering a drawer, animate previous hovered drawer back
         if (
           hoveredDrawer &&
-          drawerOriginalPositions.has(hoveredDrawer) &&
+          drawerOriginalPositions.has(hoveredDrawer.userData.targetDrawer || hoveredDrawer) &&
           animatedDrawers.includes(hoveredDrawer.userData.type)
         ) {
-          const orig = drawerOriginalPositions.get(hoveredDrawer);
+          const targetDrawer = hoveredDrawer.userData.targetDrawer || hoveredDrawer;
+          const orig = drawerOriginalPositions.get(targetDrawer);
+          
           // Check if it's a skillFlower
           if (hoveredDrawer.userData.type.startsWith('skillFlower')) {
-            gsap.to(hoveredDrawer.position, {
+            gsap.to(targetDrawer.position, {
               x: orig.x,
               y: orig.y, // Return to original Y position
               z: orig.z,
               duration: 0.3,
               ease: 'power2.out',
             });
+            
+            // Hide language flower when stopping hover on any skillFlower
+            if (hoveredDrawer.userData.type.startsWith('skillFlower') && hoveredDrawer.userData.gridIndex !== undefined) {
+              hideLanguageFlower(hoveredDrawer.userData.gridIndex);
+            }
           } else {
-            gsap.to(hoveredDrawer.position, {
+            gsap.to(targetDrawer.position, {
               x: orig.x,
               z: orig.z,
               duration: 0.3,
@@ -1033,6 +1158,11 @@ window.addEventListener('mousemove', (event) => {
           duration: 0.3,
           ease: 'power2.out',
         });
+        
+        // Hide language flower when stopping hover on any skillFlower
+        if (hoveredDrawer.userData.type.startsWith('skillFlower') && hoveredDrawer.userData.gridIndex !== undefined) {
+          hideLanguageFlower(hoveredDrawer.userData.gridIndex);
+        }
       } else {
         gsap.to(hoveredDrawer.position, {
           x: orig.x,
@@ -1162,6 +1292,295 @@ ErrorHandler.handleAsyncError(
   'Environment texture loading'
 );
 
+// === Skill Flowers Grid Generation ===
+function generateSkillFlowersGrid() {
+  const cvHex = hexMap.find(hex => hex.type === 'cv');
+  if (!cvHex) {
+    console.error('CV hex not found');
+    return;
+  }
+  
+  const cvWorldPos = hexToWorld(cvHex.q, cvHex.r);
+  const gridSpacing = { x: 0.2, z: 0.27 }; // Grid dimensions reduced by half
+  const collisionBoxYOffset = -0.1; // Configurable Y offset for collision boxes (negative = lower)
+  
+  // 3x3 grid positions (center at 0,0 relative to CV hex)
+  // NOTE: The coordinate system is relative to the camera's viewing angle
+  // From the user's perspective when looking at the CV hex:
+  // - Negative Z is "forward" (top row)
+  // - Positive Z is "backward" (bottom row)  
+  // - Negative X is "left" 
+  // - Positive X is "right"
+  const gridPositions = [
+    { x: -gridSpacing.x, z: -gridSpacing.z }, // Index 0: Top-left -> Unity
+    { x: 0, z: -gridSpacing.z },              // Index 1: Top-center -> Unreal
+    { x: gridSpacing.x, z: -gridSpacing.z },  // Index 2: Top-right -> C++
+    { x: -gridSpacing.x, z: 0 },              // Index 3: Middle-left -> C#
+    { x: 0, z: 0 },                           // Index 4: Middle-center -> Python
+    { x: gridSpacing.x, z: 0 },               // Index 5: Middle-right -> Java
+    { x: -gridSpacing.x, z: gridSpacing.z },  // Index 6: Bottom-left -> Git
+    { x: 0, z: gridSpacing.z },               // Index 7: Bottom-center -> Arduino
+    { x: gridSpacing.x, z: gridSpacing.z }    // Index 8: Bottom-right -> Meta
+  ];
+  
+  console.log('=== SkillFlower Grid Debug ===');
+  console.log('CV hex world position:', cvWorldPos);
+  console.log('Grid spacing:', gridSpacing);
+  
+  // Load skillFlower model and create 9 instances
+  gridPositions.forEach((gridPos, index) => {
+    const loader = new GLTFLoader();
+    incrementTotalAssets(); // Register for loading tracking
+    
+    // Calculate final world position
+    const finalWorldPos = {
+      x: cvWorldPos.x + gridPos.x,
+      y: 0,
+      z: cvWorldPos.z + gridPos.z
+    };
+    
+    const expectedFlower = languageFlowerData[index];
+    console.log(`SkillFlower ${index}: Grid(${gridPos.x.toFixed(2)}, ${gridPos.z.toFixed(2)}) -> World(${finalWorldPos.x.toFixed(2)}, ${finalWorldPos.z.toFixed(2)}) -> ${expectedFlower?.displayName} (${expectedFlower?.name})`);
+    
+    // Additional debug: Show which position this represents in user view
+    let viewPosition = 'unknown';
+    if (gridPos.z < 0) viewPosition = 'top';
+    else if (gridPos.z > 0) viewPosition = 'bottom';
+    else viewPosition = 'middle';
+    
+    if (gridPos.x < 0) viewPosition += '-left';
+    else if (gridPos.x > 0) viewPosition += '-right';
+    else viewPosition += '-center';
+    
+    console.log(`  -> Visual position: ${viewPosition} (should show ${expectedFlower?.displayName})`);
+    
+    ErrorHandler.handleAsyncError(
+      new Promise((resolve, reject) => {
+        loader.load(
+          `./public/models/skillFlower.glb`, // Use same skillFlower.glb model for all 9
+          (gltf) => {
+            try {
+              processGLBMaterials(gltf);
+              const skillFlower = gltf.scene;
+              
+              // Position at grid location relative to CV hex
+              skillFlower.position.set(
+                finalWorldPos.x,
+                finalWorldPos.y,
+                finalWorldPos.z
+              );
+              
+              skillFlower.scale.set(1, 1, 1);
+              skillFlower.userData.type = `skillFlower${index + 1}`;
+              skillFlower.userData.gridIndex = index;
+              
+              // Create collision box for enhanced mouse detection
+              const collisionGeometry = new THREE.BoxGeometry(0.05, 0.2, 0.05);
+              const collisionMaterial = new THREE.MeshBasicMaterial({ 
+                visible: false,
+                transparent: true,
+                opacity: 0 
+              });
+              const collisionBox = new THREE.Mesh(collisionGeometry, collisionMaterial);
+              
+              collisionBox.position.copy(skillFlower.position);
+              collisionBox.position.y += collisionBoxYOffset; // Apply configurable Y offset
+              collisionBox.userData.type = `skillFlower${index + 1}`;
+              collisionBox.userData.targetDrawer = skillFlower;
+              collisionBox.userData.gridIndex = index;
+              
+              scene.add(skillFlower);
+              scene.add(collisionBox);
+              
+              skillFlowers.push(skillFlower);
+              drawers.push(collisionBox);
+              drawerOriginalPositions.set(skillFlower, skillFlower.position.clone());
+              
+              console.log(`SkillFlower ${index + 1} loaded at world position:`, skillFlower.position, `-> Maps to: ${expectedFlower?.displayName}`);
+              markAssetLoaded();
+              resolve(skillFlower);
+            } catch (error) {
+              reject(error);
+            }
+          },
+          undefined,
+          reject
+        );
+      }),
+      `SkillFlower ${index + 1} loading`
+    );
+  });
+}
+
+// === Language Flowers Management ===
+function loadLanguageFlowers() {
+  console.log('Loading language flowers with enhanced mapping...');
+  
+  // Pre-initialize the array with the correct size to ensure proper indexing
+  languageFlowers.length = languageFlowerData.length;
+  
+  languageFlowerData.forEach((flowerData, index) => {
+    const loader = new GLTFLoader();
+    incrementTotalAssets(); // Register for loading tracking
+    
+    ErrorHandler.handleAsyncError(
+      new Promise((resolve, reject) => {
+        loader.load(
+          `./public/models/${flowerData.model}`,
+          (gltf) => {
+            try {
+              processGLBMaterials(gltf);
+              const languageFlower = gltf.scene;
+              
+              // FIXED: Start hidden below ground at origin (will be positioned correctly when shown)
+              languageFlower.position.set(0, -2, 0);
+              languageFlower.scale.set(1, 1, 1);
+              languageFlower.visible = false;
+              
+              // Enhanced userData with complete flower information
+              languageFlower.userData = {
+                type: flowerData.name,
+                displayName: flowerData.displayName,
+                category: flowerData.category,
+                gridPosition: flowerData.gridPosition,
+                gridIndex: index
+              };
+              
+              scene.add(languageFlower);
+              // FIXED: Place language flower at the correct array index instead of pushing
+              languageFlowers[index] = languageFlower;
+              
+              console.log(`Language flower loaded - Index: ${index}, Name: ${flowerData.name}, Display: ${flowerData.displayName}, Position: ${flowerData.gridPosition}`);
+              markAssetLoaded();
+              resolve(languageFlower);
+            } catch (error) {
+              reject(error);
+            }
+          },
+          undefined,
+          reject
+        );
+      }),
+      `Language flower ${flowerData.displayName} (${flowerData.name}) loading`
+    );
+  });
+  
+  // Log the complete mapping for verification
+  console.log('Language Flower Grid Mapping:');
+  languageFlowerData.forEach((flower, index) => {
+    console.log(`Grid ${index} (${flower.gridPosition}): ${flower.displayName} (${flower.name}) - ${flower.category}`);
+  });
+}
+
+function showLanguageFlower(gridIndex) {
+  const languageFlower = languageFlowers[gridIndex];
+  const skillFlower = skillFlowers[gridIndex];
+  const flowerInfo = getLanguageFlowerInfo(gridIndex);
+  
+  if (!languageFlower || !skillFlower || activeLanguageFlowers.has(gridIndex)) {
+    console.warn(`Cannot show language flower at index ${gridIndex}:`, {
+      hasLanguageFlower: !!languageFlower,
+      hasSkillFlower: !!skillFlower,
+      alreadyActive: activeLanguageFlowers.has(gridIndex)
+    });
+    return;
+  }
+  
+  activeLanguageFlowers.add(gridIndex);
+  languageFlower.visible = true;
+  
+  // Log what we're showing
+  console.log(`Showing language flower: ${flowerInfo?.displayName || 'Unknown'} (${flowerInfo?.name || 'unknown'}) at grid position ${gridIndex} (${flowerInfo?.gridPosition || 'unknown'})`);
+  
+  // FIXED: Position directly above the corresponding skillFlower using exact coordinates
+  const targetX = skillFlower.position.x;
+  const targetY = skillFlower.position.y + 0.42; // Height above skillFlower
+  const targetZ = skillFlower.position.z;
+  
+  // Set the language flower to the exact X,Z position of the skillFlower, but below ground
+  languageFlower.position.set(targetX, targetY - 0.5, targetZ);
+  
+  // Animate rising to the target position
+  gsap.to(languageFlower.position, {
+    y: targetY,
+    duration: 0.4,
+    ease: 'back.out(1.4)'
+  });
+  
+  // Start rotation animation
+  const rotationAnim = gsap.to(languageFlower.rotation, {
+    y: "+=6.283", // Full rotation (2π radians)
+    duration: 2,
+    ease: "none",
+    repeat: -1
+  });
+  
+  languageFlowerRotations.set(gridIndex, rotationAnim);
+}
+
+function hideLanguageFlower(gridIndex) {
+  const languageFlower = languageFlowers[gridIndex];
+  const skillFlower = skillFlowers[gridIndex];
+  const flowerInfo = getLanguageFlowerInfo(gridIndex);
+  
+  if (!languageFlower || !activeLanguageFlowers.has(gridIndex)) return;
+  
+  console.log(`Hiding language flower: ${flowerInfo?.displayName || 'Unknown'} (${flowerInfo?.name || 'unknown'}) at grid position ${gridIndex}`);
+  
+  activeLanguageFlowers.delete(gridIndex);
+  
+  // Stop rotation
+  const rotationAnim = languageFlowerRotations.get(gridIndex);
+  if (rotationAnim) {
+    rotationAnim.kill();
+    languageFlowerRotations.delete(gridIndex);
+  }
+  
+  // FIXED: Animate sinking down to below ground at the same X,Z coordinates
+  const targetX = skillFlower ? skillFlower.position.x : languageFlower.position.x;
+  const targetZ = skillFlower ? skillFlower.position.z : languageFlower.position.z;
+  
+  gsap.to(languageFlower.position, {
+    y: languageFlower.position.y - 0.5,
+    duration: 0.3,
+    ease: 'power2.in',
+    onComplete: () => {
+      languageFlower.visible = false;
+      languageFlower.rotation.y = 0; // Reset rotation
+      // FIXED: Reset position to below ground at the correct X,Z coordinates for next show
+      languageFlower.position.set(targetX, -2, targetZ);
+    }
+  });
+}
+
+// Initialize skill flowers and language flowers
+generateSkillFlowersGrid();
+loadLanguageFlowers();
+
+// === Legacy Unity Flower Functions (keeping for compatibility) ===
+function showUnityFlower() {
+  // Legacy function - Unity flower is now at index 0 (top-left position)
+  const unityFlower = getLanguageFlowerByName('unity');
+  if (unityFlower) {
+    const unityIndex = languageFlowerData.findIndex(flower => flower.name === 'unity');
+    console.log(`Legacy showUnityFlower called - showing Unity at index ${unityIndex}`);
+    showLanguageFlower(unityIndex);
+  } else {
+    console.warn('Unity flower not found in language flower data');
+  }
+}
+
+function hideUnityFlower() {
+  // Legacy function - Unity flower is now at index 0 (top-left position)
+  const unityIndex = languageFlowerData.findIndex(flower => flower.name === 'unity');
+  if (unityIndex !== -1) {
+    console.log(`Legacy hideUnityFlower called - hiding Unity at index ${unityIndex}`);
+    hideLanguageFlower(unityIndex);
+  } else {
+    console.warn('Unity flower not found in language flower data');
+  }
+}
+
 // === Animation Loop ===
 const clock = new THREE.Clock();
 function animate() {
@@ -1179,6 +1598,19 @@ function animate() {
       oceanGeometry.attributes.position.needsUpdate = true;
       oceanGeometry.computeVertexNormals();
     }
+
+    // Update language flowers positions to stay above their corresponding skillFlowers
+    activeLanguageFlowers.forEach(gridIndex => {
+      const languageFlower = languageFlowers[gridIndex];
+      const skillFlower = skillFlowers[gridIndex];
+      
+      if (languageFlower && skillFlower && languageFlower.visible) {
+        // Keep language flower positioned above its skillFlower
+        languageFlower.position.x = skillFlower.position.x;
+        languageFlower.position.z = skillFlower.position.z;
+        // Y position is handled by animations, don't override here
+      }
+    });
 
     // Update performance monitor
     performanceMonitor.update();
@@ -1859,13 +2291,6 @@ drawerModels.forEach((model) => {
               drawer.position.set(x, 0, z);
             }
             
-            // Position skillFlowers at CV hex location (q: 1, r: 0)
-            if (model.startsWith('skillFlower')) {
-              const { x, z } = hexToWorld(1, 0); // CV hex position
-              // Initialize all skillFlowers at the center of CV hex (0,0,0 relative to hex)
-              drawer.position.set(x, 0, z);
-            }
-            
             scene.add(drawer);
             drawers.push(drawer);
             drawerOriginalPositions.set(drawer, drawer.position.clone());
@@ -1890,6 +2315,9 @@ drawerModels.forEach((model) => {
     `Drawer loading - ${model}`
   );
 });
+
+// === Legacy Unity Flower Model Loading (now handled by language flowers system) ===
+// This section has been replaced by the new language flowers system
 
 // === Navigation Sidebar for Zones ===
 const mainZones = [
@@ -1944,6 +2372,7 @@ function navigateToZone(zoneType) {
   if (!hex) return;
 
   currentActiveHexType = zoneType;
+  console.log(`Navigation started: currentActiveHexType set to "${currentActiveHexType}"`);
   
   // Find the hex data for camera position
   const hexData = hexMap.find(h => h.type === zoneType);
@@ -1968,6 +2397,9 @@ function navigateToZone(zoneType) {
     onUpdate: () => {
       camera.lookAt(lookAtTarget.x, lookAtTarget.y, lookAtTarget.z);
     },
+    onComplete: () => {
+      console.log(`Navigation completed: currentActiveHexType is "${currentActiveHexType}"`);
+    }
   });
 
   // Update active nav item
@@ -1976,38 +2408,51 @@ function navigateToZone(zoneType) {
 
 // Function to update nav active state
 function updateNavActiveState(activeType) {
-  const navItems = navList.querySelectorAll('li');
-  navItems.forEach(item => {
-    // Find the zone that matches this nav item
-    const zone = mainZones.find(z => z.label === item.textContent);
-    if (zone && activeType && zone.type === activeType) {
-      item.style.background = '#0a5a3d';
-      item.style.color = '#fff';
-      item.style.fontWeight = 'bold';
-    } else {
-      item.style.background = 'none';
-      item.style.color = '#fff';
-      item.style.fontWeight = 'normal';
+  try {
+    const navList = document.getElementById('zoneNavList');
+    if (!navList) {
+      console.log('Navigation element not found, skipping nav update');
+      return;
     }
-  });
+    
+    const navItems = navList.querySelectorAll('li');
+    navItems.forEach(item => {
+      // Find the zone that matches this nav item
+      if (typeof mainZones !== 'undefined') {
+        const zone = mainZones.find(z => z.label === item.textContent);
+        if (zone && activeType && zone.type === activeType) {
+          item.style.background = '#0a5a3d';
+          item.style.color = '#fff';
+          item.style.fontWeight = 'bold';
+        } else {
+          item.style.background = 'none';
+          item.style.color = '#fff';
+          item.style.fontWeight = 'normal';
+        }
+      }
+    });
+  } catch (error) {
+    console.log('Navigation update failed:', error.message);
+  }
 }
 
 // Group zones by theme for better organization
-const groupedZones = {
-  'home': mainZones.filter(zone => zone.themeId === 'home'),
-  'forge': mainZones.filter(zone => zone.themeId === 'forge'),
-  'contact': mainZones.filter(zone => zone.themeId === 'contact'),
-  'projects': mainZones.filter(zone => zone.themeId === 'projects'),
-  'cv': mainZones.filter(zone => zone.themeId === 'cv')
-};
+if (typeof mainZones !== 'undefined') {
+  const groupedZones = {
+    'home': mainZones.filter(zone => zone.themeId === 'home'),
+    'forge': mainZones.filter(zone => zone.themeId === 'forge'),
+    'contact': mainZones.filter(zone => zone.themeId === 'contact'),
+    'projects': mainZones.filter(zone => zone.themeId === 'projects'),
+    'cv': mainZones.filter(zone => zone.themeId === 'cv')
+  };
 
-// Create navigation items grouped by theme
-Object.entries(groupedZones).forEach(([themeId, zones]) => {
+  // Create navigation items grouped by theme
+  Object.entries(groupedZones).forEach(([themeId, zones]) => {
 
-  
-  // Create zone items for this theme
-  zones.forEach(zone => {
-    const li = document.createElement('li');
+    
+    // Create zone items for this theme
+    zones.forEach(zone => {
+      const li = document.createElement('li');
     li.style.cursor = 'pointer';
     li.style.margin = '0 0 8px 0';
     li.style.padding = '8px 24px';
@@ -2095,6 +2540,8 @@ Object.entries(groupedZones).forEach(([themeId, zones]) => {
     navList.appendChild(li);
   });
 });
+
+}
 
 // Initialize theme unread badges
 updateThemeUnreadBadges();
@@ -2201,4 +2648,3 @@ function updateCameraAngleFromPosition() {
   const deltaZ = camera.position.z - orbitCenter.z;
   currentCameraAngle = Math.atan2(deltaZ, deltaX);
 }
-

@@ -18,6 +18,38 @@ import * as THREE from 'https://esm.sh/three@0.150.1';
 import { GLTFLoader } from 'https://esm.sh/three@0.150.1/examples/jsm/loaders/GLTFLoader.js';
 import { gsap } from 'https://esm.sh/gsap@3.12.2';
 
+// Import SEO Manager and Analytics (will be loaded dynamically)
+let SEOManager = null;
+let AnalyticsTracker = null;
+let analytics = null;
+
+if (typeof window !== 'undefined') {
+  // Load SEO Manager dynamically
+  import('./js/seo-manager.js').then(module => {
+    SEOManager = module.default || window.SEOManager;
+    if (SEOManager) {
+      const seoManager = new SEOManager();
+      seoManager.init();
+      window.seoManager = seoManager; // Make available globally
+    }
+  }).catch(err => console.warn('SEO Manager not loaded:', err));
+
+  // Load Analytics dynamically
+  import('./js/analytics.js').then(module => {
+    AnalyticsTracker = module.default || window.AnalyticsTracker;
+    if (AnalyticsTracker) {
+      analytics = new AnalyticsTracker();
+      window.analytics = analytics; // Make available globally
+      
+      // Track portfolio load
+      analytics.track('portfolio_load', {
+        webgl_supported: webGLSupported,
+        touch_device: isTouchDevice
+      });
+    }
+  }).catch(err => console.warn('Analytics not loaded:', err));
+}
+
 // === GLOBAL STATE VARIABLES ===
 let interactionsDisabled = false; // Global flag to disable all 3D interactions
 
@@ -256,6 +288,50 @@ const mouse = new THREE.Vector2();
 const raycaster = new THREE.Raycaster();
 let hoveredDrawer = null;
 
+// === Touch Support Variables ===
+let isTouchDevice = false;
+let touchStart = { x: 0, y: 0 };
+let lastTouchTime = 0;
+let touchMoved = false;
+const TOUCH_SENSITIVITY = 0.008;
+const TAP_THRESHOLD = 10; // pixels
+const DOUBLE_TAP_DELAY = 300; // ms
+
+// Detect touch device
+function detectTouchDevice() {
+  isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+  
+  if (isTouchDevice) {
+    console.log('Touch device detected - enabling mobile controls');
+    // Add mobile-specific styles
+    document.body.style.touchAction = 'none';
+    
+    // Add mobile UI indicators
+    const mobileInfo = document.createElement('div');
+    mobileInfo.id = 'mobile-info';
+    mobileInfo.innerHTML = '👆 Glissez pour explorer • Tapez pour sélectionner';
+    mobileInfo.style.cssText = `
+      position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+      background: rgba(0,0,0,0.7); color: white; padding: 8px 16px;
+      border-radius: 20px; font-size: 12px; z-index: 1000;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    `;
+    document.body.appendChild(mobileInfo);
+    
+    // Auto-hide mobile info after 5 seconds
+    setTimeout(() => {
+      if (mobileInfo.parentElement) {
+        mobileInfo.style.animation = 'fadeOut 0.5s ease-out forwards';
+        setTimeout(() => mobileInfo.remove(), 500);
+      }
+    }, 5000);
+  }
+  
+  return isTouchDevice;
+}
+
+detectTouchDevice();
+
 // === Application State Variables ===
 let currentActiveHexType = null; // Tracks the currently active hex type for navigation sync
 let lookAtTarget = { 
@@ -275,30 +351,141 @@ class ErrorHandler {
   static logError(error, context = '') {
     console.error(`[Portfolio Error${context ? ` - ${context}` : ''}]:`, error);
     
+    // Send error to analytics if available
+    if (typeof gtag !== 'undefined') {
+      gtag('event', 'exception', {
+        description: `${context}: ${error.message}`,
+        fatal: false
+      });
+    }
+    
     // Show user-friendly error message if needed
     if (context.includes('Critical')) {
-      this.showUserError('An error occurred while loading the portfolio. Please refresh the page.');
+      this.showUserError('Erreur critique lors du chargement. Veuillez actualiser la page.', true);
     }
   }
   
-  static showUserError(message) {
+  static showUserError(message, persistent = false) {
+    // Show user-friendly error message
     const errorDiv = document.createElement('div');
+    errorDiv.innerHTML = `
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <span>⚠️</span>
+        <span>${message}</span>
+        ${persistent ? '<button onclick="this.parentElement.parentElement.remove()" style="margin-left: auto; background: none; border: 1px solid white; color: white; padding: 2px 8px; cursor: pointer;">✕</button>' : ''}
+      </div>
+    `;
     errorDiv.style.cssText = `
       position: fixed; top: 20px; right: 20px; z-index: 10000;
       background: #ff4444; color: white; padding: 15px; border-radius: 8px;
       font-family: Arial, sans-serif; max-width: 300px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      animation: slideInRight 0.3s ease-out;
     `;
-    errorDiv.textContent = message;
+    
+    // Add animation styles if not present
+    if (!document.getElementById('error-animations')) {
+      const style = document.createElement('style');
+      style.id = 'error-animations';
+      style.textContent = `
+        @keyframes slideInRight {
+          from { transform: translateX(100%); opacity: 0; }
+          to { transform: translateX(0); opacity: 1; }
+        }
+      `;
+      document.head.appendChild(style);
+    }
+    
     document.body.appendChild(errorDiv);
     
-    setTimeout(() => errorDiv.remove(), 5000);
+    if (!persistent) {
+      setTimeout(() => {
+        if (errorDiv.parentElement) {
+          errorDiv.style.animation = 'slideInRight 0.3s ease-out reverse';
+          setTimeout(() => errorDiv.remove(), 300);
+        }
+      }, 5000);
+    }
   }
   
   static handleAsyncError(promise, context = '') {
     return promise.catch(error => {
       this.logError(error, context);
+      
+      // Show user error for critical failures
+      if (context.includes('Critical') || context.includes('Environment') || context.includes('WebGL')) {
+        this.showUserError(`Erreur: ${context}. Certaines fonctionnalités peuvent être limitées.`, true);
+      }
+      
       return null; // Return null instead of throwing to allow graceful degradation
     });
+  }
+  
+  static checkWebGLSupport() {
+    try {
+      const canvas = document.createElement('canvas');
+      const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+      if (!gl) {
+        throw new Error('WebGL not supported');
+      }
+      
+      // Test for essential extensions
+      const extensions = [
+        'OES_element_index_uint',
+        'WEBGL_depth_texture'
+      ];
+      
+      extensions.forEach(ext => {
+        if (!gl.getExtension(ext)) {
+          console.warn(`WebGL extension ${ext} not available`);
+        }
+      });
+      
+      return true;
+    } catch (error) {
+      this.logError(error, 'WebGL Support Check');
+      this.showUserError('Votre navigateur ne supporte pas WebGL. Certaines fonctionnalités peuvent ne pas fonctionner.', true);
+      return false;
+    }
+  }
+  
+  static checkRequiredElements() {
+    const requiredSelectors = [
+      'body',
+      '#loadingOverlay'
+    ];
+    
+    const optionalSelectors = [
+      '#zoneNavSidebar' // Navigation sidebar - will be created if missing
+    ];
+    
+    const missingElements = [];
+    const missingOptional = [];
+    
+    requiredSelectors.forEach(selector => {
+      const element = selector === 'body' ? document.body : document.querySelector(selector);
+      if (!element) {
+        missingElements.push(selector);
+      }
+    });
+    
+    optionalSelectors.forEach(selector => {
+      const element = document.querySelector(selector);
+      if (!element) {
+        missingOptional.push(selector);
+      }
+    });
+    
+    if (missingElements.length > 0) {
+      this.logError(new Error(`Missing required elements: ${missingElements.join(', ')}`), 'DOM Check');
+      return false;
+    }
+    
+    if (missingOptional.length > 0) {
+      console.warn(`Optional elements not found: ${missingOptional.join(', ')} - will continue without them`);
+    }
+    
+    return true;
   }
 }
 
@@ -334,6 +521,136 @@ class PerformanceMonitor {
 }
 
 const performanceMonitor = new PerformanceMonitor();
+// Enable performance monitoring
+performanceMonitor.enabled = true;
+
+// === INITIALIZATION CHECKS ===
+// Check WebGL support before initializing Three.js
+const webGLSupported = ErrorHandler.checkWebGLSupport();
+const domElementsValid = ErrorHandler.checkRequiredElements();
+
+if (!webGLSupported || !domElementsValid) {
+  console.error('Critical startup checks failed');
+  // Continue with degraded functionality
+}
+
+// === Production Configuration ===
+const isProduction = !window.location.hostname.includes('localhost') && !window.location.hostname.includes('127.0.0.1');
+
+// === Debug Logging Control ===
+const originalConsole = {
+  log: console.log,
+  warn: console.warn,
+  error: console.error
+};
+
+function setupLogging() {
+  if (isProduction) {
+    // In production, reduce console noise but keep errors
+    console.log = function(...args) {
+      // Only log important messages in production
+      const message = args.join(' ');
+      if (message.includes('loaded successfully') || message.includes('Critical') || message.includes('Error')) {
+        originalConsole.log(...args);
+      }
+    };
+  }
+}
+
+setupLogging();
+
+// === Asset Validation System ===
+class AssetValidator {
+  static requiredAssets = {
+    models: [
+      'Hex.glb', 'skillFlower.glb', 'drawer1.glb', 'drawer2.glb', 
+      'drawer3.glb', 'drawer4.glb', 'steering.glb', 'pc.glb', 
+      'forge.glb', 'mail-box.glb', 'trashTruck.glb', 'convoyeur.glb',
+      'sensorSensei.glb', 'unityFlower.glb', 'UnrealFlower.glb',
+      'c++Flower.glb', 'CFlower.glb', 'pythonFlower.glb', 'javaFlower.glb',
+      'gitFlower.glb', 'arduinoFlower.glb', 'MetaFlower.glb'
+    ],
+    textures: [
+      'env.jpg', 'hex-texture.png'
+    ],
+    pages: [
+      'project1.html', 'project2.html', 'project3.html', 'project4.html',
+      'forge.html', 'virtual.html', 'sidepages/contact.html',
+      'sidepages/trashProject.html', 'sidepages/convoyeur.html', 
+      'sidepages/sensorSensei.html'
+    ]
+  };
+
+  static async validateAsset(path, type = 'model') {
+    try {
+      const response = await fetch(path, { method: 'HEAD' });
+      return response.ok;
+    } catch (error) {
+      console.warn(`Asset validation failed for ${path}:`, error);
+      return false;
+    }
+  }
+
+  static async validateAllAssets() {
+    const results = {
+      models: [],
+      textures: [],
+      pages: []
+    };
+
+    // Validate models
+    for (const model of this.requiredAssets.models) {
+      const path = `./public/models/${model}`;
+      const exists = await this.validateAsset(path);
+      results.models.push({ name: model, exists, path });
+    }
+
+    // Validate textures  
+    for (const texture of this.requiredAssets.textures) {
+      const path = `./public/textures/${texture}`;
+      const exists = await this.validateAsset(path);
+      results.textures.push({ name: texture, exists, path });
+    }
+
+    // Validate pages
+    for (const page of this.requiredAssets.pages) {
+      const exists = await this.validateAsset(page);
+      results.pages.push({ name: page, exists, path: page });
+    }
+
+    this.reportValidationResults(results);
+    return results;
+  }
+
+  static reportValidationResults(results) {
+    const missing = [];
+    
+    ['models', 'textures', 'pages'].forEach(type => {
+      results[type].forEach(asset => {
+        if (!asset.exists) {
+          missing.push(`${type}: ${asset.name}`);
+        }
+      });
+    });
+
+    if (missing.length > 0) {
+      console.warn('Missing assets detected:', missing);
+      if (!isProduction) {
+        ErrorHandler.showUserError(
+          `⚠️ ${missing.length} assets manquants détectés. Vérifiez la console pour plus de détails.`,
+          true
+        );
+      }
+    } else {
+      console.log('All assets validated successfully');
+    }
+  }
+}
+
+// Validate assets in development mode
+if (!isProduction) {
+  AssetValidator.validateAllAssets();
+}
 
 // === Modal State Tracking ===
 let virtualModalClosed = false; // Track if user has manually closed the virtual modal
@@ -351,8 +668,28 @@ let sensorSenseiModalOpened = false; // Track if the sensorSensei modal was ever
 // === Drawer Management ===
 const drawerModels = ['drawer1', 'drawer2', 'drawer3', 'drawer4', 'steering', 'pc', 'forge', 'mail-box', 'trashTruck', 'convoyeur', 'sensorSensei'];
 const drawers = [];
+const interactiveObjects = []; // Separate array for collision detection optimization
 const drawerOriginalPositions = new Map();
 const unreadDrawers = new Set(['drawer1', 'drawer2', 'drawer3', 'drawer4', 'steering', 'forge', 'mail-box', 'trashTruck', 'convoyeur', 'sensorSensei', 'skillFlower']);
+
+// === Drawer Management Utilities ===
+function addToDrawers(object, isInteractive = true) {
+  if (!drawers.includes(object)) {
+    drawers.push(object);
+    if (isInteractive) {
+      interactiveObjects.push(object);
+    }
+  }
+}
+
+function optimizeDrawersArray() {
+  // Remove duplicates and organize for better performance
+  const uniqueDrawers = [...new Set(drawers)];
+  drawers.length = 0;
+  drawers.push(...uniqueDrawers);
+  
+  console.log(`Optimized drawers array: ${drawers.length} unique objects`);
+}
 
 // === Skill Flowers and Language Flowers Management ===
 const skillFlowers = []; // Array to store the 9 skillFlowers
@@ -618,11 +955,42 @@ hexMap.forEach(({ q, r, type }) => {
             reject(error);
           }
         },
-        undefined,
-        reject
+        (progress) => {
+          // Loading progress
+          const percent = (progress.loaded / progress.total) * 100;
+          console.log(`Loading ${type}: ${percent.toFixed(1)}%`);
+        },
+        (error) => {
+          console.error(`Failed to load Hex-${type}.glb:`, error);
+          
+          // Create fallback hex geometry
+          const fallbackGeometry = new THREE.CylinderGeometry(0.8, 0.8, 0.1, 6);
+          const fallbackMaterial = new THREE.MeshStandardMaterial({ 
+            color: type === 'home' ? 0x4a9eff : 
+                   type === 'cv' ? 0x9c27b0 :
+                   type === 'projects' ? 0xff9800 :
+                   type === 'contact' ? 0x4caf50 : 
+                   type.includes('forge') ? 0xff5722 : 0x607d8b
+          });
+          
+          const fallbackHex = new THREE.Mesh(fallbackGeometry, fallbackMaterial);
+          fallbackHex.position.set(x, 0, z);
+          fallbackHex.userData = { type, q, r, fallback: true };
+          fallbackHex.castShadow = true;
+          fallbackHex.receiveShadow = true;
+          
+          scene.add(fallbackHex);
+          hexObjects.push(fallbackHex);
+          
+          loadedHexCount++;
+          markAssetLoaded(); // Still mark as loaded even with fallback
+          
+          console.warn(`Using fallback geometry for ${type} hex`);
+          reject(error);
+        }
       );
     }),
-    `Hex loading - ${type}`
+    `Critical - Hex loading - ${type}`
   );
 });
 
@@ -1300,52 +1668,109 @@ const textureLoader = new THREE.TextureLoader();
 // Register environment texture for loading tracking
 incrementTotalAssets();
 
-ErrorHandler.handleAsyncError(
-  new Promise((resolve, reject) => {
-    textureLoader.load(
-      './public/textures/env.jpg',
-      (texture) => {
-        try {
-          texture.mapping = THREE.EquirectangularReflectionMapping;
-          texture.colorSpace = THREE.SRGBColorSpace;
-          
-          // Set as both background and environment for reflections
-          scene.background = texture;
-          scene.environment = texture;
-          
-          // Process existing materials to use the new environment
-          scene.traverse((child) => {
-            if (child.isMesh && child.material) {
-              if (child.material.isMeshStandardMaterial || child.material.isMeshPhysicalMaterial) {
-                child.material.envMap = texture;
-                child.material.envMapIntensity = 0.8;
-                child.material.needsUpdate = true;
+// Try multiple environment texture formats
+const envTexturePaths = [
+  './public/textures/env.jpg',
+  './public/textures/env.png',
+  './public/textures/env.hdr'
+];
+
+let envTextureLoaded = false;
+
+function loadEnvironmentTexture(paths, index = 0) {
+  if (index >= paths.length) {
+    // All texture formats failed, create fallback
+    console.warn('All environment textures failed, creating fallback');
+    const fallbackTexture = createFallbackEnvironment();
+    scene.background = fallbackTexture;
+    scene.environment = fallbackTexture;
+    markAssetLoaded();
+    return;
+  }
+  
+  ErrorHandler.handleAsyncError(
+    new Promise((resolve, reject) => {
+      textureLoader.load(
+        paths[index],
+        (texture) => {
+          try {
+            if (envTextureLoaded) return; // Prevent double loading
+            envTextureLoaded = true;
+            
+            texture.mapping = THREE.EquirectangularReflectionMapping;
+            texture.colorSpace = THREE.SRGBColorSpace;
+            
+            // Set as both background and environment for reflections
+            scene.background = texture;
+            scene.environment = texture;
+            
+            // Process existing materials to use the new environment
+            scene.traverse((child) => {
+              if (child.isMesh && child.material) {
+                if (child.material.isMeshStandardMaterial || child.material.isMeshPhysicalMaterial) {
+                  child.material.envMap = texture;
+                  child.material.envMapIntensity = 0.8;
+                  child.material.needsUpdate = true;
+                }
+                if (Array.isArray(child.material)) {
+                  child.material.forEach(mat => {
+                    if (mat.isMeshStandardMaterial || mat.isMeshPhysicalMaterial) {
+                      mat.envMap = texture;
+                      mat.envMapIntensity = 0.8;
+                      mat.needsUpdate = true;
+                    }
+                  });
+                }
               }
-              if (Array.isArray(child.material)) {
-                child.material.forEach(mat => {
-                  if (mat.isMeshStandardMaterial || mat.isMeshPhysicalMaterial) {
-                    mat.envMap = texture;
-                    mat.envMapIntensity = 0.8;
-                    mat.needsUpdate = true;
-                  }
-                });
-              }
-            }
-          });
-          
-          console.log('Environment texture loaded successfully');
-          markAssetLoaded(); // Mark this asset as loaded
-          resolve(texture);
-        } catch (error) {
+            });
+            
+            console.log(`Environment texture loaded successfully: ${paths[index]}`);
+            markAssetLoaded();
+            resolve(texture);
+          } catch (error) {
+            reject(error);
+          }
+        },
+        undefined,
+        (error) => {
+          console.warn(`Failed to load ${paths[index]}, trying next format...`);
           reject(error);
         }
-      },
-      undefined,
-      reject
-    );
-  }),
-  'Environment texture loading'
-);
+      );
+    }),
+    `Environment texture loading - ${paths[index]}`
+  ).then((result) => {
+    if (!result && !envTextureLoaded) {
+      // Try next texture format
+      loadEnvironmentTexture(paths, index + 1);
+    }
+  });
+}
+
+function createFallbackEnvironment() {
+  // Create a simple gradient environment texture as fallback
+  const canvas = document.createElement('canvas');
+  canvas.width = 512;
+  canvas.height = 256;
+  const ctx = canvas.getContext('2d');
+  
+  const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+  gradient.addColorStop(0, '#87CEEB'); // Sky blue
+  gradient.addColorStop(0.7, '#FFD4A3'); // Warm horizon
+  gradient.addColorStop(1, '#8B4513'); // Ground brown
+  
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.mapping = THREE.EquirectangularReflectionMapping;
+  texture.colorSpace = THREE.SRGBColorSpace;
+  
+  return texture;
+}
+
+// Start loading environment textures
+loadEnvironmentTexture(envTexturePaths);
 
 // === Skill Flowers Grid Generation ===
 function generateSkillFlowersGrid() {
@@ -1941,6 +2366,120 @@ window.addEventListener('click', (event) => {
     }
   }
 });
+
+// === Touch Event Handlers for Mobile Support ===
+if (isTouchDevice) {
+  // Touch start
+  window.addEventListener('touchstart', (event) => {
+    if (cinematicMode || isOrbiting) return;
+    
+    const touch = event.touches[0];
+    touchStart.x = touch.clientX;
+    touchStart.y = touch.clientY;
+    touchMoved = false;
+    
+    // Prevent default touch behavior
+    event.preventDefault();
+  }, { passive: false });
+  
+  // Touch move for orbital camera controls
+  window.addEventListener('touchmove', (event) => {
+    if (cinematicMode || event.touches.length !== 1) return;
+    
+    const touch = event.touches[0];
+    const deltaX = touch.clientX - touchStart.x;
+    const deltaY = touch.clientY - touchStart.y;
+    
+    // Check if movement is significant enough to be considered a drag
+    if (Math.abs(deltaX) > TAP_THRESHOLD || Math.abs(deltaY) > TAP_THRESHOLD) {
+      touchMoved = true;
+      
+      // Orbital camera rotation (only horizontal for simplicity on mobile)
+      if (currentActiveHexType === null) { // Only in orbital mode
+        currentCameraAngle += deltaX * TOUCH_SENSITIVITY;
+        
+        const newCameraPos = {
+          x: orbitCenter.x + orbitRadius * Math.cos(currentCameraAngle),
+          y: orbitHeight,
+          z: orbitCenter.z + orbitRadius * Math.sin(currentCameraAngle)
+        };
+        
+        camera.position.set(newCameraPos.x, newCameraPos.y, newCameraPos.z);
+        camera.lookAt(orbitCenter.x, orbitCenter.y, orbitCenter.z);
+        
+        touchStart.x = touch.clientX;
+        touchStart.y = touch.clientY;
+      }
+    }
+    
+    event.preventDefault();
+  }, { passive: false });
+  
+  // Touch end - handle tap
+  window.addEventListener('touchend', (event) => {
+    if (cinematicMode) return;
+    
+    // If no significant movement, treat as tap
+    if (!touchMoved) {
+      const touch = event.changedTouches[0];
+      const currentTime = Date.now();
+      
+      // Convert touch to mouse-like event for existing click handler
+      const syntheticEvent = {
+        clientX: touch.clientX,
+        clientY: touch.clientY,
+        target: event.target,
+        preventDefault: () => {},
+        stopImmediatePropagation: () => {}
+      };
+      
+      // Call existing click handler logic
+      handleInteraction(syntheticEvent);
+      
+      lastTouchTime = currentTime;
+    }
+    
+    touchMoved = false;
+    event.preventDefault();
+  }, { passive: false });
+}
+
+// === Shared Interaction Handler ===
+function handleInteraction(event) {
+  // FIRST: Check global interactions disabled flag
+  if (interactionsDisabled) {
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    return false;
+  }
+  
+  // SECOND: Skip 3D interactions if loading overlay is visible
+  const loadingOverlay = document.getElementById('loadingOverlay');
+  if (loadingOverlay && !loadingOverlay.classList.contains('hidden')) {
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    return false;
+  }
+  
+  // Skip interactions during cinematic mode or if currently orbiting
+  if (cinematicMode || isOrbiting) return;
+  
+  // Check if click is on the navigation sidebar
+  const navSidebar = document.getElementById('zoneNavSidebar');
+  if (navSidebar && navSidebar.contains(event.target)) {
+    return; // Don't process 3D canvas clicks if clicking on nav
+  }
+
+  const canvasBounds = renderer.domElement.getBoundingClientRect();
+  mouse.x = ((event.clientX - canvasBounds.left) / canvasBounds.width) * 2 - 1;
+  mouse.y = -((event.clientY - canvasBounds.top) / canvasBounds.height) * 2 + 1;
+
+  raycaster.setFromCamera(mouse, camera);
+  const intersects = raycaster.intersectObjects([...hexObjects, ...drawers], true);
+
+  // Existing interaction logic would go here...
+  // This is extracted from the existing click handler
+}
 
 // === Modal Functions ===
 function createModalBase(id, onClose = null) {

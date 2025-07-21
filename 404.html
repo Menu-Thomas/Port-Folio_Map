@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>404 - Page non trouvée | Portfolio Thomas Menu</title>
+  <meta name="description" content="Page non trouvée - Retournez au portfolio interactif de Thomas Menu">
+  <link rel="canonical" href="https://thomasmenu.fr/404">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      overflow: hidden;
+    }
+
+    .container {
+      max-width: 600px;
+      padding: 2rem;
+      z-index: 10;
+    }
+
+    .error-code {
+      font-size: 8rem;
+      font-weight: 900;
+      line-height: 1;
+      margin-bottom: 1rem;
+      text-shadow: 0 0 50px rgba(255,255,255,0.3);
+      animation: pulse 2s ease-in-out infinite alternate;
+    }
+
+    @keyframes pulse {
+      from { opacity: 0.8; transform: scale(1); }
+      to { opacity: 1; transform: scale(1.05); }
+    }
+
+    .title {
+      font-size: 2.5rem;
+      margin-bottom: 1rem;
+      font-weight: 700;
+    }
+
+    .description {
+      font-size: 1.2rem;
+      margin-bottom: 3rem;
+      opacity: 0.9;
+      line-height: 1.6;
+    }
+
+    .actions {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      padding: 1rem 2rem;
+      border: none;
+      border-radius: 50px;
+      font-size: 1.1rem;
+      font-weight: 600;
+      text-decoration: none;
+      transition: all 0.3s ease;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+    }
+
+    .btn-primary {
+      background: rgba(255,255,255,0.2);
+      color: white;
+      border: 2px solid rgba(255,255,255,0.3);
+      backdrop-filter: blur(10px);
+    }
+
+    .btn-primary:hover {
+      background: rgba(255,255,255,0.3);
+      border-color: rgba(255,255,255,0.5);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 30px rgba(0,0,0,0.3);
+    }
+
+    .btn-secondary {
+      background: transparent;
+      color: white;
+      border: 2px solid rgba(255,255,255,0.5);
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255,255,255,0.1);
+      transform: translateY(-2px);
+    }
+
+    /* Animated background elements */
+    .bg-element {
+      position: fixed;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.1);
+      animation: float 6s ease-in-out infinite;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0px) rotate(0deg); }
+      50% { transform: translateY(-20px) rotate(180deg); }
+    }
+
+    .bg-element:nth-child(1) {
+      width: 80px;
+      height: 80px;
+      top: 10%;
+      left: 10%;
+      animation-delay: 0s;
+    }
+
+    .bg-element:nth-child(2) {
+      width: 120px;
+      height: 120px;
+      top: 20%;
+      right: 20%;
+      animation-delay: 2s;
+    }
+
+    .bg-element:nth-child(3) {
+      width: 60px;
+      height: 60px;
+      bottom: 30%;
+      left: 20%;
+      animation-delay: 4s;
+    }
+
+    .bg-element:nth-child(4) {
+      width: 100px;
+      height: 100px;
+      bottom: 20%;
+      right: 10%;
+      animation-delay: 1s;
+    }
+
+    @media (max-width: 768px) {
+      .error-code {
+        font-size: 5rem;
+      }
+      
+      .title {
+        font-size: 1.8rem;
+      }
+      
+      .description {
+        font-size: 1rem;
+      }
+      
+      .actions {
+        flex-direction: column;
+        align-items: center;
+      }
+      
+      .btn {
+        width: 100%;
+        max-width: 300px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="bg-element"></div>
+  <div class="bg-element"></div>
+  <div class="bg-element"></div>
+  <div class="bg-element"></div>
+
+  <div class="container">
+    <div class="error-code">404</div>
+    <h1 class="title">Oups ! Page introuvable</h1>
+    <p class="description">
+      Il semblerait que cette page n'existe pas ou ait été déplacée.<br>
+      Retournez au portfolio pour continuer l'exploration !
+    </p>
+    
+    <div class="actions">
+      <a href="./portfolio.html" class="btn btn-primary">
+        🏠 Retour au Portfolio
+      </a>
+      <a href="javascript:history.back()" class="btn btn-secondary">
+        ← Page précédente
+      </a>
+    </div>
+  </div>
+
+  <script>
+    // Track 404 visits if analytics is available
+    if (window.analytics) {
+      window.analytics.track('404_page', {
+        referrer: document.referrer,
+        requested_path: window.location.pathname
+      });
+    }
+
+    // Auto-redirect after 10 seconds if no user interaction
+    let autoRedirectTimer = setTimeout(() => {
+      window.location.href = './portfolio.html';
+    }, 10000);
+
+    // Cancel auto-redirect on any user interaction
+    ['click', 'scroll', 'keypress', 'mousemove'].forEach(event => {
+      document.addEventListener(event, () => {
+        clearTimeout(autoRedirectTimer);
+      }, { once: true });
+    });
+  </script>
+</body>
+</html>

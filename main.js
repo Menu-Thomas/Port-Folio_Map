@@ -182,6 +182,9 @@ function onAllAssetsLoaded() {
   // Set global flag for guide system
   window.allAssetsLoaded = true;
   
+  // Initialize badges once all assets are loaded
+  updateThemeUnreadBadges();
+  
   // Wait for loading overlay to be hidden before starting cinematic animation
   function checkAndStartCinematic() {
     const overlayHidden = sessionStorage.getItem('loadingOverlayHidden');
@@ -345,6 +348,7 @@ window.interactionsDisabled = interactionsDisabled; // Expose to window for acce
 window.getCurrentActiveHexType = () => currentActiveHexType;
 window.getHoveredDrawer = () => hoveredDrawer;
 window.getUnreadDrawers = () => unreadDrawers;
+window.getUnreadCountForTheme = getUnreadCountForTheme;
 
 // === Error Handling ===
 class ErrorHandler {
@@ -455,12 +459,8 @@ class ErrorHandler {
       '#loadingOverlay'
     ];
     
-    const optionalSelectors = [
-      '#zoneNavSidebar' // Navigation sidebar - will be created if missing
-    ];
-    
+    // Note: #zoneNavSidebar is created dynamically by main.js navigation system
     const missingElements = [];
-    const missingOptional = [];
     
     requiredSelectors.forEach(selector => {
       const element = selector === 'body' ? document.body : document.querySelector(selector);
@@ -469,20 +469,9 @@ class ErrorHandler {
       }
     });
     
-    optionalSelectors.forEach(selector => {
-      const element = document.querySelector(selector);
-      if (!element) {
-        missingOptional.push(selector);
-      }
-    });
-    
     if (missingElements.length > 0) {
       this.logError(new Error(`Missing required elements: ${missingElements.join(', ')}`), 'DOM Check');
       return false;
-    }
-    
-    if (missingOptional.length > 0) {
-      console.warn(`Optional elements not found: ${missingOptional.join(', ')} - will continue without them`);
     }
     
     return true;
@@ -670,7 +659,13 @@ const drawerModels = ['drawer1', 'drawer2', 'drawer3', 'drawer4', 'steering', 'p
 const drawers = [];
 const interactiveObjects = []; // Separate array for collision detection optimization
 const drawerOriginalPositions = new Map();
-const unreadDrawers = new Set(['drawer1', 'drawer2', 'drawer3', 'drawer4', 'steering', 'forge', 'mail-box', 'trashTruck', 'convoyeur', 'sensorSensei', 'skillFlower']);
+const unreadDrawers = new Set([
+  'drawer1', 'drawer2', 'drawer3', 'drawer4', 
+  'steering', 'forge', 'mail-box', 'trashTruck', 'convoyeur', 'sensorSensei',
+  // Individual skillFlowers for CV theme badges
+  'skillFlower1', 'skillFlower2', 'skillFlower3', 'skillFlower4', 'skillFlower5',
+  'skillFlower6', 'skillFlower7', 'skillFlower8', 'skillFlower9'
+]);
 
 // === Drawer Management Utilities ===
 function addToDrawers(object, isInteractive = true) {
@@ -1095,6 +1090,7 @@ function getUnreadCountForTheme(themeId) {
       count++;
     }
   });
+  
   return count;
 }
 
@@ -2924,8 +2920,8 @@ drawerModels.forEach((model) => {
 // === Navigation Sidebar for Zones ===
 const mainZones = [
   { type: 'home', label: 'Accueil', themeId: 'home' },
-  { type: 'cv', label: 'CV', themeId: 'home' },
-  { type: 'projects', label: 'Projets', themeId: 'home' },
+  { type: 'cv', label: 'CV', themeId: 'cv' },
+  { type: 'projects', label: 'Projets', themeId: 'projects' },
   { type: 'contact', label: 'Contact', themeId: 'contact' },
   { type: 'forge2', label: 'Conception', themeId: 'forge' },
 ];
@@ -3147,6 +3143,14 @@ if (typeof mainZones !== 'undefined') {
 
 // Initialize theme unread badges
 updateThemeUnreadBadges();
+
+// Also initialize badges after a short delay to ensure DOM is ready
+setTimeout(() => {
+  updateThemeUnreadBadges();
+}, 1000);
+
+// Expose navigation function to window for external access
+window.navigateToZone = navigateToZone;
 
 
 // === Responsive 3D Canvas: Only fill area right of nav bar ===

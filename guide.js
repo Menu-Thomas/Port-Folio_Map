@@ -16,6 +16,7 @@
 const GUIDE_CONFIG = {
   GUIDE_ID: 'portfolio-guide',
   STORAGE_KEY: 'portfolio_guide_completed',
+  DISMISSED_KEY: 'portfolio_guide_dismissed',
   ANIMATION_DURATION: 500,
   BUBBLE_DELAY: 2000,
   COLORS: {
@@ -63,7 +64,7 @@ const guideSteps = [
     title: '🧭 Navigation facile',
     message: 'Utilisez cette barre de navigation pour accéder rapidement aux différentes sections : Accueil, CV, Projets, Contact, et Conception.',
     action: 'continue',
-    position: 'center-right',
+    position: 'left-center',
     highlight: '#zoneNavSidebar'
   },
   {
@@ -121,10 +122,11 @@ const guideSteps = [
 
 // === GUIDE INITIALIZATION ===
 function initializeGuide() {
-  // Check if user has already completed the guide
+  // Check if user has already completed or dismissed the guide
   const hasCompletedGuide = localStorage.getItem(GUIDE_CONFIG.STORAGE_KEY) === 'true';
+  const hasDismissedGuide = localStorage.getItem(GUIDE_CONFIG.DISMISSED_KEY) === 'true';
   
-  if (hasCompletedGuide) {
+  if (hasCompletedGuide || hasDismissedGuide) {
     guideState.isFirstVisit = false;
     createGuideToggleButton();
     return;
@@ -438,7 +440,7 @@ function createGuideToggleButton() {
   const toggleBtn = document.createElement('button');
   toggleBtn.id = 'guide-toggle';
   toggleBtn.innerHTML = '❓';
-  toggleBtn.title = 'Relancer le guide';
+  toggleBtn.title = 'Relancer le guide (clic droit pour réinitialiser)';
   toggleBtn.style.cssText = `
     position: fixed;
     top: 20px;
@@ -474,6 +476,24 @@ function createGuideToggleButton() {
     e.stopPropagation();
     e.preventDefault();
     startGuide();
+  });
+
+  // Add right-click to reset guide preferences
+  toggleBtn.addEventListener('contextmenu', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    // Clear both completed and dismissed flags
+    localStorage.removeItem(GUIDE_CONFIG.STORAGE_KEY);
+    localStorage.removeItem(GUIDE_CONFIG.DISMISSED_KEY);
+    
+    // Show confirmation
+    toggleBtn.innerHTML = '✓';
+    toggleBtn.title = 'Préférences du guide réinitialisées - Clic gauche pour démarrer';
+    setTimeout(() => {
+      toggleBtn.innerHTML = '❓';
+      toggleBtn.title = 'Relancer le guide (clic droit pour réinitialiser)';
+    }, 2000);
   });
 
   // Prevent clicks from passing through
@@ -543,9 +563,12 @@ function endGuide(skipped = false) {
   guideState.skipButton = null;
   guideState.guideCharacter = null;
 
-  // Mark as completed if not skipped
+  // Mark as completed if not skipped, or as dismissed if skipped
   if (!skipped && guideState.currentStep >= guideSteps.length - 1) {
     localStorage.setItem(GUIDE_CONFIG.STORAGE_KEY, 'true');
+  } else if (skipped) {
+    // User dismissed the guide, don't show it automatically again
+    localStorage.setItem(GUIDE_CONFIG.DISMISSED_KEY, 'true');
   }
 
   // Create toggle button for future access
@@ -807,8 +830,8 @@ function positionBubble(position) {
       break;
       
     case 'left-center':
-      // Position on the left side, avoiding navigation
-      bubble.style.left = '250px'; // Account for navigation sidebar
+      // Position right next to the navigation sidebar
+      bubble.style.left = '230px'; // Just right of the 220px navigation sidebar
       bubble.style.top = '50%';
       bubble.style.transform = 'translateY(-50%) scale(1)';
       break;
@@ -819,7 +842,7 @@ function positionBubble(position) {
       bubble.style.bottom = '110px';
   }
   
-  // Ensure bubble stays within viewport bounds
+  // Ensure bubble stays within viewport bounds (but don't override intentional left positioning)
   setTimeout(() => {
     const rect = bubble.getBoundingClientRect();
     let adjustments = {};
@@ -829,7 +852,8 @@ function positionBubble(position) {
       adjustments.right = '10px';
       adjustments.left = 'auto';
     }
-    if (rect.left < 230) { // Account for navigation sidebar
+    // Only adjust left position if it's not intentionally positioned there (left-center)
+    if (rect.left < 230 && position !== 'left-center') { // Don't adjust if it's intentionally left-center
       adjustments.left = '240px';
       adjustments.right = 'auto';
     }

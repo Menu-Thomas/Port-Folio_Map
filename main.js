@@ -182,6 +182,9 @@ function onAllAssetsLoaded() {
   // Set global flag for guide system
   window.allAssetsLoaded = true;
   
+  // Ensure fresh state after all assets are loaded
+  initializeFreshState();
+  
   // Initialize badges once all assets are loaded
   updateThemeUnreadBadges();
   
@@ -290,6 +293,7 @@ document.body.appendChild(renderer.domElement);
 const mouse = new THREE.Vector2();
 const raycaster = new THREE.Raycaster();
 let hoveredDrawer = null;
+let currentHoveredSkillFlowerIndex = null; // Track currently hovered skillFlower to prevent duplicate language flower triggers
 
 // === Touch Support Variables ===
 let isTouchDevice = false;
@@ -762,6 +766,29 @@ const activeLanguageFlowers = new Set(); // Track which language flowers are cur
 const languageFlowerRotations = new Map(); // Track rotation animations
 const stayUpSkillFlowers = new Set(); // Track which skill flowers should stay up permanently
 const stayUpLanguageFlowers = new Set(); // Track which language flowers should stay up permanently
+
+// === Fresh State Initialization ===
+function initializeFreshState() {
+  // Clear all persistent states to ensure clean startup on each page load
+  activeLanguageFlowers.clear();
+  languageFlowerRotations.clear();
+  stayUpSkillFlowers.clear();
+  stayUpLanguageFlowers.clear();
+  
+  // Reset hover tracking
+  currentHoveredSkillFlowerIndex = null;
+  hoveredDrawer = null;
+  
+  // Kill any existing GSAP animations to prevent conflicts
+  if (typeof gsap !== 'undefined') {
+    gsap.killTweensOf("*"); // Kill all existing animations
+  }
+  
+  console.log('Portfolio state initialized fresh for this session');
+}
+
+// Initialize fresh state immediately
+initializeFreshState();
 
 // Helper function to get language flower info by grid index
 function getLanguageFlowerInfo(gridIndex) {
@@ -1338,6 +1365,7 @@ window.addEventListener('mousemove', (event) => {
                 // Hide language flower when stopping hover on any skillFlower
                 if (hoveredDrawer.userData.type.startsWith('skillFlower') && hoveredDrawer.userData.gridIndex !== undefined) {
                   hideLanguageFlower(hoveredDrawer.userData.gridIndex);
+                  currentHoveredSkillFlowerIndex = null; // Reset tracking
                 }
               } else {
                 gsap.to(hoveredDrawer.position, {
@@ -1384,9 +1412,13 @@ window.addEventListener('mousemove', (event) => {
               
               // FIXED: Show corresponding language flower using grid index from any skillFlower component
               if (gridIndex !== undefined) {
-                const skillFlowerInfo = getLanguageFlowerInfo(gridIndex);
-                console.log(`SkillFlower hover detected - Grid Index: ${gridIndex}, Type: ${foundDrawer.userData.type}, Expected: ${skillFlowerInfo?.displayName}`);
-                showLanguageFlower(gridIndex);
+                // Only trigger language flower if we're hovering a different skillFlower
+                if (currentHoveredSkillFlowerIndex !== gridIndex) {
+                  const skillFlowerInfo = getLanguageFlowerInfo(gridIndex);
+                  console.log(`SkillFlower hover detected - Grid Index: ${gridIndex}, Type: ${foundDrawer.userData.type}, Expected: ${skillFlowerInfo?.displayName}`);
+                  showLanguageFlower(gridIndex);
+                  currentHoveredSkillFlowerIndex = gridIndex;
+                }
               }
             } else {
               // For regular drawers, use the old movement
@@ -1540,6 +1572,7 @@ window.addEventListener('mousemove', (event) => {
             // Hide language flower when stopping hover on any skillFlower
             if (hoveredDrawer.userData.type.startsWith('skillFlower') && hoveredDrawer.userData.gridIndex !== undefined) {
               hideLanguageFlower(hoveredDrawer.userData.gridIndex);
+              currentHoveredSkillFlowerIndex = null; // Reset tracking
             }
           } else {
             gsap.to(targetDrawer.position, {
@@ -1581,6 +1614,7 @@ window.addEventListener('mousemove', (event) => {
         // Hide language flower when stopping hover on any skillFlower
         if (hoveredDrawer.userData.type.startsWith('skillFlower') && hoveredDrawer.userData.gridIndex !== undefined) {
           hideLanguageFlower(hoveredDrawer.userData.gridIndex);
+          currentHoveredSkillFlowerIndex = null; // Reset tracking
         }
       } else {
         gsap.to(hoveredDrawer.position, {
@@ -1914,13 +1948,14 @@ function loadLanguageFlowers() {
               languageFlower.scale.set(1, 1, 1);
               languageFlower.visible = false;
               
-              // Enhanced userData with complete flower information
+              // Enhanced userData with complete flower information - reset for fresh state
               languageFlower.userData = {
                 type: flowerData.name,
                 displayName: flowerData.displayName,
                 category: flowerData.category,
                 gridPosition: flowerData.gridPosition,
-                gridIndex: index
+                gridIndex: index,
+                isAnimating: false // Ensure fresh animation state
               };
               
               scene.add(languageFlower);
@@ -1954,18 +1989,44 @@ function showLanguageFlower(gridIndex) {
   const skillFlower = skillFlowers[gridIndex];
   const flowerInfo = getLanguageFlowerInfo(gridIndex);
   
-  if (!languageFlower || !skillFlower || activeLanguageFlowers.has(gridIndex)) {
+  // Enhanced checks to prevent duplicate animations
+  if (!languageFlower || !skillFlower) {
     console.warn(`Cannot show language flower at index ${gridIndex}:`, {
       hasLanguageFlower: !!languageFlower,
-      hasSkillFlower: !!skillFlower,
-      alreadyActive: activeLanguageFlowers.has(gridIndex)
+      hasSkillFlower: !!skillFlower
     });
     return;
   }
   
+  // If already active or currently animating, don't start another animation
+  if (activeLanguageFlowers.has(gridIndex)) {
+    console.log(`Language flower ${flowerInfo?.displayName} already active at grid ${gridIndex} - skipping duplicate show`);
+    return;
+  }
+  
+  // Check if there's already a running animation on this language flower
+  if (languageFlower.userData && languageFlower.userData.isAnimating) {
+    console.log(`Language flower ${flowerInfo?.displayName} currently animating at grid ${gridIndex} - skipping duplicate show`);
+    return;
+  }
+  
+  // Mark as active and animating immediately to prevent duplicates
   activeLanguageFlowers.add(gridIndex);
   stayUpLanguageFlowers.add(gridIndex); // Mark this language flower to stay up permanently
   languageFlower.visible = true;
+  languageFlower.userData = languageFlower.userData || {};
+  languageFlower.userData.isAnimating = true;
+  
+  // Kill any existing animations on this language flower to prevent conflicts
+  gsap.killTweensOf(languageFlower.position);
+  gsap.killTweensOf(languageFlower.rotation);
+  
+  // Clear any existing rotation animation tracking
+  const existingRotation = languageFlowerRotations.get(gridIndex);
+  if (existingRotation) {
+    existingRotation.kill();
+    languageFlowerRotations.delete(gridIndex);
+  }
   
   // Log what we're showing
   console.log(`Showing language flower: ${flowerInfo?.displayName || 'Unknown'} (${flowerInfo?.name || 'unknown'}) at grid position ${gridIndex} (${flowerInfo?.gridPosition || 'unknown'})`);
@@ -1982,7 +2043,13 @@ function showLanguageFlower(gridIndex) {
   gsap.to(languageFlower.position, {
     y: targetY,
     duration: 0.4,
-    ease: 'back.out(1.4)'
+    ease: 'back.out(1.4)',
+    onComplete: () => {
+      // Clear the animating flag when animation completes
+      if (languageFlower.userData) {
+        languageFlower.userData.isAnimating = false;
+      }
+    }
   });
   
   // Start rotation animation
@@ -2011,6 +2078,15 @@ function hideLanguageFlower(gridIndex) {
   
   console.log(`Hiding language flower: ${flowerInfo?.displayName || 'Unknown'} (${flowerInfo?.name || 'unknown'}) at grid position ${gridIndex}`);
   
+  // Clear animation state immediately to prevent conflicts
+  if (languageFlower.userData) {
+    languageFlower.userData.isAnimating = false;
+  }
+  
+  // Kill any running animations immediately
+  gsap.killTweensOf(languageFlower.position);
+  gsap.killTweensOf(languageFlower.rotation);
+  
   activeLanguageFlowers.delete(gridIndex);
   
   // Stop rotation
@@ -2031,6 +2107,10 @@ function hideLanguageFlower(gridIndex) {
     onComplete: () => {
       languageFlower.visible = false;
       languageFlower.rotation.y = 0; // Reset rotation
+      // Clear any remaining animation flags
+      if (languageFlower.userData) {
+        languageFlower.userData.isAnimating = false;
+      }
       // FIXED: Reset position to below ground at the correct X,Z coordinates for next show
       languageFlower.position.set(targetX, -2, targetZ);
     }

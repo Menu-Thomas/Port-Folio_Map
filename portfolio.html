@@ -323,9 +323,18 @@
       }
     }
     
-    // Close button handler
+    // Close button handler - both click and touch
     closeBtn.addEventListener('click', (e) => {
       e.stopPropagation(); // Prevent event bubbling
+      if (assetsLoaded) {
+        hideLoadingOverlay();
+      }
+    });
+    
+    // Touch support for close button
+    closeBtn.addEventListener('touchend', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
       if (assetsLoaded) {
         hideLoadingOverlay();
       }
@@ -338,8 +347,24 @@
       }
     });
     
+    // Touch support for overlay
+    loadingOverlay.addEventListener('touchend', (e) => {
+      e.preventDefault();
+      if (assetsLoaded && e.target === loadingOverlay) {
+        hideLoadingOverlay();
+      }
+    });
+    
     // Allow clicks on loading container to bubble to overlay when ready
     document.querySelector('.loading-container').addEventListener('click', (e) => {
+      if (assetsLoaded) {
+        hideLoadingOverlay();
+      }
+    });
+    
+    // Touch support for loading container
+    document.querySelector('.loading-container').addEventListener('touchend', (e) => {
+      e.preventDefault();
       if (assetsLoaded) {
         hideLoadingOverlay();
       }

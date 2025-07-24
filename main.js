@@ -304,14 +304,28 @@ const TOUCH_SENSITIVITY = 0.008;
 const TAP_THRESHOLD = 10; // pixels
 const DOUBLE_TAP_DELAY = 300; // ms
 
+// === Mobile Navigation Variables ===
+let isMobileDevice = false;
+let isNavigationOpen = false;
+
 // Detect touch device
 function detectTouchDevice() {
   isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+  isMobileDevice = window.innerWidth <= 768 || isTouchDevice;
+  
+  // Force mobile detection for testing - remove this line later
+  if (window.innerWidth <= 768) {
+    isTouchDevice = true;
+    isMobileDevice = true;
+  }
   
   if (isTouchDevice) {
     console.log('Touch device detected - enabling mobile controls');
+    console.log('isMobileDevice:', isMobileDevice);
+    console.log('Window width:', window.innerWidth);
+    
     // Add mobile-specific styles
-    document.body.style.touchAction = 'none';
+    document.body.style.touchAction = 'manipulation'; // Changed from 'none' to allow some touch behaviors
     
     // Add mobile UI indicators
     const mobileInfo = document.createElement('div');
@@ -324,6 +338,20 @@ function detectTouchDevice() {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     `;
     document.body.appendChild(mobileInfo);
+    
+    // Add touch indicator animation styles
+    const style = document.createElement('style');
+    style.textContent = `
+      @keyframes ping {
+        0% { transform: scale(1); opacity: 1; }
+        100% { transform: scale(2); opacity: 0; }
+      }
+      @keyframes fadeOut {
+        0% { opacity: 1; }
+        100% { opacity: 0; }
+      }
+    `;
+    document.head.appendChild(style);
     
     // Auto-hide mobile info after 5 seconds
     setTimeout(() => {
@@ -922,7 +950,7 @@ const hexMap = [
   //{ q: -1, r: 1, type: 'plain1' },
   { q: -2, r: -1, type: 'plain1' },
   { q: 0, r: -1, type: 'champ1', cameraPos: { x: -0.7, y: 0.7, z: -0.9 } },
-  { q: -1, r: 0, type: 'champ2', cameraPos: { x: -1.5, y: 0.4, z: 0.4 } },
+  { q: -1, r: 0, type: 'garage', cameraPos: { x: -1.4, y: 0.15, z: 0.1 } },
   { q: 1, r: 1, type: 'forest1', cameraPos: { x: 1.8, y: 0.65, z: 0 }},
   { q: 3, r: -1, type: 'forest2', cameraPos: { x: 5, y: 0.3, z: -0.1}},
   { q: 2, r: 0, type: 'forest3', cameraPos: { x: 1.8, y: 0.65, z: 0 } },
@@ -1176,7 +1204,7 @@ function getCurrentHexTheme(hexType) {
     'contact': 'contact',
     'bridge': 'home',
     'champ1': 'home',
-    'champ2': 'home',
+    'garage': 'home',
     'forest1': 'home',
     'forest2': 'home', 
     'forest3': 'home',
@@ -2449,18 +2477,66 @@ if (isTouchDevice) {
   window.addEventListener('touchstart', (event) => {
     if (cinematicMode || isOrbiting) return;
     
+    // Check if touch is on UI elements - don't interfere
+    const loadingOverlay = document.getElementById('loadingOverlay');
+    const navSidebar = document.getElementById('zoneNavSidebar');
+    const toggleButton = document.getElementById('mobile-nav-toggle');
+    const mobileNavOverlay = document.getElementById('mobile-nav-overlay');
+    
+    // Allow loading overlay interactions
+    if (loadingOverlay && !loadingOverlay.classList.contains('hidden')) {
+      if (loadingOverlay.contains(event.target)) {
+        return; // Let loading overlay handle its own touch events
+      }
+    }
+    
+    // Allow navigation interactions
+    if ((navSidebar && navSidebar.contains(event.target)) || 
+        (toggleButton && toggleButton.contains(event.target)) ||
+        (mobileNavOverlay && mobileNavOverlay.contains(event.target))) {
+      return; // Let navigation handle its own touch events
+    }
+    
     const touch = event.touches[0];
     touchStart.x = touch.clientX;
     touchStart.y = touch.clientY;
     touchMoved = false;
     
-    // Prevent default touch behavior
-    event.preventDefault();
+    // Only prevent default for 3D canvas interactions
+    const canvasBounds = renderer.domElement.getBoundingClientRect();
+    const isOnCanvas = touch.clientX >= canvasBounds.left && 
+                      touch.clientX <= canvasBounds.right &&
+                      touch.clientY >= canvasBounds.top && 
+                      touch.clientY <= canvasBounds.bottom;
+    
+    if (isOnCanvas) {
+      event.preventDefault();
+    }
   }, { passive: false });
   
   // Touch move for orbital camera controls
   window.addEventListener('touchmove', (event) => {
     if (cinematicMode || event.touches.length !== 1) return;
+    
+    // Check if touch is on UI elements - don't interfere
+    const loadingOverlay = document.getElementById('loadingOverlay');
+    const navSidebar = document.getElementById('zoneNavSidebar');
+    const toggleButton = document.getElementById('mobile-nav-toggle');
+    const mobileNavOverlay = document.getElementById('mobile-nav-overlay');
+    
+    // Allow loading overlay interactions
+    if (loadingOverlay && !loadingOverlay.classList.contains('hidden')) {
+      if (loadingOverlay.contains(event.target)) {
+        return; // Let loading overlay handle its own touch events
+      }
+    }
+    
+    // Allow navigation interactions
+    if ((navSidebar && navSidebar.contains(event.target)) || 
+        (toggleButton && toggleButton.contains(event.target)) ||
+        (mobileNavOverlay && mobileNavOverlay.contains(event.target))) {
+      return; // Let navigation handle its own touch events
+    }
     
     const touch = event.touches[0];
     const deltaX = touch.clientX - touchStart.x;
@@ -2488,42 +2564,113 @@ if (isTouchDevice) {
       }
     }
     
-    event.preventDefault();
+    // Only prevent default for 3D canvas interactions
+    const canvasBounds = renderer.domElement.getBoundingClientRect();
+    const isOnCanvas = touch.clientX >= canvasBounds.left && 
+                      touch.clientX <= canvasBounds.right &&
+                      touch.clientY >= canvasBounds.top && 
+                      touch.clientY <= canvasBounds.bottom;
+    
+    if (isOnCanvas) {
+      event.preventDefault();
+    }
   }, { passive: false });
   
   // Touch end - handle tap
   window.addEventListener('touchend', (event) => {
+    console.log('Touch end event triggered');
+    console.log('cinematicMode:', cinematicMode);
+    console.log('touchMoved:', touchMoved);
+    console.log('event.target:', event.target);
+    
     if (cinematicMode) return;
+    
+    // Check if touch is on UI elements - don't interfere
+    const loadingOverlay = document.getElementById('loadingOverlay');
+    const navSidebar = document.getElementById('zoneNavSidebar');
+    const toggleButton = document.getElementById('mobile-nav-toggle');
+    const mobileNavOverlay = document.getElementById('mobile-nav-overlay');
+    
+    console.log('loadingOverlay exists:', !!loadingOverlay);
+    console.log('loadingOverlay hidden:', loadingOverlay ? loadingOverlay.classList.contains('hidden') : 'n/a');
+    
+    // Allow loading overlay interactions
+    if (loadingOverlay && !loadingOverlay.classList.contains('hidden')) {
+      if (loadingOverlay.contains(event.target)) {
+        console.log('Touch on loading overlay - letting it handle the event');
+        return; // Let loading overlay handle its own touch events
+      }
+    }
+    
+    // Allow navigation interactions
+    if ((navSidebar && navSidebar.contains(event.target)) || 
+        (toggleButton && toggleButton.contains(event.target)) ||
+        (mobileNavOverlay && mobileNavOverlay.contains(event.target))) {
+      console.log('Touch on navigation - letting it handle the event');
+      return; // Let navigation handle its own touch events
+    }
     
     // If no significant movement, treat as tap
     if (!touchMoved) {
       const touch = event.changedTouches[0];
       const currentTime = Date.now();
       
-      // Convert touch to mouse-like event for existing click handler
-      const syntheticEvent = {
-        clientX: touch.clientX,
-        clientY: touch.clientY,
-        target: event.target,
-        preventDefault: () => {},
-        stopImmediatePropagation: () => {}
-      };
+      console.log('Processing tap - no movement detected');
+      console.log('Touch coordinates:', touch.clientX, touch.clientY);
       
-      // Call existing click handler logic
-      handleInteraction(syntheticEvent);
+      // Only handle taps on the 3D canvas
+      const canvasBounds = renderer.domElement.getBoundingClientRect();
+      const isOnCanvas = touch.clientX >= canvasBounds.left && 
+                        touch.clientX <= canvasBounds.right &&
+                        touch.clientY >= canvasBounds.top && 
+                        touch.clientY <= canvasBounds.bottom;
       
-      lastTouchTime = currentTime;
+      console.log('Canvas bounds:', canvasBounds);
+      console.log('Is on canvas:', isOnCanvas);
+      
+      if (isOnCanvas) {
+        console.log('Calling handleInteraction for touch tap');
+        
+        // Add visual feedback for mobile touches
+        const touchIndicator = document.createElement('div');
+        touchIndicator.style.cssText = `
+          position: fixed; top: ${touch.clientY - 10}px; left: ${touch.clientX - 10}px;
+          width: 20px; height: 20px; border-radius: 50%;
+          background: rgba(255, 0, 0, 0.7); pointer-events: none;
+          z-index: 10000; animation: ping 0.5s ease-out forwards;
+        `;
+        document.body.appendChild(touchIndicator);
+        setTimeout(() => touchIndicator.remove(), 500);
+        
+        // Call handleInteraction with separate coordinates
+        handleInteraction(touch.clientX, touch.clientY);
+        
+        lastTouchTime = currentTime;
+      }
     }
     
     touchMoved = false;
-    event.preventDefault();
+    // Only prevent default for 3D canvas interactions
+    const touch = event.changedTouches[0];
+    const canvasBounds = renderer.domElement.getBoundingClientRect();
+    const isOnCanvas = touch.clientX >= canvasBounds.left && 
+                      touch.clientX <= canvasBounds.right &&
+                      touch.clientY >= canvasBounds.top && 
+                      touch.clientY <= canvasBounds.bottom;
+    
+    if (isOnCanvas) {
+      event.preventDefault();
+    }
   }, { passive: false });
 }
 
 // === Shared Interaction Handler ===
 function handleInteraction(event) {
+  console.log('handleInteraction called with event:', event);
+  
   // FIRST: Check global interactions disabled flag
   if (interactionsDisabled) {
+    console.log('Interactions disabled - stopping');
     event.preventDefault();
     event.stopImmediatePropagation();
     return false;
@@ -2532,17 +2679,22 @@ function handleInteraction(event) {
   // SECOND: Skip 3D interactions if loading overlay is visible
   const loadingOverlay = document.getElementById('loadingOverlay');
   if (loadingOverlay && !loadingOverlay.classList.contains('hidden')) {
+    console.log('Loading overlay is visible - stopping 3D interactions');
     event.preventDefault();
     event.stopImmediatePropagation();
     return false;
   }
   
   // Skip interactions during cinematic mode or if currently orbiting
-  if (cinematicMode || isOrbiting) return;
+  if (cinematicMode || isOrbiting) {
+    console.log('Cinematic mode or orbiting - stopping');
+    return;
+  }
   
   // Check if click is on the navigation sidebar
   const navSidebar = document.getElementById('zoneNavSidebar');
   if (navSidebar && navSidebar.contains(event.target)) {
+    console.log('Event on navigation sidebar - stopping');
     return; // Don't process 3D canvas clicks if clicking on nav
   }
 
@@ -2550,11 +2702,175 @@ function handleInteraction(event) {
   mouse.x = ((event.clientX - canvasBounds.left) / canvasBounds.width) * 2 - 1;
   mouse.y = -((event.clientY - canvasBounds.top) / canvasBounds.height) * 2 + 1;
 
+  console.log('Mouse coordinates calculated:', mouse.x, mouse.y);
+
   raycaster.setFromCamera(mouse, camera);
   const intersects = raycaster.intersectObjects([...hexObjects, ...drawers], true);
 
-  // Existing interaction logic would go here...
-  // This is extracted from the existing click handler
+  console.log('Raycaster intersects:', intersects.length);
+
+  if (intersects.length > 0) {
+    let object = intersects[0].object;
+    while (object.parent && !hexObjects.includes(object) && !drawers.includes(object)) object = object.parent;
+
+    console.log('Found object:', object.userData.type);
+
+    // Animation caméra pour hexagones classiques
+    if (object.userData.q !== undefined && object.userData.r !== undefined) {
+      console.log('Hex object clicked:', object.userData.type);
+      currentActiveHexType = object.userData.type; // Update active type on 3D click
+      
+      // Stop any ongoing orbital movement
+      isOrbiting = false;
+      document.body.style.cursor = 'default';
+      
+      // Reset virtual modal state when navigating to different areas
+      virtualModalClosed = false;
+      virtualModalOpened = false;
+      steeringWheelClicked = false;
+      
+      // Reset trash modal state when navigating to different areas
+      trashModalClosed = false;
+      trashModalOpened = false;
+      trashTruckClicked = false;
+      
+      // Reset convoyeur modal state when navigating to different areas
+      convoyeurModalClosed = false;
+      convoyeurModalOpened = false;
+      convoyeurClicked = false;
+      
+      // Reset sensorSensei modal state when navigating to different areas
+      sensorSenseiModalClosed = false;
+      sensorSenseiModalOpened = false;
+      
+      const hexPosition = object.position;
+      const hexData = hexMap.find(hex => hex.q === object.userData.q && hex.r === object.userData.r);
+      const cameraPos = hexData?.cameraPos || { x: 0, y: 5, z: 10 }; // Default camera position
+
+      // Store current camera position to ensure smooth transition
+      const currentPos = {
+        x: camera.position.x,
+        y: camera.position.y,
+        z: camera.position.z
+      };
+
+      gsap.to(camera.position, {
+        x: cameraPos.x,
+        y: cameraPos.y,
+        z: cameraPos.z,
+        duration: CONFIG.ANIMATION.CAMERA_DURATION,
+        ease: CONFIG.ANIMATION.EASE,
+      });
+
+      gsap.to(lookAtTarget, {
+        x: hexPosition.x,
+        y: hexPosition.y,
+        z: hexPosition.z,
+        duration: CONFIG.ANIMATION.CAMERA_DURATION,
+        ease: CONFIG.ANIMATION.EASE,
+        onUpdate: () => {
+          camera.lookAt(lookAtTarget.x, lookAtTarget.y, lookAtTarget.z);
+        },
+      });
+
+      // Update active nav item when clicking on 3D objects
+      updateNavActiveState(object.userData.type);
+    }
+    // Animation caméra pour objets spéciaux (ex: pc)
+    else if (object.userData.type && clickAnimatedDrawers.includes(object.userData.type)) {
+      // Check if this drawer is clickable at the current location/theme
+      if (!isDrawerClickableAtCurrentLocation(object.userData.type)) {
+        console.log(`Drawer ${object.userData.type} not clickable at current location/theme`);
+        return; // Don't allow interaction if not at correct theme
+      }
+      
+      // Mark drawer as read when clicked (except forge)
+      if (unreadDrawers.has(object.userData.type) && object.userData.type !== 'forge') {
+        unreadDrawers.delete(object.userData.type);
+        updateThemeUnreadBadges();
+      }
+      
+      // Handle objects that don't need camera movement (trashTruck, convoyeur, sensorSensei)
+      if (object.userData.type === 'trashTruck' || object.userData.type === 'convoyeur' || object.userData.type === 'sensorSensei') {
+        if (object.userData.type === 'trashTruck' && !trashModalClosed) {
+          showTrashModal();
+        }
+        if (object.userData.type === 'convoyeur' && !convoyeurModalClosed) {
+          showConvoyeurModal();
+        }
+        if (object.userData.type === 'sensorSensei' && !sensorSenseiModalClosed) {
+          showSensorSenseiModal();
+        }
+        return; // Don't animate camera for these objects
+      }
+      
+      const camTarget = drawerCameraTargets[object.userData.type];
+      if (camTarget) {
+        // Set flag only if user clicked on steering wheel
+        if (object.userData.type === 'steering') {
+          steeringWheelClicked = true;
+        }
+        
+        gsap.to(camera.position, {
+          x: camTarget.x,
+          y: camTarget.y,
+          z: camTarget.z,
+          duration: CONFIG.ANIMATION.CAMERA_DURATION,
+          ease: CONFIG.ANIMATION.EASE,
+          onComplete: () => {
+            if (object.userData.type === 'steering' && steeringWheelClicked && !virtualModalClosed) {
+              showVirtualModal();
+              steeringWheelClicked = false; // Reset flag after showing modal
+            }
+          }
+        });
+        // Utilise camTarget.lookAt si défini, sinon fallback sur l'objet
+        const lookAt = camTarget.lookAt || object.position;
+        gsap.to(lookAtTarget, {
+          x: lookAt.x,
+          y: lookAt.y,
+          z: lookAt.z,
+          duration: CONFIG.ANIMATION.CAMERA_DURATION,
+          ease: CONFIG.ANIMATION.EASE,
+          onUpdate: () => {
+            camera.lookAt(lookAtTarget.x, lookAtTarget.y, lookAtTarget.z);
+          },
+        });
+      }
+    }
+    // Affiche forge.html si on clique sur l'objet forge
+    else if (object.userData.type === 'forge') {
+      // Check if forge is clickable at the current location/theme
+      if (!isDrawerClickableAtCurrentLocation('forge')) {
+        console.log('Forge not clickable at current location/theme');
+        return; // Don't allow interaction if not at correct theme
+      }
+      
+      // Mark forge as read
+      if (unreadDrawers.has('forge')) {
+        unreadDrawers.delete('forge');
+        updateThemeUnreadBadges();
+      }
+      showForgeModal();
+    }
+    // Handle mail-box click for contact theme
+    else if (object.userData.type === 'mail-box') {
+      // Check if mail-box is clickable at the current location/theme
+      if (!isDrawerClickableAtCurrentLocation('mail-box')) {
+        console.log('Mail-box not clickable at current location/theme');
+        return; // Don't allow interaction if not at correct theme
+      }
+      
+      // Mark mail-box as read
+      if (unreadDrawers.has('mail-box')) {
+        unreadDrawers.delete('mail-box');
+        updateThemeUnreadBadges();
+      }
+      
+      // Show contact modal instead of navigating to a new page
+      showContactModal();
+    }
+  }
 }
 
 // === Modal Functions ===
@@ -3006,27 +3322,163 @@ const mainZones = [
   { type: 'forge2', label: 'Conception', themeId: 'forge' },
 ];
 
+// === Mobile Navigation Toggle ===
+function toggleMobileNavigation() {
+  const navSidebar = document.getElementById('zoneNavSidebar');
+  const overlay = document.getElementById('mobile-nav-overlay');
+  
+  if (!navSidebar) return;
+  
+  isNavigationOpen = !isNavigationOpen;
+  
+  if (isNavigationOpen) {
+    // Open navigation
+    navSidebar.style.transform = 'translateX(0)';
+    if (overlay) overlay.style.display = 'block';
+  } else {
+    // Close navigation
+    navSidebar.style.transform = 'translateX(-100%)';
+    if (overlay) overlay.style.display = 'none';
+  }
+}
+
+// === Create Mobile Navigation Toggle Button ===
+function createMobileNavToggle() {
+  if (!isMobileDevice) return;
+  
+  const toggleButton = document.createElement('button');
+  toggleButton.id = 'mobile-nav-toggle';
+  toggleButton.innerHTML = '☰';
+  toggleButton.style.cssText = `
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    z-index: 400;
+    background: rgba(20, 20, 30, 0.9);
+    color: white;
+    border: none;
+    width: 50px;
+    height: 50px;
+    border-radius: 25px;
+    font-size: 20px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    transition: all 0.3s ease;
+    touch-action: manipulation;
+  `;
+  
+  toggleButton.addEventListener('click', (e) => {
+    e.stopPropagation();
+    toggleMobileNavigation();
+  });
+  
+  // Prevent 3D interactions
+  toggleButton.addEventListener('touchstart', (e) => e.stopPropagation());
+  toggleButton.addEventListener('touchmove', (e) => e.stopPropagation());
+  toggleButton.addEventListener('touchend', (e) => e.stopPropagation());
+  
+  document.body.appendChild(toggleButton);
+  
+  // Create overlay for mobile navigation
+  const overlay = document.createElement('div');
+  overlay.id = 'mobile-nav-overlay';
+  overlay.style.cssText = `
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 299;
+    display: none;
+    touch-action: none;
+  `;
+  
+  overlay.addEventListener('click', () => {
+    toggleMobileNavigation();
+  });
+  
+  document.body.appendChild(overlay);
+  
+  // Apply mobile-specific navigation styling if on mobile device
+  if (isMobileDevice) {
+    setTimeout(() => {
+      const navSidebar = document.getElementById('zoneNavSidebar');
+      if (navSidebar) {
+        // Mobile-specific navigation styling  
+        navSidebar.style.transform = 'translateX(-100%)';
+        navSidebar.style.zIndex = '1000';
+        
+        // Make navigation items touch-friendly on mobile
+        const navItems = navSidebar.querySelectorAll('div');
+        navItems.forEach(item => {
+          if (item.style.cursor === 'pointer') {
+            item.style.minHeight = '44px'; // Touch target minimum
+            item.style.display = 'flex';
+            item.style.alignItems = 'center';
+            item.style.padding = '12px 20px';
+            item.style.fontSize = '16px';
+            item.style.borderBottom = '1px solid rgba(255,255,255,0.1)';
+            
+            // Enhanced touch feedback
+            item.addEventListener('touchstart', () => {
+              item.style.backgroundColor = 'rgba(255,255,255,0.1)';
+            });
+            item.addEventListener('touchend', () => {
+              setTimeout(() => {
+                item.style.backgroundColor = 'transparent';
+              }, 150);
+            });
+          }
+        });
+      }
+    }, 100); // Small delay to ensure navigation is created
+  }
+}
+
 // Define drawer-to-theme mapping (already declared at top)
 
 const navSidebar = document.createElement('nav');
 navSidebar.id = 'zoneNavSidebar';
-navSidebar.style.position = 'fixed';
-navSidebar.style.top = '0';
-navSidebar.style.left = '0';
-navSidebar.style.height = '100vh';
-navSidebar.style.width = CONFIG.NAVIGATION.SIDEBAR_WIDTH + 'px';
-navSidebar.style.background = 'rgba(20, 20, 30, 0.97)';
-navSidebar.style.color = '#fff';
-navSidebar.style.padding = '36px 0 24px 0';
-navSidebar.style.display = 'flex';
-navSidebar.style.flexDirection = 'column';
-navSidebar.style.alignItems = 'center';
-navSidebar.style.zIndex = '300';
-navSidebar.style.boxShadow = '2px 0 24px rgba(0,0,0,0.18)';
-navSidebar.style.fontSize = '1.1rem';
-navSidebar.style.fontWeight = 'bold';
-navSidebar.style.letterSpacing = '0.02em';
-navSidebar.innerHTML = `<div style="font-size:1.3rem;margin-bottom:18px;font-weight:bold;">Zones à explorer</div><ul id="zoneNavList" style="list-style:none;padding:0;margin:0;width:100%;"></ul>`;
+
+// Base styles for navigation
+const baseNavStyles = {
+  position: 'fixed',
+  top: '0',
+  left: '0',
+  height: '100vh',
+  background: 'rgba(20, 20, 30, 0.97)',
+  color: '#fff',
+  padding: '36px 0 24px 0',
+  display: 'flex',
+  flexDirection: 'column',
+  alignItems: 'center',
+  zIndex: '300',
+  boxShadow: '2px 0 24px rgba(0,0,0,0.18)',
+  fontSize: '1.1rem',
+  fontWeight: 'bold',
+  letterSpacing: '0.02em'
+};
+
+// Apply responsive styles
+if (isMobileDevice) {
+  // Mobile styles
+  Object.assign(navSidebar.style, baseNavStyles);
+  navSidebar.style.width = '280px'; // Wider for mobile touch targets
+  navSidebar.style.transform = 'translateX(-100%)'; // Hidden by default
+  navSidebar.style.transition = 'transform 0.3s ease';
+  navSidebar.style.fontSize = '1.2rem'; // Larger text for mobile
+  navSidebar.style.padding = '60px 0 24px 0'; // More top padding for toggle button
+} else {
+  // Desktop styles
+  Object.assign(navSidebar.style, baseNavStyles);
+  navSidebar.style.width = CONFIG.NAVIGATION.SIDEBAR_WIDTH + 'px';
+}
+
+navSidebar.innerHTML = `<div style="font-size:1.3rem;margin-bottom:18px;font-weight:bold;">${isMobileDevice ? 'Navigation' : 'Zones à explorer'}</div><ul id="zoneNavList" style="list-style:none;padding:0;margin:0;width:100%;"></ul>`;
 document.body.appendChild(navSidebar);
 
 // Empêche le raycast de passer à travers la nav bar
@@ -3035,12 +3487,24 @@ navSidebar.addEventListener('pointermove', e => e.stopPropagation());
 navSidebar.addEventListener('pointerup', e => e.stopPropagation());
 navSidebar.style.pointerEvents = 'auto';
 
-// Décale le canvas 3D pour ne pas être sous la nav
+// Position 3D canvas responsively
 renderer.domElement.style.position = 'absolute';
-renderer.domElement.style.left = CONFIG.NAVIGATION.SIDEBAR_WIDTH + 'px';
-renderer.domElement.style.top = '0';
-renderer.domElement.style.width = `calc(100vw - ${CONFIG.NAVIGATION.SIDEBAR_WIDTH}px)`;
-renderer.domElement.style.height = '100vh';
+if (isMobileDevice) {
+  // Mobile: Full screen canvas, navigation slides over
+  renderer.domElement.style.left = '0';
+  renderer.domElement.style.top = '0';
+  renderer.domElement.style.width = '100vw';
+  renderer.domElement.style.height = '100vh';
+} else {
+  // Desktop: Canvas offset by navigation width
+  renderer.domElement.style.left = CONFIG.NAVIGATION.SIDEBAR_WIDTH + 'px';
+  renderer.domElement.style.top = '0';
+  renderer.domElement.style.width = `calc(100vw - ${CONFIG.NAVIGATION.SIDEBAR_WIDTH}px)`;
+  renderer.domElement.style.height = '100vh';
+}
+
+// Create mobile navigation toggle after sidebar is created
+createMobileNavToggle();
 
 const navList = document.getElementById('zoneNavList');
 
@@ -3235,12 +3699,26 @@ window.navigateToZone = navigateToZone;
 
 // === Responsive 3D Canvas: Only fill area right of nav bar ===
 function resize3DView() {
-  const navWidth = CONFIG.NAVIGATION.SIDEBAR_WIDTH;
-  const width = window.innerWidth - navWidth;
-  const height = window.innerHeight;
+  let width, height;
+  
+  if (isMobileDevice) {
+    // Mobile: Full screen canvas
+    width = window.innerWidth;
+    height = window.innerHeight;
+    renderer.domElement.style.left = '0';
+    renderer.domElement.style.width = '100vw';
+    renderer.domElement.style.height = '100vh';
+  } else {
+    // Desktop: Canvas offset by navigation width
+    const navWidth = CONFIG.NAVIGATION.SIDEBAR_WIDTH;
+    width = window.innerWidth - navWidth;
+    height = window.innerHeight;
+    renderer.domElement.style.left = navWidth + 'px';
+    renderer.domElement.style.width = `calc(100vw - ${navWidth}px)`;
+    renderer.domElement.style.height = '100vh';
+  }
+  
   renderer.setSize(width, height);
-  renderer.domElement.style.width = width + 'px';
-  renderer.domElement.style.height = height + 'px';
   camera.aspect = width / height;
   camera.updateProjectionMatrix();
 }

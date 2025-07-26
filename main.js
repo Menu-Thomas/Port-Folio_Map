@@ -4580,8 +4580,22 @@ if (typeof mainZones !== 'undefined') {
         if (hex.userData.type === zone.type) {
           hex.traverse(child => {
             if (child.isMesh && child.material) {
-              child.material.emissive = new THREE.Color(0x1a82f7);
-              child.material.emissiveIntensity = 0.7;
+              // Handle single material
+              if (!Array.isArray(child.material)) {
+                // Only modify materials that already have emissive properties
+                if (child.material.emissive !== undefined) {
+                  child.material.emissive = new THREE.Color(0x1a82f7);
+                  child.material.emissiveIntensity = 0.7;
+                }
+              } else {
+                // Handle material arrays
+                child.material.forEach(mat => {
+                  if (mat && mat.emissive !== undefined) {
+                    mat.emissive = new THREE.Color(0x1a82f7);
+                    mat.emissiveIntensity = 0.7;
+                  }
+                });
+              }
             }
           });
         }
@@ -4604,9 +4618,22 @@ if (typeof mainZones !== 'undefined') {
       hexObjects.forEach(hex => {
         if (hex.userData.type === zone.type) {
           hex.traverse(child => {
-            if (child.isMesh && child.material && child.material.emissive) {
-              child.material.emissive.setRGB(0,0,0);
-              child.material.emissiveIntensity = 1;
+            if (child.isMesh && child.material) {
+              // Handle single material
+              if (!Array.isArray(child.material)) {
+                if (child.material.emissive !== undefined) {
+                  child.material.emissive.setRGB(0,0,0);
+                  child.material.emissiveIntensity = 0;
+                }
+              } else {
+                // Handle material arrays
+                child.material.forEach(mat => {
+                  if (mat && mat.emissive !== undefined) {
+                    mat.emissive.setRGB(0,0,0);
+                    mat.emissiveIntensity = 0;
+                  }
+                });
+              }
             }
           });
         }

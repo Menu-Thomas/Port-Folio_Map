@@ -711,15 +711,17 @@ let convoyeurModalOpened = false; // Track if the convoyeur modal was ever opene
 let convoyeurClicked = false; // Track if user actually clicked on the convoyeur
 let sensorSenseiModalClosed = false; // Track if user has manually closed the sensorSensei modal
 let sensorSenseiModalOpened = false; // Track if the sensorSensei modal was ever opened
+let medicalModalClosed = false; // Track if user has manually closed the medical modal
+let medicalModalOpened = false; // Track if the medical modal was ever opened
 
 // === Drawer Management ===
-const drawerModels = ['drawer1', 'drawer2', 'drawer3', 'drawer4', 'steering', 'pc', 'forge', 'mail-box', 'trashTruck', 'convoyeur', 'sensorSensei'];
+const drawerModels = ['drawer1', 'drawer2', 'drawer3', 'drawer4', 'steering', 'pc', 'forge', 'mail-box', 'trashTruck', 'convoyeur', 'sensorSensei', 'medical'];
 const drawers = [];
 const interactiveObjects = []; // Separate array for collision detection optimization
 const drawerOriginalPositions = new Map();
 const unreadDrawers = new Set([
   'drawer1', 'drawer2', 'drawer3', 'drawer4', 
-  'steering', 'forge', 'mail-box', 'trashTruck', 'convoyeur', 'sensorSensei',
+  'steering', 'forge', 'mail-box', 'trashTruck', 'convoyeur', 'sensorSensei', 'medical',
   // Individual skillFlowers for CV theme badges
   'skillFlower1', 'skillFlower2', 'skillFlower3', 'skillFlower4', 'skillFlower5',
   'skillFlower6', 'skillFlower7', 'skillFlower8', 'skillFlower9'
@@ -859,7 +861,7 @@ function getLanguageFlowerByName(name) {
 
 // === Drawer Configuration ===
 const animatedDrawers = ['drawer1', 'drawer2', 'drawer3', 'drawer4', 'skillFlower1', 'skillFlower2', 'skillFlower3', 'skillFlower4', 'skillFlower5', 'skillFlower6', 'skillFlower7', 'skillFlower8', 'skillFlower9']; // Drawers that animate on hover
-const clickAnimatedDrawers = ['pc', 'steering', 'trashTruck', 'convoyeur', 'sensorSensei']; // Drawers that animate camera on click
+const clickAnimatedDrawers = ['pc', 'steering', 'trashTruck', 'convoyeur', 'sensorSensei', 'medical']; // Drawers that animate camera on click
 const drawerInfoFiles = {
   drawer1: "project1.html",
   drawer2: "project2.html", 
@@ -880,6 +882,7 @@ const drawerThemes = {
   'trashTruck': 'home',
   'convoyeur': 'home',
   'sensorSensei': 'projects',
+  'medical': 'garage',
   'skillFlower': 'cv' // All skillFlowers belong to CV theme
 };
 
@@ -900,6 +903,14 @@ const drawerCameraTargets = {
   convoyeur: {
     x: 0, y: 0, z: 0,
     lookAt: { x: 0, y: 0, z: 0 }
+  },
+  sensorSensei: {
+    x: 0, y: 0, z: 0,
+    lookAt: { x: 0, y: 0, z: 0 }
+  },
+  medical: {
+    x: -1.738, y: 0.018, z: 0.160,
+    lookAt: { x: -2.256, y: -0.070, z: 1.011 }
   }
 };
 
@@ -1581,6 +1592,8 @@ window.addEventListener('mousemove', (event) => {
             message = `<div>Automated sorting system with NFC & WMS</div>`;
           } else if (object.userData.type === 'sensorSensei') {
             message = `<div>LoRa-powered environmental data relay</div>`;
+          } else if (object.userData.type === 'medical') {
+            message = `<div>VivaTech Medical App - 3D Eye-Tracking Telemedicine</div>`;
           } else if (object.userData.type === 'skillFlower1') {
             message = `<div><strong>Unity Game Engine</strong><br/>3D game development and interactive experiences</div>`;
           } else if (object.userData.type === 'skillFlower2') {
@@ -3176,6 +3189,10 @@ window.addEventListener('wheel', (event) => {
     sensorSenseiModalClosed = false;
     sensorSenseiModalOpened = false;
     
+    // Reset medical modal state when going back to overview
+    medicalModalClosed = false;
+    medicalModalOpened = false;
+    
     // Return to orbital position instead of fixed original position
     const orbitalPosition = {
       x: orbitCenter.x + orbitRadius * Math.cos(currentCameraAngle),
@@ -3273,6 +3290,10 @@ window.addEventListener('click', (event) => {
       sensorSenseiModalClosed = false;
       sensorSenseiModalOpened = false;
       
+      // Reset medical modal state when navigating to different areas
+      medicalModalClosed = false;
+      medicalModalOpened = false;
+      
       const hexPosition = object.position;
       const hexData = hexMap.find(hex => hex.q === object.userData.q && hex.r === object.userData.r);
       const cameraPos = hexData?.cameraPos || { x: 0, y: 5, z: 10 }; // Default camera position
@@ -3320,8 +3341,8 @@ window.addEventListener('click', (event) => {
         updateThemeUnreadBadges();
       }
       
-      // Handle objects that don't need camera movement (trashTruck, convoyeur, sensorSensei)
-      if (object.userData.type === 'trashTruck' || object.userData.type === 'convoyeur' || object.userData.type === 'sensorSensei') {
+      // Handle objects that don't need camera movement (trashTruck, convoyeur, sensorSensei, medical)
+      if (object.userData.type === 'trashTruck' || object.userData.type === 'convoyeur' || object.userData.type === 'sensorSensei' || object.userData.type === 'medical') {
         if (object.userData.type === 'trashTruck' && !trashModalClosed) {
           showTrashModal();
         }
@@ -3330,6 +3351,9 @@ window.addEventListener('click', (event) => {
         }
         if (object.userData.type === 'sensorSensei' && !sensorSenseiModalClosed) {
           showSensorSenseiModal();
+        }
+        if (object.userData.type === 'medical' && !medicalModalClosed) {
+          showMedicalModal();
         }
         return; // Don't animate camera for these objects
       }
@@ -3675,6 +3699,10 @@ function handleInteraction(event) {
       sensorSenseiModalClosed = false;
       sensorSenseiModalOpened = false;
       
+      // Reset medical modal state when navigating to different areas
+      medicalModalClosed = false;
+      medicalModalOpened = false;
+      
       const hexPosition = object.position;
       const hexData = hexMap.find(hex => hex.q === object.userData.q && hex.r === object.userData.r);
       const cameraPos = hexData?.cameraPos || { x: 0, y: 5, z: 10 }; // Default camera position
@@ -3722,8 +3750,8 @@ function handleInteraction(event) {
         updateThemeUnreadBadges();
       }
       
-      // Handle objects that don't need camera movement (trashTruck, convoyeur, sensorSensei)
-      if (object.userData.type === 'trashTruck' || object.userData.type === 'convoyeur' || object.userData.type === 'sensorSensei') {
+      // Handle objects that don't need camera movement (trashTruck, convoyeur, sensorSensei, medical)
+      if (object.userData.type === 'trashTruck' || object.userData.type === 'convoyeur' || object.userData.type === 'sensorSensei' || object.userData.type === 'medical') {
         if (object.userData.type === 'trashTruck' && !trashModalClosed) {
           showTrashModal();
         }
@@ -3732,6 +3760,9 @@ function handleInteraction(event) {
         }
         if (object.userData.type === 'sensorSensei' && !sensorSenseiModalClosed) {
           showSensorSenseiModal();
+        }
+        if (object.userData.type === 'medical' && !medicalModalClosed) {
+          showMedicalModal();
         }
         return; // Don't animate camera for these objects
       }
@@ -4164,6 +4195,65 @@ function showSensorSenseiModal() {
   document.body.appendChild(modal);
 }
 
+function showMedicalModal() {
+  let existingModal = document.getElementById('medicalModal');
+  if (existingModal) return; // Already open
+  
+  medicalModalOpened = true; // Mark that the modal was opened
+  
+  const { modal, content } = createModalBase('medicalModal', () => {
+    medicalModalClosed = true; // Mark that user has closed the modal
+    
+    // Return to orbital position instead of fixed original position
+    const orbitalPosition = {
+      x: orbitCenter.x + orbitRadius * Math.cos(currentCameraAngle),
+      y: orbitHeight,
+      z: orbitCenter.z + orbitRadius * Math.sin(currentCameraAngle)
+    };
+    
+    // Animate camera position
+    gsap.to(camera.position, {
+      x: orbitalPosition.x,
+      y: orbitalPosition.y,
+      z: orbitalPosition.z,
+      duration: CONFIG.ANIMATION.CAMERA_DURATION,
+      ease: CONFIG.ANIMATION.EASE,
+    });
+    
+    // Smoothly animate look-at target to orbital center
+    gsap.to(lookAtTarget, {
+      x: orbitCenter.x,
+      y: orbitCenter.y,
+      z: orbitCenter.z,
+      duration: CONFIG.ANIMATION.CAMERA_DURATION,
+      ease: CONFIG.ANIMATION.EASE,
+      onUpdate: () => {
+        camera.lookAt(lookAtTarget.x, lookAtTarget.y, lookAtTarget.z);
+      },
+      onComplete: () => {
+        // Update orbital camera angle to match the current position
+        updateCameraAngleFromPosition();
+      }
+    });
+  });
+  
+  const iframe = document.createElement('iframe');
+  iframe.src = 'sidepages/medicalApp.html';
+  iframe.style.cssText = `
+    width: 100%;
+    height: 100%;
+    border: none;
+    background: #fff;
+  `;
+  
+  iframe.onerror = () => {
+    content.innerHTML = '<div style="color: white; padding: 20px; text-align: center;">Error loading medical app project content</div>';
+  };
+
+  content.appendChild(iframe);
+  document.body.appendChild(modal);
+}
+
 // Store original positions of drawers
 // (drawerOriginalPositions already declared at top)
 
@@ -4222,6 +4312,13 @@ drawerModels.forEach((model) => {
               // Get projects hex position (q: 0, r: 1)
               const { x, z } = hexToWorld(0, 1);
               drawer.position.set(x, 0, z);
+            }
+            
+            // Position medical at garage hex location
+            if (model === 'medical') {
+              // Get garage hex position (q: -1, r: 0)
+              const { x, z } = hexToWorld(-1, 0);
+              drawer.position.set(x, 0, z); // Position at exact garage hex center (0,0,0 relative)
             }
             
             scene.add(drawer);

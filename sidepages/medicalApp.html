@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VivaTech Medical App - 3D Eye-Tracking Telemedicine</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      line-height: 1.6;
+      color: #333;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 3rem;
+      color: white;
+    }
+
+    .title {
+      font-size: 2.5rem;
+      margin-bottom: 0.5rem;
+      font-weight: 700;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+    }
+
+    .subtitle {
+      font-size: 1.2rem;
+      opacity: 0.9;
+      margin-bottom: 1rem;
+    }
+
+    .project-overview {
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 15px;
+      padding: 2rem;
+      margin-bottom: 2rem;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+      backdrop-filter: blur(10px);
+    }
+
+    .content-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+      gap: 2rem;
+      margin-bottom: 2rem;
+    }
+
+    .card {
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 15px;
+      padding: 1.5rem;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 12px 40px rgba(0,0,0,0.15);
+    }
+
+    .card h3 {
+      color: #4a90e2;
+      margin-bottom: 1rem;
+      font-size: 1.3rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .icon {
+      font-size: 1.5rem;
+    }
+
+    .card p, .card li {
+      margin-bottom: 0.5rem;
+      color: #555;
+    }
+
+    .card ul {
+      margin-left: 1rem;
+    }
+
+    .tech-stack {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-top: 1rem;
+    }
+
+    .tech-tag {
+      background: linear-gradient(135deg, #4a90e2, #357abd);
+      color: white;
+      padding: 0.3rem 0.8rem;
+      border-radius: 20px;
+      font-size: 0.9rem;
+      font-weight: 500;
+    }
+
+    .highlight {
+      background: linear-gradient(120deg, #a8edea 0%, #fed6e3 100%);
+      border-left: 4px solid #4a90e2;
+      padding: 1rem;
+      border-radius: 8px;
+      margin: 1rem 0;
+    }
+
+    .results {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border-radius: 15px;
+      padding: 2rem;
+      margin-top: 2rem;
+      text-align: center;
+    }
+
+    .results h3 {
+      font-size: 1.8rem;
+      margin-bottom: 1rem;
+    }
+
+    .achievement {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
+      padding: 1rem;
+      margin: 1rem 0;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .image-placeholder {
+      background: linear-gradient(45deg, #f0f0f0, #e0e0e0);
+      border-radius: 10px;
+      padding: 2rem;
+      text-align: center;
+      color: #666;
+      border: 2px dashed #ccc;
+      margin: 1rem 0;
+    }
+
+    @media (max-width: 768px) {
+      .title {
+        font-size: 2rem;
+      }
+      
+      .container {
+        padding: 1rem;
+      }
+      
+      .content-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1 class="title">🏥 VivaTech Medical App</h1>
+      <p class="subtitle">Application de téléconsultation médicale avec technologie 3D et eye-tracking</p>
+      <p><strong>Projet réalisé lors du stage chez EpicNpoc</strong></p>
+    </div>
+
+    <div class="project-overview">
+      <h2>📋 Vue d'ensemble du projet</h2>
+      <p>Le projet visait à développer une application de téléconsultation médicale innovante pour un écran 3D avec eye-tracking Leia. Cette solution permettait aux médecins de partager des visualisations d'organes en 3D avec leurs patients pendant les consultations à distance, offrant une expérience interactive et immersive.</p>
+      
+      <div class="highlight">
+        <strong>Défi technique principal :</strong> Assurer la réception et l'affichage en temps réel d'objets 3D, de messages et de vidéos sans recompilation de l'application.
+      </div>
+    </div>
+
+    <div class="content-grid">
+      <div class="card">
+        <h3><span class="icon">🎯</span>Objectifs spécifiques</h3>
+        <ul>
+          <li>Développer une application fonctionnant sur les tablettes 3D Leia avec eye-tracking</li>
+          <li>Créer plusieurs pages : présentation des informations du patient et vidéoconférence</li>
+          <li>Permettre le partage de visualisations d'organes en 3D pendant la consultation</li>
+          <li>Assurer l'affichage en temps réel d'objets 3D sans recompilation</li>
+          <li>Garantir une interaction fluide avec les éléments 3D via eye-tracking</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h3><span class="icon">🔬</span>Méthodologies utilisées</h3>
+        <h4>1. Recherche et Collecte des Besoins</h4>
+        <ul>
+          <li>Discussions régulières avec le tuteur et expert UI design</li>
+          <li>Utilisation de Figma pour la conception des interfaces</li>
+          <li>Intégration des spécifications liées au plugin Leia</li>
+        </ul>
+        
+        <h4>2. Développement par Étapes</h4>
+        <ul>
+          <li>Développement des fonctionnalités de vidéoconférence</li>
+          <li>Intégration de la technologie eye-tracking</li>
+          <li>Mise en place de la réception temps réel</li>
+        </ul>
+        
+        <h4>3. Validation des Spécifications</h4>
+        <ul>
+          <li>Tests sur tablettes 3D Leia</li>
+          <li>Tests finaux chez le client à Paris sur télévision 3D</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h3><span class="icon">💻</span>Technologies utilisées</h3>
+        <div class="tech-stack">
+          <span class="tech-tag">Leia 3D Display</span>
+          <span class="tech-tag">Eye-tracking</span>
+          <span class="tech-tag">WebRTC</span>
+          <span class="tech-tag">Figma</span>
+          <span class="tech-tag">3D Rendering</span>
+          <span class="tech-tag">Real-time Communication</span>
+          <span class="tech-tag">JavaScript</span>
+          <span class="tech-tag">HTML5</span>
+        </div>
+        
+        <div class="image-placeholder">
+         <!-- Replace Image 1 placeholder with: -->
+            <img src="../public/images/med2.jpg" alt="Interface principale" style="width: 100%; border-radius: 8px;">
+            
+        </div>
+      </div>
+
+      <div class="card">
+        <h3><span class="icon">⚡</span>Fonctionnalités principales</h3>
+        <ul>
+          <li><strong>Vidéoconférence HD :</strong> Communication en temps réel entre médecin et patient</li>
+          <li><strong>Visualisation 3D d'organes :</strong> Partage d'objets 3D médicaux interactifs</li>
+          <li><strong>Eye-tracking :</strong> Navigation fluide via le suivi oculaire</li>
+          <li><strong>Interface patient :</strong> Présentation claire des informations médicales</li>
+          <li><strong>Streaming temps réel :</strong> Réception d'objets 3D sans recompilation</li>
+          <li><strong>Multi-plateforme :</strong> Compatible tablettes et télévisions 3D</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h3><span class="icon">🔧</span>Défis techniques relevés</h3>
+        <ul>
+          <li><strong>Synchronisation temps réel :</strong> Affichage instantané des objets 3D partagés</li>
+          <li><strong>Optimisation eye-tracking :</strong> Réactivité et précision du suivi oculaire</li>
+          <li><strong>Performance 3D :</strong> Rendu fluide sur hardware spécialisé Leia</li>
+          <li><strong>Stabilité réseau :</strong> Maintien de la qualité durant les consultations</li>
+          <li><strong>Interface adaptive :</strong> UX optimisée pour l'interaction oculaire</li>
+        </ul>
+        
+        <div class="image-placeholder">
+          <!-- Replace Image 2 placeholder with: -->
+            <img src="../public/images/med1.jpg" alt="Eye-tracking demo" style="width: 100%; border-radius: 8px;">
+        </div>
+      </div>
+
+      <div class="card">
+        <h3><span class="icon">🤝</span>Collaboration</h3>
+        <p>Travail en étroite collaboration avec :</p>
+        <ul>
+          <li><strong>Tuteur de stage :</strong> Supervision technique et validation des fonctionnalités</li>
+          <li><strong>Expert UI/UX :</strong> Conception des interfaces avec Figma</li>
+          <li><strong>Client final :</strong> Tests de validation en conditions réelles</li>
+        </ul>
+        
+        <div class="highlight">
+          <strong>Particularité :</strong> Contrairement aux autres projets, cette application ne nécessitait pas de connexion au serveur d'EpicNpoc, permettant un développement plus autonome.
+        </div>
+      </div>
+    </div>
+
+    <div class="results">
+      <h3>🏆 Résultats et Impact</h3>
+      
+      <div class="achievement">
+        <h4>✅ Application Fonctionnelle</h4>
+        <p>Développement réussi d'une application de téléconsultation médicale innovante permettant des consultations à distance avec interaction 3D fluide.</p>
+      </div>
+      
+      <div class="achievement">
+        <h4>✅ Défi Technique Relevé</h4>
+        <p>Le défi de recevoir et afficher des objets 3D en temps réel sans recompilation a été relevé avec succès, démontrant la maîtrise des technologies temps réel.</p>
+      </div>
+      
+      <div class="achievement">
+        <h4>✅ Validation Client</h4>
+        <p>Les tests effectués sur les tablettes Leia et la télévision 3D ont validé la robustesse et l'efficacité de l'application en conditions réelles d'utilisation.</p>
+      </div>
+      
+      <div class="achievement">
+        <h4>✅ Innovation Technologique</h4>
+        <p>Démonstration de la capacité de l'équipe à intégrer des technologies avancées (3D, eye-tracking, temps réel), offrant une solution pratique et interactive pour les téléconsultations médicales.</p>
+      </div>
+      
+      <div class="achievement">
+        <h4>✅ Compétences Développées</h4>
+        <p>Maîtrise des technologies 3D, eye-tracking, développement temps réel, collaboration interdisciplinaire, et validation produit en environnement client.</p>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

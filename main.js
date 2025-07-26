@@ -367,6 +367,32 @@ function detectTouchDevice() {
 
 detectTouchDevice();
 
+// === Global Keyboard Shortcuts ===
+document.addEventListener('keydown', (event) => {
+  // Camera Editor Toggle (Ctrl + E)
+  if (event.ctrlKey && event.key.toLowerCase() === 'e') {
+    event.preventDefault();
+    cameraEditor.toggle();
+    return;
+  }
+  
+  // Debug Light Manager (Ctrl + L)
+  if (event.ctrlKey && event.key.toLowerCase() === 'l') {
+    event.preventDefault();
+    ImportedLightManager.debugLights();
+    return;
+  }
+  
+  // Quick position print (Ctrl + P) - only when editor is not active
+  if (event.ctrlKey && event.key.toLowerCase() === 'p' && !cameraEditor.isActive) {
+    event.preventDefault();
+    console.log('📍 Current Camera Position:');
+    console.log(`Position: { x: ${camera.position.x.toFixed(3)}, y: ${camera.position.y.toFixed(3)}, z: ${camera.position.z.toFixed(3)} }`);
+    console.log(`Looking at: { x: ${lookAtTarget.x.toFixed(3)}, y: ${lookAtTarget.y.toFixed(3)}, z: ${lookAtTarget.z.toFixed(3)} }`);
+    return;
+  }
+});
+
 // === Application State Variables ===
 let currentActiveHexType = null; // Tracks the currently active hex type for navigation sync
 let lookAtTarget = { 
@@ -847,7 +873,7 @@ const drawerThemes = {
   'drawer2': 'home',
   'drawer3': 'home', 
   'drawer4': 'home',
-  'steering': 'home',
+  'steering': 'garage',
   'pc': 'home',
   'forge': 'forge',
   'mail-box': 'contact',
@@ -864,8 +890,8 @@ const drawerCameraTargets = {
     lookAt: { x: -0.25, y: -0.04, z: -0.35 }
   },
   steering: {
-    x: -0.1, y: 0.005, z: 0.16,
-    lookAt: { x: -0.16, y: 0.005, z: 0.24 }
+    x: -1.738, y: 0.018, z: 0.160,
+    lookAt: { x: -2.256, y: -0.070, z: 1.011 }
   },
   trashTruck: {
     x: 0, y: 0, z: 0,
@@ -986,7 +1012,7 @@ hexMap.forEach(({ q, r, type }) => {
         `./public/models/Hex-${type}.glb`,
         (gltf) => {
           try {
-            processGLBMaterials(gltf);
+            processGLBMaterials(gltf, `Hex-${type}.glb`);
             const hex = gltf.scene;
             hex.position.set(x, 0, z);
             hex.scale.set(1, 1, 1);
@@ -1094,13 +1120,27 @@ function createOcean() {
       opacity: 0.9,
       roughness: 0.1,
       metalness: 0.0,
-      envMapIntensity: 0.8
+      emissive: new THREE.Color(0x000000), // Ensure emissive is always a Color
+      normalScale: new THREE.Vector2(1, 1) // Ensure normalScale is always a Vector2
     });
     
-    // Apply environment map if available
-    if (scene.environment) {
-      material.envMap = scene.environment;
+    // Temporarily disable environment mapping to avoid uniform issues
+    /*
+    // Safely apply environment map if available
+    try {
+      if (scene.environment && scene.environment.isTexture) {
+        // Additional validation for environment texture
+        if (scene.environment.image && (scene.environment.image.width > 0 || scene.environment.image.length > 0)) {
+          material.envMap = scene.environment;
+          material.envMapIntensity = 0.8;
+        } else {
+          console.warn('Ocean: Environment texture appears invalid, not applying envMap');
+        }
+      }
+    } catch (envError) {
+      console.warn('Environment map assignment failed for ocean:', envError);
     }
+    */
     
     const mesh = new THREE.Mesh(geometry, material);
     mesh.position.y = -1;
@@ -1150,7 +1190,7 @@ function getUnreadCountForTheme(themeId) {
 }
 
 function updateThemeUnreadBadges() {
-  const themes = ['home', 'forge', 'contact', 'projects', 'cv'];
+  const themes = ['home', 'garage', 'forge', 'contact', 'projects', 'cv'];
   themes.forEach(themeId => {
     const count = getUnreadCountForTheme(themeId);
     const badge = document.getElementById(`unread-badge-${themeId}`);
@@ -1204,7 +1244,7 @@ function getCurrentHexTheme(hexType) {
     'contact': 'contact',
     'bridge': 'home',
     'champ1': 'home',
-    'garage': 'home',
+    'garage': 'garage',
     'forest1': 'home',
     'forest2': 'home', 
     'forest3': 'home',
@@ -1660,8 +1700,131 @@ window.addEventListener('mousemove', (event) => {
   }
 });
 
-// === GLB Material Processing ===
-function processGLBMaterials(gltf) {
+// === Material Validation Utility ===
+function validateSceneMaterials() {
+  let invalidMaterials = 0;
+  
+  scene.traverse((child) => {
+    if (child.isMesh && child.material) {
+      const materials = Array.isArray(child.material) ? child.material : [child.material];
+      
+      materials.forEach((material, index) => {
+        if (material) {
+          try {
+            // Check for common uniform issues
+            if (material.envMap && !material.envMap.isTexture) {
+              console.warn(`Invalid envMap on material ${index} of ${child.name || 'unnamed object'}`);
+              material.envMap = null;
+              invalidMaterials++;
+            }
+            
+            // Ensure normal scale is a Vector2
+            if (material.normalScale && !(material.normalScale instanceof THREE.Vector2)) {
+              material.normalScale = new THREE.Vector2(1, 1);
+              invalidMaterials++;
+            }
+            
+            // Ensure emissive is a Color
+            if (material.emissive && !(material.emissive instanceof THREE.Color)) {
+              material.emissive = new THREE.Color(0x000000);
+              invalidMaterials++;
+            }
+
+            // Check for invalid uniforms that might cause .value errors
+            if (material.uniforms) {
+              Object.keys(material.uniforms).forEach(uniformName => {
+                const uniform = material.uniforms[uniformName];
+                if (uniform && typeof uniform === 'object' && uniform.value === undefined) {
+                  console.warn(`Invalid uniform ${uniformName} on material ${index} of ${child.name || 'unnamed object'}`);
+                  // Don't delete, just ensure it has a valid value
+                  uniform.value = 0; // Safe default for most uniform types
+                  invalidMaterials++;
+                }
+              });
+            }
+
+            // Ensure proper material flags
+            if (material.transparent === undefined) material.transparent = false;
+            if (material.alphaTest === undefined) material.alphaTest = 0;
+            if (material.side === undefined) material.side = THREE.FrontSide;
+            
+          } catch (validationError) {
+            console.warn(`Material validation error on ${child.name || 'unnamed object'}:`, validationError);
+            invalidMaterials++;
+          }
+        }
+      });
+    }
+  });
+  
+  if (invalidMaterials > 0) {
+    console.log(`Fixed ${invalidMaterials} invalid material properties`);
+  }
+}
+
+// === Problematic Material Isolation ===
+function isolateProblematicMaterials() {
+  let isolatedCount = 0;
+  const fallbackMaterial = new THREE.MeshBasicMaterial({ color: 0x808080, transparent: true, opacity: 0.5 });
+  
+  scene.traverse((child) => {
+    if (child.isMesh && child.material) {
+      const materials = Array.isArray(child.material) ? child.material : [child.material];
+      
+      materials.forEach((material, index) => {
+        if (material) {
+          try {
+            // Test if material has problematic uniforms
+            let hasProblematicUniforms = false;
+            
+            if (material.uniforms) {
+              Object.keys(material.uniforms).forEach(uniformName => {
+                const uniform = material.uniforms[uniformName];
+                if (uniform && typeof uniform === 'object' && uniform.value === undefined) {
+                  hasProblematicUniforms = true;
+                }
+              });
+            }
+            
+            // If material has issues, temporarily replace it
+            if (hasProblematicUniforms) {
+              console.warn(`Isolating problematic material on ${child.name || 'unnamed object'}[${index}]`);
+              
+              if (Array.isArray(child.material)) {
+                child.material[index] = fallbackMaterial;
+              } else {
+                child.material = fallbackMaterial;
+              }
+              
+              isolatedCount++;
+              
+              // Mark the object for material restoration later
+              child.userData.materialIsolated = true;
+            }
+          } catch (isolationError) {
+            console.warn(`Material isolation error on ${child.name || 'unnamed object'}:`, isolationError);
+            
+            // As a last resort, use fallback material
+            if (Array.isArray(child.material)) {
+              child.material[index] = fallbackMaterial;
+            } else {
+              child.material = fallbackMaterial;
+            }
+            isolatedCount++;
+            child.userData.materialIsolated = true;
+          }
+        }
+      });
+    }
+  });
+  
+  if (isolatedCount > 0) {
+    console.log(`Isolated ${isolatedCount} problematic materials with fallback materials`);
+  }
+}
+
+// === GLB Material and Light Processing ===
+function processGLBMaterials(gltf, sourceName = 'unknown') {
   gltf.scene.traverse((child) => {
     if (child.isMesh) {
       // Enable shadow casting and receiving
@@ -1671,53 +1834,771 @@ function processGLBMaterials(gltf) {
       if (child.material) {
         // Ensure proper material properties for PBR rendering
         if (child.material.isMeshStandardMaterial || child.material.isMeshPhysicalMaterial) {
-          // Enable environment mapping if available
-          if (scene.environment) {
-            child.material.envMap = scene.environment;
-            child.material.envMapIntensity = 0.8;
+          // Safely apply environment mapping
+          try {
+            if (scene.environment && scene.environment.isTexture) {
+              child.material.envMap = scene.environment;
+              child.material.envMapIntensity = 0.8;
+            }
+            
+            // Improve material properties for better lighting response
+            if (child.material.metalness === undefined) child.material.metalness = 0.1;
+            if (child.material.roughness === undefined) child.material.roughness = 0.7;
+            
+            // Enable proper normal mapping with better scale
+            if (child.material.normalMap) {
+              child.material.normalScale = child.material.normalScale || new THREE.Vector2(1.2, 1.2);
+            }
+            
+            // Add subtle emission for better visibility in dark areas
+            if (!child.material.emissive) {
+              child.material.emissive = new THREE.Color(0x000000);
+            }
+            
+            // Update material
+            child.material.needsUpdate = true;
+          } catch (materialError) {
+            console.warn(`Material processing error for ${sourceName}:`, materialError);
           }
-          
-          // Improve material properties for better lighting response
-          if (child.material.metalness === undefined) child.material.metalness = 0.1;
-          if (child.material.roughness === undefined) child.material.roughness = 0.7;
-          
-          // Enable proper normal mapping with better scale
-          if (child.material.normalMap) {
-            child.material.normalScale.set(1.2, 1.2);
-          }
-          
-          // Add subtle emission for better visibility in dark areas
-          if (!child.material.emissive) {
-            child.material.emissive = new THREE.Color(0x000000);
-          }
-          
-          // Update material
-          child.material.needsUpdate = true;
         }
         
         // Handle multiple materials (arrays)
         if (Array.isArray(child.material)) {
-          child.material.forEach(mat => {
-            if (mat.isMeshStandardMaterial || mat.isMeshPhysicalMaterial) {
-              if (scene.environment) {
-                mat.envMap = scene.environment;
-                mat.envMapIntensity = 0.8;
+          child.material.forEach((mat, index) => {
+            if (mat && (mat.isMeshStandardMaterial || mat.isMeshPhysicalMaterial)) {
+              try {
+                if (scene.environment && scene.environment.isTexture) {
+                  mat.envMap = scene.environment;
+                  mat.envMapIntensity = 0.8;
+                }
+                if (mat.metalness === undefined) mat.metalness = 0.1;
+                if (mat.roughness === undefined) mat.roughness = 0.7;
+                if (mat.normalMap) {
+                  mat.normalScale = mat.normalScale || new THREE.Vector2(1.2, 1.2);
+                }
+                if (!mat.emissive) {
+                  mat.emissive = new THREE.Color(0x000000);
+                }
+                mat.needsUpdate = true;
+              } catch (materialError) {
+                console.warn(`Material array processing error for ${sourceName}[${index}]:`, materialError);
               }
-              if (mat.metalness === undefined) mat.metalness = 0.1;
-              if (mat.roughness === undefined) mat.roughness = 0.7;
-              if (mat.normalMap) {
-                mat.normalScale.set(1.2, 1.2);
-              }
-              if (!mat.emissive) {
-                mat.emissive = new THREE.Color(0x000000);
-              }
-              mat.needsUpdate = true;
             }
           });
         }
       }
     }
+    
+    // Process cameras imported from GLB files
+    if (child.isCamera) {
+      console.log('Found embedded camera:', child.name || 'unnamed', 'in', sourceName);
+      
+      // Register the camera for position editing
+      if (cameraEditor) {
+        cameraEditor.registerEmbeddedCamera(child, sourceName);
+      }
+    }
+    
+    // Process lights imported from GLB files
+    if (child.isLight) {
+      console.log('Found imported light:', child.type, 'with intensity:', child.intensity);
+      
+      // Register the light for management
+      ImportedLightManager.registerLight(child, sourceName);
+      
+      // Handle SpotLight specifically
+      if (child.type === 'SpotLight') {
+        // Reduce intensity to prevent overwhelming brightness
+        const originalIntensity = child.intensity;
+        child.intensity = Math.min(originalIntensity * 0.3, 2.0); // Reduce to 30% of original, max 2.0
+        
+        // Configure shadow settings for better quality and prevent light bleeding
+        child.castShadow = true;
+        child.shadow.mapSize.width = 1024;
+        child.shadow.mapSize.height = 1024;
+        child.shadow.camera.near = 0.1;
+        child.shadow.camera.far = Math.min(child.distance || 50, 30); // Limit shadow distance
+        child.shadow.bias = -0.0005; // Prevent shadow acne
+        child.shadow.normalBias = 0.02; // Prevent peter panning
+        
+        // Limit the spotlight angle to prevent excessive spread
+        if (child.angle > Math.PI / 3) { // If angle > 60 degrees
+          child.angle = Math.PI / 4; // Limit to 45 degrees
+        }
+        
+        // Set penumbra for softer light edges (prevents harsh cutoffs)
+        child.penumbra = Math.max(child.penumbra || 0, 0.2); // Min 20% penumbra
+        
+        // Limit distance to prevent light bleeding through walls
+        if (child.distance === 0 || child.distance > 20) {
+          child.distance = 15; // Set reasonable max distance
+        }
+        
+        // Add decay for more realistic falloff
+        child.decay = Math.max(child.decay || 1, 1.5); // Ensure some decay
+        
+        console.log(`Adjusted SpotLight: intensity ${originalIntensity} -> ${child.intensity}, angle: ${(child.angle * 180 / Math.PI).toFixed(1)}°, distance: ${child.distance}`);
+      }
+      
+      // Handle PointLight
+      else if (child.type === 'PointLight') {
+        const originalIntensity = child.intensity;
+        child.intensity = Math.min(originalIntensity * 0.4, 3.0); // Reduce intensity
+        
+        // Configure shadows
+        child.castShadow = true;
+        child.shadow.mapSize.width = 512;
+        child.shadow.mapSize.height = 512;
+        child.shadow.camera.near = 0.1;
+        child.shadow.camera.far = Math.min(child.distance || 30, 20);
+        child.shadow.bias = -0.0005;
+        
+        // Limit distance
+        if (child.distance === 0 || child.distance > 25) {
+          child.distance = 20;
+        }
+        
+        child.decay = Math.max(child.decay || 1, 1.2);
+        
+        console.log(`Adjusted PointLight: intensity ${originalIntensity} -> ${child.intensity}, distance: ${child.distance}`);
+      }
+      
+      // Handle DirectionalLight
+      else if (child.type === 'DirectionalLight') {
+        const originalIntensity = child.intensity;
+        child.intensity = Math.min(originalIntensity * 0.5, 2.0);
+        
+        // Configure shadows with smaller area to prevent conflicts
+        child.castShadow = true;
+        child.shadow.mapSize.width = 1024;
+        child.shadow.mapSize.height = 1024;
+        child.shadow.camera.near = 0.5;
+        child.shadow.camera.far = 50;
+        child.shadow.camera.left = -10;
+        child.shadow.camera.right = 10;
+        child.shadow.camera.top = 10;
+        child.shadow.camera.bottom = -10;
+        child.shadow.bias = -0.0001;
+        child.shadow.normalBias = 0.02;
+        
+        console.log(`Adjusted DirectionalLight: intensity ${originalIntensity} -> ${child.intensity}`);
+      }
+      
+      // For any other light types, just reduce intensity
+      else if (child.intensity !== undefined) {
+        const originalIntensity = child.intensity;
+        child.intensity = Math.min(originalIntensity * 0.4, 2.0);
+        console.log(`Adjusted ${child.type}: intensity ${originalIntensity} -> ${child.intensity}`);
+      }
+    }
   });
+}
+
+// === Light Management Utilities ===
+class ImportedLightManager {
+  static importedLights = new Set();
+  
+  // Register an imported light for management
+  static registerLight(light, source = 'unknown') {
+    this.importedLights.add(light);
+    light.userData.source = source;
+    light.userData.originalIntensity = light.intensity;
+    console.log(`Registered imported ${light.type} from ${source}`);
+  }
+  
+  // Adjust all imported lights intensity
+  static adjustAllLights(intensityMultiplier = 0.3) {
+    this.importedLights.forEach(light => {
+      if (light.userData.originalIntensity !== undefined) {
+        light.intensity = light.userData.originalIntensity * intensityMultiplier;
+      }
+    });
+    console.log(`Adjusted ${this.importedLights.size} imported lights by factor ${intensityMultiplier}`);
+  }
+  
+  // Toggle all imported lights
+  static toggleAllLights(enabled = true) {
+    this.importedLights.forEach(light => {
+      light.visible = enabled;
+    });
+    console.log(`${enabled ? 'Enabled' : 'Disabled'} ${this.importedLights.size} imported lights`);
+  }
+  
+  // Get all lights of a specific type
+  static getLightsByType(type) {
+    return Array.from(this.importedLights).filter(light => light.type === type);
+  }
+  
+  // Remove a light from management
+  static unregisterLight(light) {
+    this.importedLights.delete(light);
+  }
+  
+  // Debug: List all imported lights
+  static debugLights() {
+    console.log('=== Imported Lights Debug ===');
+    this.importedLights.forEach((light, index) => {
+      console.log(`${index + 1}. ${light.type} from ${light.userData.source || 'unknown'}`);
+      console.log(`   - Intensity: ${light.intensity} (original: ${light.userData.originalIntensity})`);
+      console.log(`   - Position: (${light.position.x.toFixed(2)}, ${light.position.y.toFixed(2)}, ${light.position.z.toFixed(2)})`);
+      if (light.type === 'SpotLight') {
+        console.log(`   - Angle: ${(light.angle * 180 / Math.PI).toFixed(1)}°, Distance: ${light.distance}`);
+      }
+      console.log(`   - Shadows: ${light.castShadow}, Visible: ${light.visible}`);
+    });
+    console.log('=============================');
+  }
+}
+
+// Make the light manager available globally for debugging
+window.ImportedLightManager = ImportedLightManager;
+
+// === Camera Position Editor System ===
+class CameraPositionEditor {
+  constructor() {
+    this.isActive = false;
+    this.currentTarget = null;
+    this.embeddedCameras = new Map(); // Store cameras found in GLB files
+    this.tempMarkers = new Set(); // Store temporary position markers
+    this.originalCameraPosition = null;
+    this.originalCameraTarget = null;
+  }
+
+  // Register a camera found in a GLB file
+  registerEmbeddedCamera(camera, sourceName) {
+    const key = `${sourceName}_${camera.name || 'camera'}`;
+    this.embeddedCameras.set(key, {
+      camera: camera,
+      source: sourceName,
+      position: camera.position.clone(),
+      target: camera.getWorldDirection(new THREE.Vector3()).multiplyScalar(-1).add(camera.position)
+    });
+    console.log(`Registered embedded camera: ${key} from ${sourceName}`);
+  }
+
+  // Toggle editor mode
+  toggle() {
+    this.isActive = !this.isActive;
+    
+    if (this.isActive) {
+      this.activate();
+    } else {
+      this.deactivate();
+    }
+  }
+
+  activate() {
+    console.log('🎥 Camera Position Editor ACTIVATED');
+    console.log('Controls:');
+    console.log('- Z: Move forward (camera direction)');
+    console.log('- S: Move backward');
+    console.log('- Q: Move left');  
+    console.log('- D: Move right');
+    console.log('- A: Move up');
+    console.log('- E: Move down');
+    console.log('- Mouse: Look around (hold left button and drag)');
+    console.log('- Click objects: Set look-at target');
+    console.log('- P: Print current position');
+    console.log('- M: Place marker at current position');
+    console.log('- C: Clear all markers');
+    console.log('- ESC: Exit editor');
+    console.log('※ Works with both AZERTY and QWERTY layouts');
+
+    // Store original camera state
+    this.originalCameraPosition = camera.position.clone();
+    this.originalCameraTarget = lookAtTarget ? { ...lookAtTarget } : { x: 0, y: 0, z: 0 };
+
+    // Initialize camera rotation tracking
+    this.cameraRotation = {
+      x: camera.rotation.x,
+      y: camera.rotation.y
+    };
+
+    // Set proper rotation order for camera
+    camera.rotation.order = 'YXZ';
+
+    // Disable cinematic mode and orbital controls
+    cinematicMode = true; // Prevent other interactions
+    
+    // Create editor UI
+    this.createEditorUI();
+    
+    // Add event listeners
+    this.addEventListeners();
+
+    // Show embedded cameras if any
+    this.displayEmbeddedCameras();
+  }
+
+  deactivate() {
+    console.log('🎥 Camera Position Editor DEACTIVATED');
+    
+    // Restore original camera state
+    if (this.originalCameraPosition) {
+      camera.position.copy(this.originalCameraPosition);
+    }
+    if (this.originalCameraTarget) {
+      camera.lookAt(this.originalCameraTarget.x, this.originalCameraTarget.y, this.originalCameraTarget.z);
+    }
+
+    // Reset camera rotation tracking
+    this.cameraRotation = null;
+
+    // Re-enable normal interactions
+    cinematicMode = false;
+    
+    // Remove editor UI
+    this.removeEditorUI();
+    
+    // Remove event listeners
+    this.removeEventListeners();
+
+    // Clear temporary markers
+    this.clearMarkers();
+  }
+
+  createEditorUI() {
+    // Create editor panel
+    const panel = document.createElement('div');
+    panel.id = 'camera-editor-panel';
+    panel.style.cssText = `
+      position: fixed; top: 20px; left: 20px; z-index: 10000;
+      background: rgba(0,0,0,0.9); color: white; padding: 20px;
+      border-radius: 12px; font-family: monospace; font-size: 12px;
+      min-width: 300px; max-height: 80vh; overflow-y: auto;
+      border: 2px solid #00ff00; box-shadow: 0 0 20px rgba(0,255,0,0.3);
+    `;
+
+    panel.innerHTML = `
+      <div style="color: #00ff00; font-weight: bold; margin-bottom: 15px;">
+        🎥 CAMERA POSITION EDITOR
+      </div>
+      
+      <div id="camera-position-display" style="margin-bottom: 15px; padding: 10px; background: rgba(0,255,0,0.1); border-radius: 6px;">
+        <div>Position: <span id="pos-display">0, 0, 0</span></div>
+        <div>Looking at: <span id="target-display">0, 0, 0</span></div>
+      </div>
+
+      <div style="margin-bottom: 15px;">
+        <button id="print-position" style="background: #333; color: white; border: 1px solid #666; padding: 5px 10px; margin: 2px; cursor: pointer; border-radius: 4px;">Print Position (P)</button>
+        <button id="place-marker" style="background: #333; color: white; border: 1px solid #666; padding: 5px 10px; margin: 2px; cursor: pointer; border-radius: 4px;">Place Marker (M)</button>
+        <button id="clear-markers" style="background: #333; color: white; border: 1px solid #666; padding: 5px 10px; margin: 2px; cursor: pointer; border-radius: 4px;">Clear Markers (C)</button>
+        <button id="export-positions" style="background: #0066cc; color: white; border: 1px solid #0088ff; padding: 5px 10px; margin: 2px; cursor: pointer; border-radius: 4px;">Export Code</button>
+      </div>
+
+      <div id="embedded-cameras" style="margin-bottom: 15px;">
+        <div style="color: #ffaa00; font-weight: bold;">Embedded Cameras:</div>
+        <div id="embedded-cameras-list" style="margin-top: 5px;"></div>
+      </div>
+
+      <div id="markers-list" style="margin-bottom: 15px;">
+        <div style="color: #ff6600; font-weight: bold;">Placed Markers:</div>
+        <div id="markers-content" style="margin-top: 5px;"></div>
+      </div>
+
+      <div style="color: #888; font-size: 10px; line-height: 1.4;">
+        <strong>Controls:</strong><br>
+        Physical Keys (works with any layout):<br>
+        Top row left/right: Move forward/back<br>
+        Bottom row left/right: Move left/right<br>
+        Corner keys: Move up/down<br>
+        Mouse drag: Look around<br>
+        Click: Set target<br>
+        P/M/C/ESC: Print/Mark/Clear/Exit
+      </div>
+    `;
+
+    document.body.appendChild(panel);
+
+    // Add button event listeners
+    document.getElementById('print-position').onclick = () => this.printCurrentPosition();
+    document.getElementById('place-marker').onclick = () => this.placeMarker();
+    document.getElementById('clear-markers').onclick = () => this.clearMarkers();
+    document.getElementById('export-positions').onclick = () => this.exportPositions();
+
+    // Start position update loop
+    this.updatePositionDisplay();
+  }
+
+  removeEditorUI() {
+    const panel = document.getElementById('camera-editor-panel');
+    if (panel) panel.remove();
+  }
+
+  addEventListeners() {
+    this.keydownHandler = (event) => this.handleKeyDown(event);
+    this.mousemoveHandler = (event) => this.handleMouseMove(event);
+    this.clickHandler = (event) => this.handleClick(event);
+
+    document.addEventListener('keydown', this.keydownHandler);
+    document.addEventListener('mousemove', this.mousemoveHandler);
+    document.addEventListener('click', this.clickHandler);
+
+    // Disable right-click context menu during editing
+    document.addEventListener('contextmenu', this.preventContext = (e) => e.preventDefault());
+  }
+
+  removeEventListeners() {
+    if (this.keydownHandler) document.removeEventListener('keydown', this.keydownHandler);
+    if (this.mousemoveHandler) document.removeEventListener('mousemove', this.mousemoveHandler);
+    if (this.clickHandler) document.removeEventListener('click', this.clickHandler);
+    if (this.preventContext) document.removeEventListener('contextmenu', this.preventContext);
+  }
+
+  handleKeyDown(event) {
+    if (!this.isActive) return;
+
+    const moveSpeed = event.shiftKey ? 0.2 : 0.05; // Much smaller movement steps
+    const direction = new THREE.Vector3();
+    const key = event.key.toLowerCase(); // Use actual character typed
+
+    // Use character-based movement for universal AZERTY/QWERTY support
+    switch(key) {
+      case 'z': // Z = Forward (camera direction) - works on both layouts
+        camera.getWorldDirection(direction);
+        camera.position.add(direction.multiplyScalar(moveSpeed));
+        break;
+      case 's': // S = Backward (opposite camera direction)
+        camera.getWorldDirection(direction);
+        camera.position.add(direction.multiplyScalar(-moveSpeed));
+        break;
+      case 'q': // Q = Left (camera relative) - works on both layouts
+        camera.getWorldDirection(direction);
+        const leftVector = new THREE.Vector3().crossVectors(direction, camera.up).normalize();
+        camera.position.add(leftVector.multiplyScalar(-moveSpeed));
+        break;
+      case 'd': // D = Right (camera relative)
+        camera.getWorldDirection(direction);
+        const rightVector = new THREE.Vector3().crossVectors(direction, camera.up).normalize();
+        camera.position.add(rightVector.multiplyScalar(moveSpeed));
+        break;
+      case 'a': // A = Up (world space)
+        camera.position.y += moveSpeed;
+        break;
+      case 'e': // E = Down (world space)
+        camera.position.y -= moveSpeed;
+        break;
+      case 'p': // Print position
+        this.printCurrentPosition(); 
+        break;
+      case 'm': // Place marker
+        this.placeMarker(); 
+        break;
+      case 'c': // Clear markers
+        this.clearMarkers(); 
+        break;
+      case 'escape': // Exit editor
+        this.toggle(); 
+        break;
+    }
+  }
+
+  handleMouseMove(event) {
+    if (!this.isActive) return;
+
+    // Proper mouse look implementation
+    if (event.buttons === 1) { // Left mouse button held
+      const sensitivity = 0.002;
+      const deltaX = event.movementX * sensitivity;
+      const deltaY = event.movementY * sensitivity;
+
+      // Store current rotation values
+      if (!this.cameraRotation) {
+        this.cameraRotation = {
+          x: camera.rotation.x,
+          y: camera.rotation.y
+        };
+      }
+
+      // Update rotation values
+      this.cameraRotation.y -= deltaX; // Horizontal rotation (left/right)
+      this.cameraRotation.x -= deltaY; // Vertical rotation (up/down)
+      
+      // Clamp vertical rotation to prevent flipping
+      this.cameraRotation.x = Math.max(-Math.PI/2 + 0.1, Math.min(Math.PI/2 - 0.1, this.cameraRotation.x));
+
+      // Apply rotation using Euler angles in the correct order
+      camera.rotation.order = 'YXZ'; // Yaw, Pitch, Roll order
+      camera.rotation.y = this.cameraRotation.y;
+      camera.rotation.x = this.cameraRotation.x;
+      camera.rotation.z = 0; // No roll
+    }
+  }
+
+  handleClick(event) {
+    if (!this.isActive) return;
+    
+    // Cast ray to find clicked object
+    const rect = renderer.domElement.getBoundingClientRect();
+    mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+    mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+
+    raycaster.setFromCamera(mouse, camera);
+    const intersects = raycaster.intersectObjects([...hexObjects, ...drawers], true);
+
+    if (intersects.length > 0) {
+      const point = intersects[0].point;
+      this.currentTarget = point.clone();
+      camera.lookAt(point);
+      console.log(`🎯 Set look-at target: (${point.x.toFixed(3)}, ${point.y.toFixed(3)}, ${point.z.toFixed(3)})`);
+    }
+  }
+
+  printCurrentPosition() {
+    const pos = camera.position;
+    
+    // Calculate current look direction from camera rotation
+    const direction = new THREE.Vector3(0, 0, -1);
+    direction.applyQuaternion(camera.quaternion);
+    const lookAt = {
+      x: pos.x + direction.x,
+      y: pos.y + direction.y,
+      z: pos.z + direction.z
+    };
+    
+    console.log('📍 CURRENT CAMERA POSITION:');
+    console.log(`Position: { x: ${pos.x.toFixed(3)}, y: ${pos.y.toFixed(3)}, z: ${pos.z.toFixed(3)} }`);
+    console.log(`LookAt: { x: ${lookAt.x.toFixed(3)}, y: ${lookAt.y.toFixed(3)}, z: ${lookAt.z.toFixed(3)} }`);
+    console.log('Code format:');
+    console.log(`cameraPos: { x: ${pos.x.toFixed(2)}, y: ${pos.y.toFixed(2)}, z: ${pos.z.toFixed(2)} },`);
+    console.log(`lookAt: { x: ${lookAt.x.toFixed(2)}, y: ${lookAt.y.toFixed(2)}, z: ${lookAt.z.toFixed(2)} }`);
+  }
+
+  placeMarker() {
+    const pos = camera.position.clone();
+    
+    // Calculate current look direction from camera rotation
+    const direction = new THREE.Vector3(0, 0, -1);
+    direction.applyQuaternion(camera.quaternion);
+    const target = new THREE.Vector3(
+      pos.x + direction.x * 5, // Project 5 units forward
+      pos.y + direction.y * 5,
+      pos.z + direction.z * 5
+    );
+    
+    // Create visual marker
+    const markerGeometry = new THREE.SphereGeometry(0.1, 8, 6);
+    const markerMaterial = new THREE.MeshBasicMaterial({ color: 0xff00ff });
+    const marker = new THREE.Mesh(markerGeometry, markerMaterial);
+    marker.position.copy(pos);
+    
+    // Add line to show look direction
+    const lineGeometry = new THREE.BufferGeometry().setFromPoints([pos, target]);
+    const lineMaterial = new THREE.LineBasicMaterial({ color: 0xff00ff });
+    const line = new THREE.Line(lineGeometry, lineMaterial);
+    scene.add(line);
+    marker.userData.line = line;
+    
+    marker.userData.position = pos.clone();
+    marker.userData.target = target.clone();
+    marker.userData.id = Date.now();
+    
+    scene.add(marker);
+    this.tempMarkers.add(marker);
+    
+    console.log(`📌 Placed marker ${this.tempMarkers.size} at position (${pos.x.toFixed(3)}, ${pos.y.toFixed(3)}, ${pos.z.toFixed(3)})`);
+    this.updateMarkersDisplay();
+  }
+
+  clearMarkers() {
+    this.tempMarkers.forEach(marker => {
+      scene.remove(marker);
+      if (marker.userData.line) {
+        scene.remove(marker.userData.line);
+      }
+    });
+    this.tempMarkers.clear();
+    console.log('🗑️ Cleared all markers');
+    this.updateMarkersDisplay();
+  }
+
+  updatePositionDisplay() {
+    if (!this.isActive) return;
+
+    const pos = camera.position;
+    
+    // Calculate current look direction from camera rotation
+    const direction = new THREE.Vector3(0, 0, -1);
+    direction.applyQuaternion(camera.quaternion);
+    const lookAt = {
+      x: pos.x + direction.x,
+      y: pos.y + direction.y,
+      z: pos.z + direction.z
+    };
+    
+    const posDisplay = document.getElementById('pos-display');
+    const targetDisplay = document.getElementById('target-display');
+    
+    if (posDisplay) {
+      posDisplay.textContent = `${pos.x.toFixed(3)}, ${pos.y.toFixed(3)}, ${pos.z.toFixed(3)}`;
+    }
+    if (targetDisplay) {
+      targetDisplay.textContent = `${lookAt.x.toFixed(3)}, ${lookAt.y.toFixed(3)}, ${lookAt.z.toFixed(3)}`;
+    }
+
+    // Continue updating
+    requestAnimationFrame(() => this.updatePositionDisplay());
+  }
+
+  updateMarkersDisplay() {
+    const container = document.getElementById('markers-content');
+    if (!container) return;
+
+    if (this.tempMarkers.size === 0) {
+      container.innerHTML = '<div style="color: #666;">No markers placed</div>';
+      return;
+    }
+
+    let html = '';
+    let index = 1;
+    this.tempMarkers.forEach(marker => {
+      const pos = marker.userData.position;
+      const target = marker.userData.target;
+      html += `
+        <div style="margin: 5px 0; padding: 8px; background: rgba(255,0,255,0.1); border-radius: 4px; font-size: 10px;">
+          <strong>Marker ${index}:</strong><br>
+          Pos: (${pos.x.toFixed(2)}, ${pos.y.toFixed(2)}, ${pos.z.toFixed(2)})<br>
+          Target: (${target.x.toFixed(2)}, ${target.y.toFixed(2)}, ${target.z.toFixed(2)})
+        </div>
+      `;
+      index++;
+    });
+    container.innerHTML = html;
+  }
+
+  displayEmbeddedCameras() {
+    const container = document.getElementById('embedded-cameras-list');
+    if (!container) return;
+
+    if (this.embeddedCameras.size === 0) {
+      container.innerHTML = '<div style="color: #666;">No embedded cameras found</div>';
+      return;
+    }
+
+    let html = '';
+    this.embeddedCameras.forEach((camData, key) => {
+      const pos = camData.position;
+      const target = camData.target;
+      html += `
+        <div style="margin: 5px 0; padding: 8px; background: rgba(255,170,0,0.1); border-radius: 4px; font-size: 10px;">
+          <strong>${key}:</strong><br>
+          Pos: (${pos.x.toFixed(2)}, ${pos.y.toFixed(2)}, ${pos.z.toFixed(2)})<br>
+          Target: (${target.x.toFixed(2)}, ${target.y.toFixed(2)}, ${target.z.toFixed(2)})<br>
+          <button onclick="cameraEditor.jumpToEmbeddedCamera('${key}')" style="background: #666; color: white; border: none; padding: 2px 6px; margin-top: 4px; cursor: pointer; border-radius: 2px; font-size: 9px;">Jump to</button>
+        </div>
+      `;
+    });
+    container.innerHTML = html;
+  }
+
+  jumpToEmbeddedCamera(key) {
+    const camData = this.embeddedCameras.get(key);
+    if (!camData) return;
+
+    camera.position.copy(camData.position);
+    camera.lookAt(camData.target);
+    this.currentTarget = camData.target.clone();
+    
+    console.log(`🎥 Jumped to embedded camera: ${key}`);
+  }
+
+  exportPositions() {
+    console.log('\n🎯 CAMERA POSITIONS EXPORT:');
+    console.log('='.repeat(50));
+    
+    // Export embedded cameras
+    if (this.embeddedCameras.size > 0) {
+      console.log('\n// Embedded cameras found in GLB files:');
+      this.embeddedCameras.forEach((camData, key) => {
+        const pos = camData.position;
+        const target = camData.target;
+        console.log(`// ${key}:`);
+        console.log(`{ x: ${pos.x.toFixed(2)}, y: ${pos.y.toFixed(2)}, z: ${pos.z.toFixed(2)} }, // Position`);
+        console.log(`{ x: ${target.x.toFixed(2)}, y: ${target.y.toFixed(2)}, z: ${target.z.toFixed(2)} }, // LookAt`);
+        console.log('');
+      });
+    }
+
+    // Export placed markers
+    if (this.tempMarkers.size > 0) {
+      console.log('\n// Manually placed markers:');
+      let index = 1;
+      this.tempMarkers.forEach(marker => {
+        const pos = marker.userData.position;
+        const target = marker.userData.target;
+        console.log(`// Marker ${index}:`);
+        console.log(`cameraPos: { x: ${pos.x.toFixed(2)}, y: ${pos.y.toFixed(2)}, z: ${pos.z.toFixed(2)} },`);
+        console.log(`lookAt: { x: ${target.x.toFixed(2)}, y: ${target.y.toFixed(2)}, z: ${target.z.toFixed(2)} },`);
+        console.log('');
+        index++;
+      });
+    }
+
+    // Current position
+    const currentPos = camera.position;
+    const currentTarget = this.currentTarget || { x: 0, y: 0, z: 0 };
+    console.log('\n// Current camera position:');
+    console.log(`cameraPos: { x: ${currentPos.x.toFixed(2)}, y: ${currentPos.y.toFixed(2)}, z: ${currentPos.z.toFixed(2)} },`);
+    console.log(`lookAt: { x: ${currentTarget.x.toFixed(2)}, y: ${currentTarget.y.toFixed(2)}, z: ${currentTarget.z.toFixed(2)} },`);
+    
+    console.log('='.repeat(50));
+  }
+}
+
+// Create global camera editor instance
+const cameraEditor = new CameraPositionEditor();
+window.cameraEditor = cameraEditor;
+
+// === Camera Position Utilities (Global Access) ===
+window.cameraUtils = {
+  // Quick access functions
+  startEditor: () => cameraEditor.toggle(),
+  printPosition: () => {
+    console.log('📍 Current Camera Position:');
+    console.log(`Position: { x: ${camera.position.x.toFixed(3)}, y: ${camera.position.y.toFixed(3)}, z: ${camera.position.z.toFixed(3)} }`);
+    console.log(`Looking at: { x: ${lookAtTarget.x.toFixed(3)}, y: ${lookAtTarget.y.toFixed(3)}, z: ${lookAtTarget.z.toFixed(3)} }`);
+  },
+  
+  // Move camera to specific position
+  setPosition: (x, y, z, lookX = 0, lookY = 0, lookZ = 0) => {
+    camera.position.set(x, y, z);
+    camera.lookAt(lookX, lookY, lookZ);
+    lookAtTarget = { x: lookX, y: lookY, z: lookZ };
+    console.log(`📷 Camera moved to (${x}, ${y}, ${z}) looking at (${lookX}, ${lookY}, ${lookZ})`);
+  },
+  
+  // Useful preset positions
+  presets: {
+    overview: () => window.cameraUtils.setPosition(0, 8, 12, 0, 0, 0),
+    topDown: () => window.cameraUtils.setPosition(0, 15, 0, 0, 0, 0),
+    closeUp: () => window.cameraUtils.setPosition(2, 2, 4, 0, 0, 0),
+    sideView: () => window.cameraUtils.setPosition(10, 4, 0, 0, 0, 0)
+  },
+  
+  // Help function
+  help: () => {
+    console.log('\n🎥 CAMERA UTILITIES HELP:');
+    console.log('='.repeat(40));
+    console.log('cameraUtils.startEditor()     - Open camera position editor');
+    console.log('cameraUtils.printPosition()   - Print current camera position');
+    console.log('cameraUtils.setPosition(x,y,z,lx,ly,lz) - Set camera position and target');
+    console.log('cameraUtils.presets.overview() - Go to overview position');
+    console.log('cameraUtils.presets.topDown()  - Go to top-down view');
+    console.log('cameraUtils.presets.closeUp()  - Go to close-up view');
+    console.log('cameraUtils.presets.sideView() - Go to side view');
+    console.log('\n🎮 KEYBOARD SHORTCUTS:');
+    console.log('Ctrl + E  - Toggle camera editor');
+    console.log('Ctrl + L  - Debug lights');
+    console.log('Ctrl + P  - Quick position print');
+    console.log('='.repeat(40));
+  }
+};
+
+// Show help on load (in development)
+if (!isProduction) {
+  console.log('\n🎥 Camera positioning system loaded!');
+  console.log('Type "cameraUtils.help()" for available commands.');
+  console.log('Press Ctrl + E to start the camera editor.');
 }
 
 // === Environment Texture Loading ===
@@ -1898,7 +2779,7 @@ function generateSkillFlowersGrid() {
           `./public/models/skillFlower.glb`, // Use same skillFlower.glb model for all 9
           (gltf) => {
             try {
-              processGLBMaterials(gltf);
+              processGLBMaterials(gltf, 'skillFlower.glb');
               const skillFlower = gltf.scene;
               
               // Position at grid location relative to CV hex
@@ -1968,7 +2849,7 @@ function loadLanguageFlowers() {
           `./public/models/${flowerData.model}`,
           (gltf) => {
             try {
-              processGLBMaterials(gltf);
+              processGLBMaterials(gltf, flowerData.model);
               const languageFlower = gltf.scene;
               
               // FIXED: Start hidden below ground at origin (will be positioned correctly when shown)
@@ -2175,20 +3056,42 @@ function hideUnityFlower() {
 
 // === Animation Loop ===
 const clock = new THREE.Clock();
+let lastErrorTime = 0;
+let errorCount = 0;
+let lastMaterialValidation = 0;
+const MAX_ERRORS_PER_SECOND = 5;
+const MATERIAL_VALIDATION_INTERVAL = 10; // seconds
+
 function animate() {
   requestAnimationFrame(animate);
   
   try {
     const time = clock.getElapsedTime();
 
+    // Validate materials periodically to prevent uniform errors
+    if (time - lastMaterialValidation > MATERIAL_VALIDATION_INTERVAL) {
+      validateSceneMaterials();
+      lastMaterialValidation = time;
+    }
+
     // Animate ocean waves if ocean data is available
     if (oceanVertData && oceanVertData.length > 0) {
-      oceanVertData.forEach((vd, idx) => {
-        const y = vd.initH + Math.sin(time + vd.phase) * vd.amplitude;
-        oceanGeometry.attributes.position.setY(idx, y);
-      });
-      oceanGeometry.attributes.position.needsUpdate = true;
-      oceanGeometry.computeVertexNormals();
+      try {
+        oceanVertData.forEach((vd, idx) => {
+          if (vd && typeof vd.initH === 'number' && typeof vd.phase === 'number' && typeof vd.amplitude === 'number') {
+            const y = vd.initH + Math.sin(time + vd.phase) * vd.amplitude;
+            oceanGeometry.attributes.position.setY(idx, y);
+          }
+        });
+        oceanGeometry.attributes.position.needsUpdate = true;
+        oceanGeometry.computeVertexNormals();
+      } catch (oceanError) {
+        // Only log ocean errors occasionally to avoid spam
+        if (time - lastErrorTime > 1) {
+          console.warn('Ocean animation error:', oceanError);
+          lastErrorTime = time;
+        }
+      }
     }
 
     // Update language flowers positions to stay above their corresponding skillFlowers
@@ -2207,9 +3110,38 @@ function animate() {
     // Update performance monitor
     performanceMonitor.update();
 
-    renderer.render(scene, camera);
+    // Safe rendering with error handling
+    try {
+      renderer.render(scene, camera);
+    } catch (renderError) {
+      // Limit error reporting to prevent spam
+      const currentTime = performance.now();
+      if (currentTime - lastErrorTime > 1000) { // Only report once per second
+        ErrorHandler.logError(renderError, 'Rendering');
+        lastErrorTime = currentTime;
+        errorCount = 0;
+        
+        // If it's a uniform/shader error, try to isolate and fix problematic materials
+        if (renderError.message && renderError.message.includes('value')) {
+          console.warn('Detected uniform value error, attempting material isolation...');
+          isolateProblematicMaterials();
+        }
+      } else {
+        errorCount++;
+        if (errorCount > MAX_ERRORS_PER_SECOND) {
+          // Too many errors, skip this frame
+          return;
+        }
+      }
+    }
   } catch (error) {
-    ErrorHandler.logError(error, 'Animation loop');
+    // Only log animation loop errors occasionally to prevent console spam
+    const currentTime = performance.now();
+    if (currentTime - lastErrorTime > 1000) { // Only report once per second
+      ErrorHandler.logError(error, 'Animation loop');
+      lastErrorTime = currentTime;
+      errorCount = 0;
+    }
   }
 }
 animate();
@@ -3254,7 +4186,7 @@ drawerModels.forEach((model) => {
         `./public/models/${model}.glb`,
         (gltf) => {
           try {
-            processGLBMaterials(gltf);
+            processGLBMaterials(gltf, `${model}.glb`);
             const drawer = gltf.scene;
             drawer.scale.set(1, 1, 1);
             drawer.userData.type = model;
@@ -3263,6 +4195,13 @@ drawerModels.forEach((model) => {
             if (model === 'mail-box') {
               // Get contact hex position (q: 2, r: 2)
               const { x, z } = hexToWorld(2, 2);
+              drawer.position.set(x, 0, z);
+            }
+            
+            // Position steering at garage hex location
+            if (model === 'steering') {
+              // Get garage hex position (q: -1, r: 0)
+              const { x, z } = hexToWorld(-1, 0);
               drawer.position.set(x, 0, z);
             }
             
@@ -3316,6 +4255,7 @@ drawerModels.forEach((model) => {
 // === Navigation Sidebar for Zones ===
 const mainZones = [
   { type: 'home', label: 'Accueil', themeId: 'home' },
+  { type: 'garage', label: 'Garage', themeId: 'garage' },
   { type: 'cv', label: 'CV', themeId: 'cv' },
   { type: 'projects', label: 'Projets', themeId: 'projects' },
   { type: 'contact', label: 'Contact', themeId: 'contact' },
@@ -3582,6 +4522,7 @@ function updateNavActiveState(activeType) {
 if (typeof mainZones !== 'undefined') {
   const groupedZones = {
     'home': mainZones.filter(zone => zone.themeId === 'home'),
+    'garage': mainZones.filter(zone => zone.themeId === 'garage'),
     'forge': mainZones.filter(zone => zone.themeId === 'forge'),
     'contact': mainZones.filter(zone => zone.themeId === 'contact'),
     'projects': mainZones.filter(zone => zone.themeId === 'projects'),
@@ -3805,6 +4746,56 @@ window.addEventListener('mouseleave', () => {
     document.body.style.cursor = 'default';
   }
 });
+
+// === Debug Console Commands for Light Management ===
+if (typeof window !== 'undefined') {
+  // Debug functions available in browser console
+  window.debugLights = () => ImportedLightManager.debugLights();
+  window.adjustLightIntensity = (multiplier) => ImportedLightManager.adjustAllLights(multiplier);
+  window.toggleImportedLights = (enabled) => ImportedLightManager.toggleAllLights(enabled);
+  window.getSpotLights = () => ImportedLightManager.getLightsByType('SpotLight');
+  window.getPointLights = () => ImportedLightManager.getLightsByType('PointLight');
+  
+  // Quick commands for common adjustments
+  window.dimLights = () => {
+    ImportedLightManager.adjustAllLights(0.1);
+    console.log('Dimmed all imported lights to 10% intensity');
+  };
+  
+  window.brightLights = () => {
+    ImportedLightManager.adjustAllLights(0.8);
+    console.log('Increased all imported lights to 80% intensity');
+  };
+  
+  window.resetLights = () => {
+    ImportedLightManager.adjustAllLights(0.3); // Back to default 30%
+    console.log('Reset all imported lights to default 30% intensity');
+  };
+
+  // Specific spotlight controls
+  window.adjustSpotLights = (intensity, angle, distance) => {
+    const spotLights = ImportedLightManager.getLightsByType('SpotLight');
+    spotLights.forEach(light => {
+      if (intensity !== undefined) light.intensity = intensity;
+      if (angle !== undefined) light.angle = angle * Math.PI / 180; // Convert degrees to radians
+      if (distance !== undefined) light.distance = distance;
+    });
+    console.log(`Adjusted ${spotLights.length} spotlights - intensity: ${intensity}, angle: ${angle}°, distance: ${distance}`);
+  };
+
+  console.log(`
+=== Portfolio Light Debug Commands ===
+debugLights() - Show all imported lights info
+adjustLightIntensity(0.5) - Adjust all lights intensity (0.5 = 50%)
+toggleImportedLights(false) - Enable/disable all imported lights
+dimLights() - Quickly dim all lights to 10%
+brightLights() - Increase all lights to 80%
+resetLights() - Reset to default 30%
+adjustSpotLights(intensity, angle, distance) - Control spotlights specifically
+getSpotLights() - Get all spotlight objects
+====================================
+  `);
+}
 
 // Update camera angle when cinematic animation completes
 function updateCameraAngleFromPosition() {

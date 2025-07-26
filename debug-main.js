@@ -16,7 +16,7 @@ setTimeout(() => {
     console.log('Current unread drawers:', Array.from(unreadDrawers));
     
     // Test theme counts
-    const themes = ['home', 'forge', 'contact', 'projects', 'cv'];
+    const themes = ['home', 'garage', 'forge', 'contact', 'projects', 'cv'];
     themes.forEach(themeId => {
         const count = getUnreadCountForTheme(themeId);
         console.log(`Theme "${themeId}": ${count} unread items`);

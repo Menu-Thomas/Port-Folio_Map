@@ -22,7 +22,7 @@
           'drawer2': 'home',
           'drawer3': 'home', 
           'drawer4': 'home',
-          'steering': 'home',
+          'steering': 'garage',
           'pc': 'home',
           'forge': 'forge',
           'mail-box': 'contact',
@@ -63,7 +63,7 @@
         output += '</ul>';
         
         output += '<h3>Theme Counts:</h3>';
-        const themes = ['home', 'forge', 'contact', 'projects', 'cv'];
+        const themes = ['home', 'garage', 'forge', 'contact', 'projects', 'cv'];
         themes.forEach(themeId => {
             const result = getUnreadCountForTheme(themeId);
             output += `<div><strong>${themeId}</strong>: ${result.count} items</div>`;

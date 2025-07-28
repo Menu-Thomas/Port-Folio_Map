@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FORVIA Car Project - Habitacle Interactif CES 2023</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      line-height: 1.6;
+      color: #333;
+      background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 3rem;
+      color: white;
+    }
+
+    .title {
+      font-size: 2.5rem;
+      margin-bottom: 0.5rem;
+      font-weight: 700;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+    }
+
+    .subtitle {
+      font-size: 1.2rem;
+      opacity: 0.9;
+      margin-bottom: 1rem;
+    }
+
+    .project-overview {
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 15px;
+      padding: 2rem;
+      margin-bottom: 2rem;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+      backdrop-filter: blur(10px);
+    }
+
+    .content-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 2rem;
+      margin-bottom: 2rem;
+    }
+
+    .card {
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 15px;
+      padding: 1.5rem;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 12px 40px rgba(0,0,0,0.15);
+    }
+
+    .card h3 {
+      color: #1e3c72;
+      margin-bottom: 1rem;
+      font-size: 1.3rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .icon {
+      font-size: 1.5rem;
+    }
+
+    .card p, .card li {
+      margin-bottom: 0.5rem;
+      color: #555;
+    }
+
+    .card ul {
+      margin-left: 1rem;
+    }
+
+    .tech-stack {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-top: 1rem;
+    }
+
+    .tech-tag {
+      background: linear-gradient(135deg, #1e3c72, #2a5298);
+      color: white;
+      padding: 0.3rem 0.8rem;
+      border-radius: 20px;
+      font-size: 0.9rem;
+      font-weight: 500;
+    }
+
+    .highlight {
+      background: linear-gradient(120deg, #e3f2fd 0%, #bbdefb 100%);
+      border-left: 4px solid #1e3c72;
+      padding: 1rem;
+      border-radius: 8px;
+      margin: 1rem 0;
+    }
+
+    .results {
+      background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+      color: white;
+      border-radius: 15px;
+      padding: 2rem;
+      margin-top: 2rem;
+      text-align: center;
+    }
+
+    .results h3 {
+      font-size: 1.8rem;
+      margin-bottom: 1rem;
+    }
+
+    .achievement {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
+      padding: 1rem;
+      margin: 1rem 0;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .image-placeholder {
+      background: linear-gradient(45deg, #f0f0f0, #e0e0e0);
+      border-radius: 10px;
+      padding: 2rem;
+      text-align: center;
+      color: #666;
+      border: 2px dashed #ccc;
+      margin: 1rem 0;
+    }
+
+    .forvia-brand {
+      background: linear-gradient(135deg, #ff6b35, #f7931e);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      font-weight: bold;
+    }
+
+    .epicnpoc-brand {
+      color: white;
+      font-weight: bold;
+    }
+
+    @media (max-width: 768px) {
+      .title {
+        font-size: 2rem;
+      }
+      
+      .container {
+        padding: 1rem;
+      }
+      
+      .content-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1 class="title">🚗 <span class="forvia-brand">FORVIA</span> Car Project</h1>
+      <p class="subtitle">Habitacle de voiture interactif avec GUI intégrées - CES 2023</p>
+      <p><strong>Projet réalisé chez <span class="epicnpoc-brand">EpicNpoc</span> pour le client FORVIA</strong></p>
+    </div>
+
+    <div class="project-overview">
+      <h2>📋 Vue d'ensemble du projet</h2>
+      <p>L'objectif principal était de développer un habitacle de voiture interactif équipé des interfaces graphiques (GUI) développées par <strong>EPICNPOC</strong>, avec des sièges capables de se déplacer selon plusieurs scénarios. Le tout devait être contrôlable depuis le serveur de l'entreprise. Ce projet visait à être présenté au <strong>CES 2023</strong> sur le stand du prototype "Lumières" du client <strong>FORVIA</strong>.</p>
+      
+      <div class="highlight">
+        <strong>Événement majeur :</strong> Présentation réussie au CES 2023, démontrant l'innovation et la capacité d'EPICNPOC à répondre aux besoins spécifiques de ses clients dans le secteur automobile.
+        
+        <div style="margin-top: 1rem; padding: 1rem; background: rgba(255, 107, 53, 0.1); border-radius: 8px; border: 2px solid #ff6b35;">
+          <p style="margin-bottom: 0.5rem; font-weight: bold; color: #ff6b35;">🎥 Vidéo exclusive - CES 2023 Présentation FORVIA SUV</p>
+          <a href="https://www.youtube.com/watch?v=I0cuEdVqjuo&t=150s" 
+             target="_blank" 
+             style="color: #ff6b35; text-decoration: underline; font-weight: bold; display: inline-block;">
+            ▶️ Voir la démonstration en direct au CES 2023
+          </a>
+          <p style="font-size: 0.9rem; margin-top: 0.5rem; color: #666;">Découvrez le SUV FORVIA avec habitacle interactif présenté en direct lors du salon CES 2023.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="content-grid">
+      <div class="card">
+        <h3><span class="icon">🎯</span>Objectifs spécifiques</h3>
+        <ul>
+          <li>Créer une réplique virtuelle de l'habitacle de la voiture équipée des GUI de l'entreprise</li>
+          <li>Intégrer des sièges interactifs capables de se déplacer selon plusieurs scénarios prédéfinis</li>
+          <li>Assurer que l'ensemble du système soit pilotable depuis le serveur de l'entreprise</li>
+          <li>Préparer une démonstration spectaculaire pour le CES 2023</li>
+          <li>Showcaser les capacités d'EPICNPOC dans l'automotive</li>
+        </ul>
+        <div class="image-placeholder">
+          <a href="https://www.youtube.com/watch?v=I0cuEdVqjuo&t=150s" target="_blank" style="display: block;">
+            <img src="../public/images/for1.jpg" alt="SUV FORVIA habitacle" style="width: 100%; height: 300px; object-fit: cover; border-radius: 8px; cursor: pointer;">
+          </a>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3><span class="icon">🔬</span>Méthodologies utilisées</h3>
+        <h4>1. Recherche et Collecte des Besoins</h4>
+        <ul>
+          <li>Discussions avec le tuteur et l'équipe projet pour comprendre les exigences spécifiques de FORVIA</li>
+          <li>Définition des spécifications techniques et fonctionnelles</li>
+          <li>Analyse des contraintes du prototype "Lumières"</li>
+        </ul>
+        
+        <h4>2. Développement par Étapes</h4>
+        <ul>
+          <li>Développement initial de l'habitacle interactif avec modèles 3D fournis par le client</li>
+          <li>Intégration des GUI d'EPICNPOC dans l'habitacle virtuel</li>
+          <li>Développement des scénarios de déplacement des sièges et intégration de ces fonctionnalités</li>
+          <li>Mise en place de la communication entre le simulateur et le serveur via JSON</li>
+        </ul>
+        
+        <h4>3. Validation des Spécifications</h4>
+        <ul>
+          <li>Tests et validation par des présentations en conditions réelles</li>
+          <li>Validation régulière avec le tuteur et les responsables de projet</li>
+          <li>Alignement continu avec les besoins du client FORVIA</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h3><span class="icon">💻</span>Technologies utilisées</h3>
+        <div class="tech-stack">
+          <span class="tech-tag">Modélisation 3D</span>
+          <span class="tech-tag">GUI Integration</span>
+          <span class="tech-tag">JSON Communication</span>
+          <span class="tech-tag">Serveur EpicNpoc</span>
+          <span class="tech-tag">Simulation Interactive</span>
+          <span class="tech-tag">Système Temps Réel</span>
+          <span class="tech-tag">Contrôle Distant</span>
+          <span class="tech-tag">Automation</span>
+        </div>
+        
+        
+      </div>
+
+      <div class="card">
+        <h3><span class="icon">⚡</span>Fonctionnalités principales</h3>
+        <ul>
+          <li><strong>Habitacle Virtuel :</strong> Réplique fidèle de l'habitacle de voiture avec GUI intégrées</li>
+          <li><strong>Sièges Intelligents :</strong> Système de déplacement automatique selon scénarios prédéfinis</li>
+          <li><strong>Contrôle Serveur :</strong> Pilotage à distance depuis le serveur EPICNPOC</li>
+          <li><strong>Communication JSON :</strong> Échange de données en temps réel</li>
+          <li><strong>Interface Intuitive :</strong> GUI optimisées pour l'expérience utilisateur automobile</li>
+          <li><strong>Multi-scénarios :</strong> Plusieurs modes de fonctionnement programmables</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h3><span class="icon">🔧</span>Défis techniques relevés</h3>
+        <ul>
+          <li><strong>Intégration GUI :</strong> Incorporation fluide des interfaces EPICNPOC dans l'environnement 3D</li>
+          <li><strong>Synchronisation Serveur :</strong> Communication temps réel fiable avec le serveur</li>
+          <li><strong>Automation Sièges :</strong> Programmation de scénarios de mouvement complexes</li>
+          <li><strong>Performance 3D :</strong> Rendu fluide pour démonstration en direct</li>
+          <li><strong>Robustesse Système :</strong> Stabilité pour présentation au CES 2023</li>
+        </ul>
+        <div class="image-placeholder">
+          <a href="https://www.youtube.com/watch?v=I0cuEdVqjuo&t=150s" target="_blank" style="display: block;">
+            <img src="../public/images/for1.jpg" alt="SUV FORVIA habitacle" style="width: 100%; height: 300px; object-fit: cover; border-radius: 8px; cursor: pointer;">
+          </a>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3><span class="icon">🧪</span>Tests et Assurance Qualité</h3>
+        <h4>Tests de Fonctionnalité</h4>
+        <ul>
+          <li>Vérification que chaque fonctionnalité, comme le déplacement des sièges et l'affichage des GUI, fonctionne correctement</li>
+        </ul>
+        
+        <h4>Tests de Communication</h4>
+        <ul>
+          <li>Assurance que les données envoyées et reçues entre le simulateur et le serveur soient exactes et en temps réel</li>
+        </ul>
+        
+        <h4>Tests en Conditions Réelles</h4>
+        <ul>
+          <li>Utilisation de l'habitacle lors des présentations internes pour s'assurer de la fiabilité et du réalisme du système</li>
+          <li>Validation finale en conditions de démonstration CES</li>
+        </ul>
+        <div class="image-placeholder">
+          <a href="https://www.youtube.com/watch?v=I0cuEdVqjuo&t=150s" target="_blank" style="display: block;">
+            <img src="../public/images/for2.jpg" alt="Presentation CES " style="width: 100%; height: 300px; object-fit: cover; border-radius: 8px; cursor: pointer;">
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <div class="results">
+      <h3>🏆 Résultats et Impact</h3>
+      
+      <div class="achievement">
+        <h4>✅ Présentation CES 2023 Réussie</h4>
+        <p>Le projet a abouti à un habitacle interactif complet, présenté avec succès au CES 2023 sur le stand du prototype client FORVIA, démontrant l'innovation et la capacité d'EPICNPOC.</p>
+        
+        <div style="background: rgba(255, 255, 255, 0.2); border-radius: 8px; padding: 1rem; margin-top: 1rem; border-left: 4px solid #ff6b35;">
+          <h5 style="margin-bottom: 0.5rem; color: #fff;">🔗 Preuve officielle - Post LinkedIn FORVIA</h5>
+          <p style="margin-bottom: 0.5rem; font-size: 0.9rem;">FORVIA a officiellement partagé leur présence au CES 2023 :</p>
+          <a href="https://www.linkedin.com/posts/forvia_ces2023-tech-mobility-activity-7018562152403787776-JGko/" 
+             target="_blank" 
+             style="color: #fff; text-decoration: underline; font-weight: bold; display: inline-block; margin-bottom: 0.5rem;">
+            🌐 Voir le post LinkedIn officiel de FORVIA
+          </a>
+          <p style="font-size: 0.8rem; opacity: 0.9;">Ce post confirme la participation d'EPICNPOC au projet CES 2023 avec FORVIA.</p>
+        </div>
+      </div>
+      
+      <div class="achievement">
+        <h4>✅ Intégration Technologique Complète</h4>
+        <p>Intégration réussie des GUI de l'entreprise et des sièges se déplaçant selon plusieurs scénarios, le tout contrôlable depuis le serveur EPICNPOC.</p>
+      </div>
+      
+      <div class="achievement">
+        <h4>✅ Innovation Automobile</h4>
+        <p>Démonstration des capacités d'EPICNPOC dans le secteur automobile avec une solution interactive et immersive pour l'industrie.</p>
+      </div>
+      
+      <div class="achievement">
+        <h4>✅ Validation Client FORVIA</h4>
+        <p>Satisfaction du client FORVIA avec un prototype fonctionnel présenté lors d'un événement international majeur, renforçant la réputation d'EPICNPOC.</p>
+      </div>
+      
+      <div class="achievement">
+        <h4>✅ Compétences Développées</h4>
+        <p>Maîtrise de l'intégration de systèmes complexes, communication serveur temps réel, développement pour l'automobile, et gestion de projets à haute visibilité.</p>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

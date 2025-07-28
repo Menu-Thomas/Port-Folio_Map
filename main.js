@@ -725,6 +725,7 @@ if (!isProduction) {
 let virtualModalClosed = false; // Track if user has manually closed the virtual modal
 let virtualModalOpened = false; // Track if the virtual modal was ever opened
 let steeringWheelClicked = false; // Track if user actually clicked on the steering wheel
+let desckClicked = false; // Track if user actually clicked on the desck
 let trashModalClosed = false; // Track if user has manually closed the trash modal
 let trashModalOpened = false; // Track if the trash modal was ever opened
 let trashTruckClicked = false; // Track if user actually clicked on the trash truck
@@ -739,6 +740,8 @@ let forviaCarModalClosed = false; // Track if user has manually closed the forvi
 let forviaCarModalOpened = false; // Track if the forviaCAR modal was ever opened
 let desckModalClosed = false; // Track if user has manually closed the desck modal
 let desckModalOpened = false; // Track if the desck modal was ever opened
+let pcModalClosed = false; // Track if user has manually closed the pc modal
+let pcModalOpened = false; // Track if the pc modal was ever opened
 
 // === Drawer Management ===
 const drawerModels = ['drawer1', 'drawer2', 'drawer3', 'drawer4', 'steering', 'pc', 'forge', 'mail-box', 'trashTruck', 'convoyeur', 'sensorSensei', 'medical', 'forviaCAR', 'desck'];
@@ -747,7 +750,7 @@ const interactiveObjects = []; // Separate array for collision detection optimiz
 const drawerOriginalPositions = new Map();
 const unreadDrawers = new Set([
   'drawer1', 'drawer2', 'drawer3', 'drawer4', 
-  'steering', 'forge', 'mail-box', 'trashTruck', 'convoyeur', 'sensorSensei', 'medical', 'forviaCAR', 'desck',
+  'steering', 'forge', 'mail-box', 'trashTruck', 'convoyeur', 'sensorSensei', 'medical', 'forviaCAR',
   // Individual skillFlowers for CV theme badges
   'skillFlower1', 'skillFlower2', 'skillFlower3', 'skillFlower4', 'skillFlower5',
   'skillFlower6', 'skillFlower7', 'skillFlower8', 'skillFlower9'
@@ -887,7 +890,7 @@ function getLanguageFlowerByName(name) {
 
 // === Drawer Configuration ===
 const animatedDrawers = ['drawer1', 'drawer2', 'drawer3', 'drawer4', 'skillFlower1', 'skillFlower2', 'skillFlower3', 'skillFlower4', 'skillFlower5', 'skillFlower6', 'skillFlower7', 'skillFlower8', 'skillFlower9']; // Drawers that animate on hover
-const clickAnimatedDrawers = ['pc', 'steering', 'trashTruck', 'convoyeur', 'sensorSensei', 'medical', 'forviaCAR', 'desck']; // Drawers that animate camera on click
+const clickAnimatedDrawers = ['desck', 'steering', 'trashTruck', 'convoyeur', 'sensorSensei', 'medical', 'forviaCAR', 'pc']; // Drawers that animate camera on click
 const drawerInfoFiles = {
   drawer1: "project1.html",
   drawer2: "project2.html", 
@@ -916,7 +919,7 @@ const drawerThemes = {
 
 // Camera target positions for click-animated drawers
 const drawerCameraTargets = {
-  pc: {
+  desck: {
     x: -0.05, y: 0.05, z: -0.15,
     lookAt: { x: -0.25, y: -0.04, z: -0.35 }
   },
@@ -944,7 +947,7 @@ const drawerCameraTargets = {
     x: -1.738, y: 0.018, z: 0.160,
     lookAt: { x: -2.256, y: -0.070, z: 1.011 }
   },
-  desck: {
+  pc: {
     x: 0, y: 0, z: 0,
     lookAt: { x: 0, y: 0, z: 0 }
   }
@@ -1422,6 +1425,12 @@ window.addEventListener('mousemove', (event) => {
 
       // Drawer hover logic
       if (drawers.includes(object)) {
+        // Make desck completely non-interactive
+        if (object.userData.type === 'desck') {
+          drawerLabel.style.display = "none";
+          return; // Don't process hover for desck
+        }
+        
         // Check if this drawer is interactive at current location/theme
         const isClickable = isDrawerClickableAtCurrentLocation(object.userData.type);
         
@@ -1632,7 +1641,7 @@ window.addEventListener('mousemove', (event) => {
             message = `<div>VivaTech Medical App - 3D Eye-Tracking Telemedicine</div>`;
           } else if (object.userData.type === 'forviaCAR') {
             message = `<div>FORVIA Car Project - Interactive Car Interior CES 2023</div>`;
-          } else if (object.userData.type === 'desck') {
+          } else if (object.userData.type === 'pc') {
             message = `<div>Desk Project - Interactive workspace and productivity tools</div>`;
           } else if (object.userData.type === 'skillFlower1') {
             message = `<div><strong>Unity Game Engine</strong><br/>3D game development and interactive experiences</div>`;
@@ -3239,7 +3248,9 @@ window.addEventListener('wheel', (event) => {
     
     // Reset desck modal state when going back to overview
     desckModalClosed = false;
+    pcModalClosed = false;
     desckModalOpened = false;
+    pcModalOpened = false;
     
     // Return to orbital position instead of fixed original position
     const orbitalPosition = {
@@ -3348,7 +3359,10 @@ window.addEventListener('click', (event) => {
       
       // Reset desck modal state when navigating to different areas
       desckModalClosed = false;
+      pcModalClosed = false;
+    pcModalClosed = false;
       desckModalOpened = false;
+    pcModalOpened = false;
       
       const hexPosition = object.position;
       const hexData = hexMap.find(hex => hex.q === object.userData.q && hex.r === object.userData.r);
@@ -3398,7 +3412,7 @@ window.addEventListener('click', (event) => {
       }
       
       // Handle objects that don't need camera movement (trashTruck, convoyeur, sensorSensei, medical, forviaCAR)
-      if (object.userData.type === 'trashTruck' || object.userData.type === 'convoyeur' || object.userData.type === 'sensorSensei' || object.userData.type === 'medical' || object.userData.type === 'forviaCAR' || object.userData.type === 'desck') {
+      if (object.userData.type === 'trashTruck' || object.userData.type === 'convoyeur' || object.userData.type === 'sensorSensei' || object.userData.type === 'medical' || object.userData.type === 'forviaCAR' || object.userData.type === 'pc') {
         if (object.userData.type === 'trashTruck' && !trashModalClosed) {
           showTrashModal();
         }
@@ -3414,7 +3428,7 @@ window.addEventListener('click', (event) => {
         if (object.userData.type === 'forviaCAR' && !forviaCarModalClosed) {
           showForviaCarModal();
         }
-        if (object.userData.type === 'desck' && !desckModalClosed) {
+        if (object.userData.type === 'pc' && !desckModalClosed) {
           showDesckModal();
         }
         return; // Don't animate camera for these objects
@@ -3426,6 +3440,9 @@ window.addEventListener('click', (event) => {
         if (object.userData.type === 'steering') {
           steeringWheelClicked = true;
         }
+        if (object.userData.type === 'desck') {
+          desckClicked = true;
+        }
         
         gsap.to(camera.position, {
           x: camTarget.x,
@@ -3436,7 +3453,11 @@ window.addEventListener('click', (event) => {
           onComplete: () => {
             if (object.userData.type === 'steering' && steeringWheelClicked && !virtualModalClosed) {
               showVirtualModal();
-              steeringWheelClicked = false; // Reset flag after showing modal
+              steeringWheelClicked = false; // Reset flag without showing modal
+            }
+            // desck animates camera but shows no modal - just reset the flag
+            if (object.userData.type === 'desck' && desckClicked) {
+              desckClicked = false; // Reset flag without showing modal
             }
           }
         });
@@ -3771,7 +3792,10 @@ function handleInteraction(event) {
       
       // Reset desck modal state when navigating to different areas
       desckModalClosed = false;
+      pcModalClosed = false;
+    pcModalClosed = false;
       desckModalOpened = false;
+    pcModalOpened = false;
       
       const hexPosition = object.position;
       const hexData = hexMap.find(hex => hex.q === object.userData.q && hex.r === object.userData.r);
@@ -3821,7 +3845,7 @@ function handleInteraction(event) {
       }
       
       // Handle objects that don't need camera movement (trashTruck, convoyeur, sensorSensei, medical, forviaCAR)
-      if (object.userData.type === 'trashTruck' || object.userData.type === 'convoyeur' || object.userData.type === 'sensorSensei' || object.userData.type === 'medical' || object.userData.type === 'forviaCAR' || object.userData.type === 'desck') {
+      if (object.userData.type === 'trashTruck' || object.userData.type === 'convoyeur' || object.userData.type === 'sensorSensei' || object.userData.type === 'medical' || object.userData.type === 'forviaCAR' || object.userData.type === 'pc') {
         if (object.userData.type === 'trashTruck' && !trashModalClosed) {
           showTrashModal();
         }
@@ -3837,7 +3861,7 @@ function handleInteraction(event) {
         if (object.userData.type === 'forviaCAR' && !forviaCarModalClosed) {
           showForviaCarModal();
         }
-        if (object.userData.type === 'desck' && !desckModalClosed) {
+        if (object.userData.type === 'pc' && !desckModalClosed) {
           showDesckModal();
         }
         return; // Don't animate camera for these objects
@@ -3849,6 +3873,9 @@ function handleInteraction(event) {
         if (object.userData.type === 'steering') {
           steeringWheelClicked = true;
         }
+        if (object.userData.type === 'desck') {
+          desckClicked = true;
+        }
         
         gsap.to(camera.position, {
           x: camTarget.x,
@@ -3859,7 +3886,11 @@ function handleInteraction(event) {
           onComplete: () => {
             if (object.userData.type === 'steering' && steeringWheelClicked && !virtualModalClosed) {
               showVirtualModal();
-              steeringWheelClicked = false; // Reset flag after showing modal
+              steeringWheelClicked = false; // Reset flag without showing modal
+            }
+            // desck animates camera but shows no modal - just reset the flag
+            if (object.userData.type === 'desck' && desckClicked) {
+              desckClicked = false; // Reset flag without showing modal
             }
           }
         });
@@ -5133,5 +5164,8 @@ function updateCameraAngleFromPosition() {
   const deltaZ = camera.position.z - orbitCenter.z;
   currentCameraAngle = Math.atan2(deltaZ, deltaX);
 }
+
+
+
 
 

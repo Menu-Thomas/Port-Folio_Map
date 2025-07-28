@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Desck Project - Interactive Workspace Solutions</title>
+  <title>Diplomas & Certifications - Thomas Menu</title>
   <style>
     body {
       font-family: 'Segoe UI', sans-serif;
@@ -49,7 +49,7 @@
       gap: 2rem;
     }
     
-    .project-section {
+    .diploma-section {
       background: white;
       border-radius: 12px;
       padding: 2rem;
@@ -57,58 +57,82 @@
       border-left: 4px solid #6c63ff;
     }
     
-    .project-section h2 {
+    .diploma-section h2 {
       color: #3b3a4f;
       margin-top: 0;
       font-size: 1.5rem;
       margin-bottom: 1rem;
     }
     
-    .project-section p {
+    .diploma-section p {
       line-height: 1.6;
       margin-bottom: 1rem;
     }
     
-    .features-grid {
+    .diplomas-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
       gap: 1rem;
       margin-top: 1rem;
     }
     
-    .feature-card {
+    .diploma-card {
       background: #f9f9f9;
-      padding: 1rem;
+      padding: 1.5rem;
       border-radius: 8px;
       border-left: 3px solid #6c63ff;
+      position: relative;
     }
     
-    .feature-card h3 {
+    .diploma-card h3 {
       margin: 0 0 0.5rem 0;
       color: #3b3a4f;
-      font-size: 1.1rem;
+      font-size: 1.2rem;
     }
     
-    .feature-card p {
+    .diploma-card .institution {
+      color: #6c63ff;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+    }
+    
+    .diploma-card .date {
+      color: #666;
+      font-size: 0.9rem;
+      margin-bottom: 0.5rem;
+    }
+    
+    .diploma-card p {
       margin: 0;
       font-size: 0.9rem;
       opacity: 0.8;
     }
     
-    .tech-stack {
+    .skills-stack {
       display: flex;
       flex-wrap: wrap;
       gap: 0.5rem;
       margin-top: 1rem;
     }
     
-    .tech-tag {
+    .skill-tag {
       background: #6c63ff;
       color: white;
       padding: 0.3rem 0.8rem;
       border-radius: 20px;
       font-size: 0.8rem;
       font-weight: 500;
+    }
+    
+    .grade {
+      display: inline-block;
+      padding: 0.3rem 1rem;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      background: #28a745;
+      color: white;
+      margin-left: 0.5rem;
     }
     
     .status {
@@ -146,7 +170,7 @@
         gap: 1rem;
       }
       
-      .project-section {
+      .diploma-section {
         padding: 1.5rem;
       }
       
@@ -158,140 +182,168 @@
 </head>
 <body>
   <header>
-    <h1>Desck Project</h1>
-    <p class="subtitle">Interactive Workspace & Productivity Solutions</p>
-    <span class="status">In Development</span>
+    <h1>Diplomas & Certifications</h1>
+    <p class="subtitle">Educational Achievements & Professional Qualifications</p>
+    <span class="status">Continuously Learning</span>
   </header>
   
   <main>
-    <section class="project-section">
-      <h2>🖥️ Project Overview</h2>
+    <section class="diploma-section">
+      <h2>🎓 Higher Education</h2>
       <p>
-        The Desck Project focuses on creating intelligent workspace solutions that enhance productivity and user experience 
-        through innovative desk-based technologies and interactive interfaces. This project combines hardware integration, 
-        software development, and user experience design to create smart workspace environments.
+        My academic journey in computer science and software engineering, building a strong foundation 
+        in programming, algorithms, and software architecture through rigorous theoretical and practical coursework.
       </p>
       
       <div class="image-placeholder">
-        <h3>🎯 Smart Workspace Concept</h3>
-        <p>Interactive desk interfaces and productivity tools</p>
+        <h3>🏫 Academic Excellence</h3>
+        <p>Computer Science & Software Engineering Education</p>
       </div>
       
+      <div class="diplomas-grid">
+        <div class="diploma-card">
+          <h3>Master in Computer Science</h3>
+          <div class="institution">EPITECH - European Institute of Technology</div>
+          <div class="date">2020 - 2025</div>
+          <span class="grade">Expert Level</span>
+          <p>Specialized in software engineering, systems programming, and advanced computer science concepts. 
+             Focus on project-based learning with real-world applications.</p>
+        </div>
+        
+        <div class="diploma-card">
+          <h3>Bachelor in Software Development</h3>
+          <div class="institution">EPITECH - European Institute of Technology</div>
+          <div class="date">2020 - 2023</div>
+          <span class="grade">Completed</span>
+          <p>Comprehensive foundation in programming languages, algorithms, data structures, 
+             and software development methodologies.</p>
+        </div>
+      </div>
+    </section>
+    
+    <section class="diploma-section">
+      <h2>🏆 Professional Certifications</h2>
+      
+      <div class="diplomas-grid">
+        <div class="diploma-card">
+          <h3>Unity Certified Developer</h3>
+          <div class="institution">Unity Technologies</div>
+          <div class="date">2024</div>
+          <p>Demonstrated proficiency in Unity game engine development, 3D programming, and interactive application creation.</p>
+        </div>
+        
+        <div class="diploma-card">
+          <h3>Meta Quest Development</h3>
+          <div class="institution">Meta Developer Program</div>
+          <div class="date">2024</div>
+          <p>Specialized certification in VR/AR development using Meta Quest SDK and immersive experience design.</p>
+        </div>
+        
+        <div class="diploma-card">
+          <h3>Arduino & IoT Certification</h3>
+          <div class="institution">Arduino Foundation</div>
+          <div class="date">2023</div>
+          <p>Hardware programming and Internet of Things development using Arduino platforms and sensor integration.</p>
+        </div>
+        
+        <div class="diploma-card">
+          <h3>Web Development Certification</h3>
+          <div class="institution">W3C & Mozilla</div>
+          <div class="date">2023</div>
+          <p>Advanced web technologies including HTML5, CSS3, JavaScript ES6+, and modern frameworks.</p>
+        </div>
+      </div>
+    </section>
+    
+    <section class="diploma-section">
+      <h2>� Technical Skills Acquired</h2>
       <p>
-        The project aims to bridge the gap between traditional workspace setups and modern digital productivity needs, 
-        creating seamless integration between physical and digital work environments.
+        Through my educational journey and certifications, I have developed expertise in various 
+        programming languages, frameworks, and technologies:
       </p>
+      
+      <div class="skills-stack">
+        <span class="skill-tag">C/C++</span>
+        <span class="skill-tag">C#</span>
+        <span class="skill-tag">Python</span>
+        <span class="skill-tag">Java</span>
+        <span class="skill-tag">JavaScript</span>
+        <span class="skill-tag">Unity Engine</span>
+        <span class="skill-tag">Unreal Engine</span>
+        <span class="skill-tag">Arduino</span>
+        <span class="skill-tag">Git/GitHub</span>
+        <span class="skill-tag">Three.js</span>
+        <span class="skill-tag">React</span>
+        <span class="skill-tag">Node.js</span>
+        <span class="skill-tag">WebGL</span>
+        <span class="skill-tag">Meta Quest SDK</span>
+        <span class="skill-tag">IoT Development</span>
+      </div>
     </section>
     
-    <section class="project-section">
-      <h2>✨ Key Features</h2>
+    <section class="diploma-section">
+      <h2>📚 Continuous Learning</h2>
       
-      <div class="features-grid">
-        <div class="feature-card">
-          <h3>🔧 Hardware Integration</h3>
-          <p>Smart desk components with embedded sensors and interactive surfaces</p>
+      <div class="diplomas-grid">
+        <div class="diploma-card">
+          <h3>Advanced Algorithms & Data Structures</h3>
+          <div class="institution">EPITECH Curriculum</div>
+          <div class="date">Ongoing</div>
+          <p>Deep dive into computational complexity, optimization algorithms, and advanced data structure implementations.</p>
         </div>
         
-        <div class="feature-card">
-          <h3>📱 Mobile Connectivity</h3>
-          <p>Seamless smartphone and tablet integration for enhanced workflow</p>
+        <div class="diploma-card">
+          <h3>Machine Learning Fundamentals</h3>
+          <div class="institution">Online Coursework</div>
+          <div class="date">2024</div>
+          <p>Introduction to AI/ML concepts, neural networks, and practical applications in software development.</p>
         </div>
         
-        <div class="feature-card">
-          <h3>🌐 IoT Integration</h3>
-          <p>Connected workspace devices for optimal environment control</p>
+        <div class="diploma-card">
+          <h3>Cybersecurity Basics</h3>
+          <div class="institution">EPITECH Security Program</div>
+          <div class="date">2023</div>
+          <p>Network security, encryption methods, and secure software development practices.</p>
         </div>
         
-        <div class="feature-card">
-          <h3>📊 Analytics Dashboard</h3>
-          <p>Productivity metrics and workspace usage analytics</p>
-        </div>
-        
-        <div class="feature-card">
-          <h3>🎨 Customizable UI</h3>
-          <p>Personalized workspace interfaces and productivity tools</p>
-        </div>
-        
-        <div class="feature-card">
-          <h3>🔗 API Integration</h3>
-          <p>Third-party productivity app integration and workflow automation</p>
+        <div class="diploma-card">
+          <h3>Mobile Development</h3>
+          <div class="institution">Self-Directed Learning</div>
+          <div class="date">2023-2024</div>
+          <p>Cross-platform mobile development using modern frameworks and native development approaches.</p>
         </div>
       </div>
     </section>
     
-    <section class="project-section">
-      <h2>🛠️ Technology Stack</h2>
+    <section class="diploma-section">
+      <h2>🎯 Academic Projects & Achievements</h2>
       <p>
-        This project leverages modern technologies to create robust and scalable workspace solutions:
-      </p>
-      
-      <div class="tech-stack">
-        <span class="tech-tag">JavaScript</span>
-        <span class="tech-tag">Node.js</span>
-        <span class="tech-tag">React</span>
-        <span class="tech-tag">Three.js</span>
-        <span class="tech-tag">WebGL</span>
-        <span class="tech-tag">IoT Sensors</span>
-        <span class="tech-tag">Arduino</span>
-        <span class="tech-tag">Raspberry Pi</span>
-        <span class="tech-tag">WebSocket</span>
-        <span class="tech-tag">REST API</span>
-      </div>
-    </section>
-    
-    <section class="project-section">
-      <h2>🎯 Implementation Phases</h2>
-      
-      <div class="features-grid">
-        <div class="feature-card">
-          <h3>Phase 1: Hardware Setup</h3>
-          <p>Design and prototype smart desk components with embedded sensors</p>
-        </div>
-        
-        <div class="feature-card">
-          <h3>Phase 2: Software Development</h3>
-          <p>Create core application and user interface for workspace management</p>
-        </div>
-        
-        <div class="feature-card">
-          <h3>Phase 3: Integration Testing</h3>
-          <p>Test hardware-software integration and user experience workflows</p>
-        </div>
-        
-        <div class="feature-card">
-          <h3>Phase 4: Deployment</h3>
-          <p>Production deployment and user feedback integration</p>
-        </div>
-      </div>
-    </section>
-    
-    <section class="project-section">
-      <h2>💡 Future Enhancements</h2>
-      <p>
-        Planned improvements and additional features for the Desck Project include:
+        Key projects and achievements during my academic journey that demonstrate practical application 
+        of learned concepts and technical skills:
       </p>
       
       <ul>
-        <li><strong>AI-Powered Recommendations:</strong> Intelligent workspace optimization based on usage patterns</li>
-        <li><strong>Voice Integration:</strong> Voice commands for hands-free workspace control</li>
-        <li><strong>Augmented Reality:</strong> AR overlays for enhanced workspace visualization</li>
-        <li><strong>Team Collaboration:</strong> Multi-user workspace sharing and collaboration tools</li>
-        <li><strong>Energy Management:</strong> Smart power management and sustainability features</li>
-        <li><strong>Health Monitoring:</strong> Posture and wellness tracking for better work ergonomics</li>
+        <li><strong>3D Portfolio Website:</strong> Interactive Three.js-based portfolio showcasing technical skills</li>
+        <li><strong>VR Application Development:</strong> Meta Quest VR experiences using Unity and C#</li>
+        <li><strong>IoT Sensor Network:</strong> Arduino-based environmental monitoring system</li>
+        <li><strong>Game Development Projects:</strong> Multiple games using Unity and Unreal Engine</li>
+        <li><strong>Web Application Suite:</strong> Full-stack development projects using modern web technologies</li>
+        <li><strong>Medical App Interface:</strong> Healthcare application development with focus on UX/UI</li>
+        <li><strong>Automotive Software:</strong> Real-time systems programming for automotive applications</li>
       </ul>
     </section>
     
-    <section class="project-section">
-      <h2>📈 Project Status</h2>
+    <section class="diploma-section">
+      <h2>📈 Future Learning Goals</h2>
       <p>
-        <strong>Current Phase:</strong> Development and Prototyping<br>
-        <strong>Completion:</strong> ~35%<br>
-        <strong>Next Milestone:</strong> Hardware integration testing
+        <strong>Current Focus:</strong> Advanced AI/ML Applications<br>
+        <strong>Next Certification:</strong> Cloud Computing Platforms (AWS/Azure)<br>
+        <strong>Long-term Goal:</strong> PhD in Computer Science or Software Engineering
       </p>
       
       <div class="image-placeholder">
-        <h3>🚀 Development Progress</h3>
-        <p>Ongoing development with regular updates and improvements</p>
+        <h3>🚀 Lifelong Learning</h3>
+        <p>Committed to continuous improvement and staying current with emerging technologies</p>
       </div>
     </section>
   </main>

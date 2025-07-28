@@ -110,50 +110,55 @@ function markAssetLoaded() {
 
 // === Cinematic Entrance Animation ===
 function startCinematicEntrance() {
-  console.log('=== STARTING CINEMATIC ENTRANCE ANIMATION ===');
+  console.log('=== STARTING UNDERWATER EMERGENCE CINEMATIC ===');
   console.log('Call stack:', new Error().stack);
   
   // Set cinematic mode and disable cursor interactions
   cinematicMode = true;
   document.body.style.cursor = 'wait';
   
-  // Simple orbit parameters
+  // Underwater emergence parameters
   const centerX = 0;
   const centerZ = 0;
-  const radius = 7.5; // Reduced from 12 to 9 for closer view
-  const height = 6;
-  const orbitDuration = 3; // 3 seconds for half turn
+  const finalRadius = 7.5; // Final orbital distance
+  const finalHeight = 6; // Final camera height
+  const emergenceDuration = 4; // 4 seconds for underwater emergence
   
-  // Start behind the island (270° or -90°)
-  const startAngle = -Math.PI / 2;
-  // End in front of the island (90°)
-  const endAngle = Math.PI / 2;
+  // Final position in front of the island (90°)
+  const finalAngle = Math.PI / 2;
+  const finalX = centerX + finalRadius * Math.cos(finalAngle);
+  const finalZ = centerZ + finalRadius * Math.sin(finalAngle);
   
-  // Camera is already positioned correctly from initialization
-  // Look at center of the island - adjusted to feel more centered on screen
+  // Starting position: further back and at sea level
+  const startDistance = 12; // Start further away
+  const startX = centerX + startDistance * Math.cos(finalAngle);
+  const startY = 0; // Start at sea level
+  const startZ = centerZ + startDistance * Math.sin(finalAngle);
+  
+  // Look at center of the island (better visual experience)
   const lookAtCenter = { x: centerX, y: 0.3, z: centerZ };
-  // Don't call camera.lookAt here since it's already set correctly during initialization
   
-  // Create simple orbit animation starting from current position
-  gsap.to({}, {
-    duration: orbitDuration,
-    ease: "power2.inOut",
+  // Set initial position
+  camera.position.set(startX, startY, startZ);
+  camera.lookAt(lookAtCenter.x, lookAtCenter.y, lookAtCenter.z);
+  
+  // Create underwater emergence animation
+  gsap.to(camera.position, {
+    x: finalX,
+    y: finalHeight,
+    z: finalZ,
+    duration: emergenceDuration,
+    ease: "power2.out", // Slow start, fast finish (like surfacing)
     onUpdate: function() {
-      const progress = this.progress();
-      // Interpolate from start angle (behind) to end angle (front)
-      const currentAngle = startAngle + (endAngle - startAngle) * progress;
-      
-      // Update camera position
-      camera.position.x = centerX + radius * Math.cos(currentAngle);
-      camera.position.z = centerZ + radius * Math.sin(currentAngle);
-      camera.position.y = height;
-      
-      // Always look at the center
+      // Always look at the center during emergence
       camera.lookAt(lookAtCenter.x, lookAtCenter.y, lookAtCenter.z);
     },
     onComplete: () => {
-      // Animation complete - enable controls
-      console.log('Cinematic entrance complete - controls enabled');
+      // Animation complete - now look at center and enable controls
+      const lookAtCenter = { x: centerX, y: 0.3, z: centerZ };
+      camera.lookAt(lookAtCenter.x, lookAtCenter.y, lookAtCenter.z);
+      
+      console.log('Underwater emergence complete - controls enabled');
       cinematicMode = false;
       document.body.style.cursor = 'default';
       
@@ -241,26 +246,26 @@ const loadingOverlay = document.getElementById('loadingOverlay');
 const shouldUseCinematicStart = loadingOverlay && !loadingOverlay.classList.contains('hidden');
 
 if (shouldUseCinematicStart) {
-  // Use exact same parameters as cinematic animation to prevent any jumps
+  // Use exact same parameters as underwater emergence animation to prevent any jumps
   const centerX = 0;
   const centerZ = 0;
-  const radius = 7.5; // Same as cinematic animation
-  const height = 6; // Same as cinematic animation
-  const startAngle = -Math.PI / 2; // Behind the island - same as cinematic
+  const finalAngle = Math.PI / 2; // Front of island - same as cinematic end position
+  const startY = 0; // Sea level - same as cinematic start
+  const startDistance = 12; // Further back - same as cinematic start
+  
+  // Calculate starting position (same as cinematic animation)
+  const startX = centerX + startDistance * Math.cos(finalAngle);
+  const startZ = centerZ + startDistance * Math.sin(finalAngle);
   
   // Position camera at exact starting position of cinematic animation
-  camera.position.set(
-    centerX + radius * Math.cos(startAngle),
-    height,
-    centerZ + radius * Math.sin(startAngle)
-  );
+  camera.position.set(startX, startY, startZ);
   
-  // Look at exact same center as cinematic animation
+  // Look at center (same as cinematic animation)
   const lookAtCenter = { x: centerX, y: 0.3, z: centerZ };
   camera.lookAt(lookAtCenter.x, lookAtCenter.y, lookAtCenter.z);
   
-  // Set currentCameraAngle to match the starting position (prevents orbital controls from moving camera)
-  currentCameraAngle = startAngle;
+  // Set currentCameraAngle to match the final position angle (prevents orbital controls from moving camera)
+  currentCameraAngle = finalAngle;
   
   // Disable all interactions while loading overlay is visible
   interactionsDisabled = true;

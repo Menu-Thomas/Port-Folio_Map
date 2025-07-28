@@ -197,23 +197,30 @@ function onAllAssetsLoaded() {
   function checkAndStartCinematic() {
     const overlayHidden = sessionStorage.getItem('loadingOverlayHidden');
     const overlayElement = document.getElementById('loadingOverlay');
+    const videoTransitionComplete = sessionStorage.getItem('videoTransitionComplete');
     
     // Double check - ensure overlay is actually hidden
     const isOverlayActuallyHidden = overlayHidden === 'true' && 
       (!overlayElement || overlayElement.classList.contains('hidden'));
     
+    // Start animation when overlay is hidden, regardless of video state
     if (isOverlayActuallyHidden) {
-      console.log('Overlay confirmed hidden, starting cinematic animation...');
+      console.log('Overlay confirmed hidden, starting cinematic animation immediately...');
+      // Clean up the video transition flag
+      if (videoTransitionComplete) {
+        sessionStorage.removeItem('videoTransitionComplete');
+      }
+      
       // Start cinematic animation if conditions are met
       if (!virtualModalOpened || virtualModalClosed) {
-        // Small delay to ensure everything is ready
+        // Minimal delay to ensure everything is ready
         setTimeout(() => {
           startCinematicEntrance();
-        }, 500); // 500ms delay after overlay is hidden
+        }, 50); // Very short delay for immediate response
       }
     } else {
-      // Check again in 100ms
-      setTimeout(checkAndStartCinematic, 100);
+      // Check again in 50ms for faster response
+      setTimeout(checkAndStartCinematic, 50);
     }
   }
   
@@ -397,6 +404,16 @@ document.addEventListener('keydown', (event) => {
     return;
   }
 });
+
+// === Transition Video Helper Functions ===
+function getTransitionVideo() {
+  return document.getElementById('transitionVideo');
+}
+
+function isTransitionVideoPlaying() {
+  const video = getTransitionVideo();
+  return video && video.style.display === 'block' && !video.ended && !video.paused;
+}
 
 // === Application State Variables ===
 let currentActiveHexType = null; // Tracks the currently active hex type for navigation sync

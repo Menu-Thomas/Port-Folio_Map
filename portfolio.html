@@ -37,6 +37,20 @@
       border-radius: 10px;
     }
     
+    /* Transition Video Styles */
+    #transitionVideo {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      object-fit: cover;
+      z-index: 10000;
+      display: none;
+      pointer-events: none;
+      background: transparent;
+    }
+    
     /* Loading Overlay Styles */
     #loadingOverlay {
       position: fixed;
@@ -295,6 +309,12 @@
     <div class="bubble-container" id="bubbleContainer"></div>
   </div>
 
+  <!-- Transition Video -->
+  <video id="transitionVideo" preload="auto" volume="0.7">
+    <source src="./public/images/Spongebubble.webm" type="video/webm">
+    Your browser does not support the video tag.
+  </video>
+
   <canvas id="bgCanvas"></canvas>
   <div id="app"></div>
   <script type="module" src="./main.js"></script>
@@ -307,9 +327,10 @@
       // Clean up the flag
       sessionStorage.removeItem('returningFromContact');
       
-      // Set flags to skip loading overlay
+      // Set flags to skip loading overlay and transition video
       sessionStorage.setItem('portfolioAssetsLoaded', 'true');
       sessionStorage.setItem('loadingOverlayHidden', 'true');
+      sessionStorage.setItem('skipTransitionVideo', 'true');
       
       // Hide loading overlay immediately
       const loadingOverlay = document.getElementById('loadingOverlay');
@@ -318,7 +339,7 @@
         loadingOverlay.style.display = 'none';
       }
       
-      console.log('Returning from contact page - loading overlay skipped');
+      console.log('Returning from contact page - loading overlay and transition video skipped');
     } else {
       // Clear flags immediately when starting to prevent race conditions
       sessionStorage.removeItem('portfolioAssetsLoaded');
@@ -330,6 +351,33 @@
     const loadingOverlay = document.getElementById('loadingOverlay');
     const loadingFill = document.getElementById('loadingFill');
     const closeBtn = document.getElementById('closeBtn');
+    
+    // Transition video initialization
+    const transitionVideo = document.getElementById('transitionVideo');
+    if (transitionVideo) {
+      // Allow audio to play and set video properties
+      transitionVideo.muted = false; // Enable audio
+      transitionVideo.playsInline = true;
+      transitionVideo.volume = 0.7; // Set volume to 70% to not be too loud
+      
+      // Preload the video for smoother playback
+      transitionVideo.preload = 'auto';
+      
+      console.log('Transition video initialized with audio enabled');
+    }
+    
+    // Enable audio context on first user interaction to comply with autoplay policies
+    function enableAudioContext() {
+      if (transitionVideo && transitionVideo.muted) {
+        transitionVideo.muted = false;
+        console.log('Audio context enabled for transition video');
+      }
+    }
+    
+    // Add one-time listeners for user interaction to enable audio
+    document.addEventListener('click', enableAudioContext, { once: true });
+    document.addEventListener('touchstart', enableAudioContext, { once: true });
+    document.addEventListener('keydown', enableAudioContext, { once: true });
     
     // Underwater Bubble Animation
     function createBubbles() {
@@ -426,13 +474,94 @@
     // Start loading bar animation
     setTimeout(updateLoadingBar, 500);
     
-    // Hide loading overlay
+    // Hide loading overlay with transition video
     function hideLoadingOverlay() {
+      // Check if we should skip the transition video
+      const skipTransition = sessionStorage.getItem('skipTransitionVideo') === 'true';
+      
+      if (skipTransition) {
+        console.log('Skipping transition video');
+        sessionStorage.removeItem('skipTransitionVideo');
+        immediateHideOverlay();
+        return;
+      }
+      
+      const transitionVideo = document.getElementById('transitionVideo');
+      
+      // Show and play the transition video
+      transitionVideo.style.display = 'block';
+      transitionVideo.currentTime = 0; // Reset to start
+      
+      // Ensure audio is enabled before playing
+      transitionVideo.muted = false;
+      
+      const playPromise = transitionVideo.play();
+      
+      if (playPromise !== undefined) {
+        playPromise.then(() => {
+          console.log('Transition video started playing with audio');
+        }).catch(error => {
+          console.warn('Error playing transition video with audio:', error);
+          console.log('Attempting to play without audio as fallback...');
+          
+          // Fallback: try playing muted if audio autoplay is blocked
+          transitionVideo.muted = true;
+          const mutedPlayPromise = transitionVideo.play();
+          
+          if (mutedPlayPromise !== undefined) {
+            mutedPlayPromise.then(() => {
+              console.log('Transition video playing without audio (fallback)');
+            }).catch(fallbackError => {
+              console.error('Failed to play video even muted:', fallbackError);
+              // Fallback to immediate transition if video fails completely
+              immediateHideOverlay();
+            });
+          }
+        });
+      }
+      
+      // Hide loading overlay at 675ms and start camera animation
+      setTimeout(() => {
+        console.log('Hiding loading overlay at 675ms');
+        loadingOverlay.classList.add('hidden');
+        
+        // Signal to main.js that loading overlay is hidden
+        sessionStorage.setItem('loadingOverlayHidden', 'true');
+        
+        // Signal that video transition is complete for camera animation
+        sessionStorage.setItem('videoTransitionComplete', 'true');
+        
+        // Dispatch custom event for guide system
+        document.dispatchEvent(new CustomEvent('loadingOverlayHidden'));
+        
+        // Re-enable 3D interactions (access global variable from main.js)
+        if (typeof window.interactionsDisabled !== 'undefined') {
+          window.interactionsDisabled = false;
+        }
+      }, 675);
+      
+      // Hide transition video when it ends
+      transitionVideo.addEventListener('ended', () => {
+        console.log('Transition video ended, hiding video element');
+        transitionVideo.style.display = 'none';
+      }, { once: true });
+      
+      // Fallback: hide video after a maximum time in case 'ended' event doesn't fire
+      setTimeout(() => {
+        if (transitionVideo.style.display !== 'none') {
+          transitionVideo.style.display = 'none';
+        }
+      }, 3000); // Assume video is max 3 seconds
+    }
+    
+    // Fallback function for immediate overlay hiding (if video fails)
+    function immediateHideOverlay() {
       loadingOverlay.classList.add('hidden');
-      console.log('Loading overlay hidden');
+      console.log('Loading overlay hidden (immediate fallback)');
       
       // Signal to main.js that loading overlay is hidden
       sessionStorage.setItem('loadingOverlayHidden', 'true');
+      sessionStorage.setItem('videoTransitionComplete', 'true');
       
       // Dispatch custom event for guide system
       document.dispatchEvent(new CustomEvent('loadingOverlayHidden'));

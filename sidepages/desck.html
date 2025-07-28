@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Desck Project - Interactive Workspace Solutions</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #f6eed6;
+      color: #2f2f2f;
+      margin: 0;
+      padding: 0;
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+    header {
+      background-color: #3b3a4f;
+      color: #f6eed6;
+      padding: 1.5rem 0 1rem 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      flex-shrink: 0;
+    }
+    
+    header h1 {
+      margin: 0;
+      font-size: 2rem;
+      font-weight: 600;
+    }
+    
+    header .subtitle {
+      font-size: 1rem;
+      opacity: 0.8;
+      margin-top: 0.5rem;
+    }
+    
+    main {
+      flex: 1;
+      overflow-y: auto;
+      padding: 2rem;
+      display: flex;
+      flex-direction: column;
+      gap: 2rem;
+    }
+    
+    .project-section {
+      background: white;
+      border-radius: 12px;
+      padding: 2rem;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+      border-left: 4px solid #6c63ff;
+    }
+    
+    .project-section h2 {
+      color: #3b3a4f;
+      margin-top: 0;
+      font-size: 1.5rem;
+      margin-bottom: 1rem;
+    }
+    
+    .project-section p {
+      line-height: 1.6;
+      margin-bottom: 1rem;
+    }
+    
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+    
+    .feature-card {
+      background: #f9f9f9;
+      padding: 1rem;
+      border-radius: 8px;
+      border-left: 3px solid #6c63ff;
+    }
+    
+    .feature-card h3 {
+      margin: 0 0 0.5rem 0;
+      color: #3b3a4f;
+      font-size: 1.1rem;
+    }
+    
+    .feature-card p {
+      margin: 0;
+      font-size: 0.9rem;
+      opacity: 0.8;
+    }
+    
+    .tech-stack {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-top: 1rem;
+    }
+    
+    .tech-tag {
+      background: #6c63ff;
+      color: white;
+      padding: 0.3rem 0.8rem;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 500;
+    }
+    
+    .status {
+      display: inline-block;
+      padding: 0.3rem 1rem;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      background: #ffc107;
+      color: #212529;
+    }
+    
+    .image-placeholder {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 3rem;
+      text-align: center;
+      border-radius: 8px;
+      margin: 1rem 0;
+    }
+    
+    .image-placeholder h3 {
+      margin: 0;
+      font-size: 1.2rem;
+    }
+    
+    .image-placeholder p {
+      margin: 0.5rem 0 0 0;
+      opacity: 0.9;
+    }
+    
+    @media (max-width: 768px) {
+      main {
+        padding: 1rem;
+        gap: 1rem;
+      }
+      
+      .project-section {
+        padding: 1.5rem;
+      }
+      
+      header h1 {
+        font-size: 1.5rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Desck Project</h1>
+    <p class="subtitle">Interactive Workspace & Productivity Solutions</p>
+    <span class="status">In Development</span>
+  </header>
+  
+  <main>
+    <section class="project-section">
+      <h2>🖥️ Project Overview</h2>
+      <p>
+        The Desck Project focuses on creating intelligent workspace solutions that enhance productivity and user experience 
+        through innovative desk-based technologies and interactive interfaces. This project combines hardware integration, 
+        software development, and user experience design to create smart workspace environments.
+      </p>
+      
+      <div class="image-placeholder">
+        <h3>🎯 Smart Workspace Concept</h3>
+        <p>Interactive desk interfaces and productivity tools</p>
+      </div>
+      
+      <p>
+        The project aims to bridge the gap between traditional workspace setups and modern digital productivity needs, 
+        creating seamless integration between physical and digital work environments.
+      </p>
+    </section>
+    
+    <section class="project-section">
+      <h2>✨ Key Features</h2>
+      
+      <div class="features-grid">
+        <div class="feature-card">
+          <h3>🔧 Hardware Integration</h3>
+          <p>Smart desk components with embedded sensors and interactive surfaces</p>
+        </div>
+        
+        <div class="feature-card">
+          <h3>📱 Mobile Connectivity</h3>
+          <p>Seamless smartphone and tablet integration for enhanced workflow</p>
+        </div>
+        
+        <div class="feature-card">
+          <h3>🌐 IoT Integration</h3>
+          <p>Connected workspace devices for optimal environment control</p>
+        </div>
+        
+        <div class="feature-card">
+          <h3>📊 Analytics Dashboard</h3>
+          <p>Productivity metrics and workspace usage analytics</p>
+        </div>
+        
+        <div class="feature-card">
+          <h3>🎨 Customizable UI</h3>
+          <p>Personalized workspace interfaces and productivity tools</p>
+        </div>
+        
+        <div class="feature-card">
+          <h3>🔗 API Integration</h3>
+          <p>Third-party productivity app integration and workflow automation</p>
+        </div>
+      </div>
+    </section>
+    
+    <section class="project-section">
+      <h2>🛠️ Technology Stack</h2>
+      <p>
+        This project leverages modern technologies to create robust and scalable workspace solutions:
+      </p>
+      
+      <div class="tech-stack">
+        <span class="tech-tag">JavaScript</span>
+        <span class="tech-tag">Node.js</span>
+        <span class="tech-tag">React</span>
+        <span class="tech-tag">Three.js</span>
+        <span class="tech-tag">WebGL</span>
+        <span class="tech-tag">IoT Sensors</span>
+        <span class="tech-tag">Arduino</span>
+        <span class="tech-tag">Raspberry Pi</span>
+        <span class="tech-tag">WebSocket</span>
+        <span class="tech-tag">REST API</span>
+      </div>
+    </section>
+    
+    <section class="project-section">
+      <h2>🎯 Implementation Phases</h2>
+      
+      <div class="features-grid">
+        <div class="feature-card">
+          <h3>Phase 1: Hardware Setup</h3>
+          <p>Design and prototype smart desk components with embedded sensors</p>
+        </div>
+        
+        <div class="feature-card">
+          <h3>Phase 2: Software Development</h3>
+          <p>Create core application and user interface for workspace management</p>
+        </div>
+        
+        <div class="feature-card">
+          <h3>Phase 3: Integration Testing</h3>
+          <p>Test hardware-software integration and user experience workflows</p>
+        </div>
+        
+        <div class="feature-card">
+          <h3>Phase 4: Deployment</h3>
+          <p>Production deployment and user feedback integration</p>
+        </div>
+      </div>
+    </section>
+    
+    <section class="project-section">
+      <h2>💡 Future Enhancements</h2>
+      <p>
+        Planned improvements and additional features for the Desck Project include:
+      </p>
+      
+      <ul>
+        <li><strong>AI-Powered Recommendations:</strong> Intelligent workspace optimization based on usage patterns</li>
+        <li><strong>Voice Integration:</strong> Voice commands for hands-free workspace control</li>
+        <li><strong>Augmented Reality:</strong> AR overlays for enhanced workspace visualization</li>
+        <li><strong>Team Collaboration:</strong> Multi-user workspace sharing and collaboration tools</li>
+        <li><strong>Energy Management:</strong> Smart power management and sustainability features</li>
+        <li><strong>Health Monitoring:</strong> Posture and wellness tracking for better work ergonomics</li>
+      </ul>
+    </section>
+    
+    <section class="project-section">
+      <h2>📈 Project Status</h2>
+      <p>
+        <strong>Current Phase:</strong> Development and Prototyping<br>
+        <strong>Completion:</strong> ~35%<br>
+        <strong>Next Milestone:</strong> Hardware integration testing
+      </p>
+      
+      <div class="image-placeholder">
+        <h3>🚀 Development Progress</h3>
+        <p>Ongoing development with regular updates and improvements</p>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

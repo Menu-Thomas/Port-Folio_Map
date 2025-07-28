@@ -635,7 +635,7 @@ class AssetValidator {
       'Hex.glb', 'skillFlower.glb', 'drawer1.glb', 'drawer2.glb', 
       'drawer3.glb', 'drawer4.glb', 'steering.glb', 'pc.glb', 
       'forge.glb', 'mail-box.glb', 'trashTruck.glb', 'convoyeur.glb',
-      'sensorSensei.glb', 'unityFlower.glb', 'UnrealFlower.glb',
+      'sensorSensei.glb', 'desck.glb', 'unityFlower.glb', 'UnrealFlower.glb',
       'c++Flower.glb', 'CFlower.glb', 'pythonFlower.glb', 'javaFlower.glb',
       'gitFlower.glb', 'arduinoFlower.glb', 'MetaFlower.glb'
     ],
@@ -646,7 +646,7 @@ class AssetValidator {
       'project1.html', 'project2.html', 'project3.html', 'project4.html',
       'forge.html', 'virtual.html', 'sidepages/contact.html',
       'sidepages/trashProject.html', 'sidepages/convoyeur.html', 
-      'sidepages/sensorSensei.html'
+      'sidepages/sensorSensei.html', 'sidepages/desck.html'
     ]
   };
 
@@ -737,15 +737,17 @@ let medicalModalClosed = false; // Track if user has manually closed the medical
 let medicalModalOpened = false; // Track if the medical modal was ever opened
 let forviaCarModalClosed = false; // Track if user has manually closed the forviaCAR modal
 let forviaCarModalOpened = false; // Track if the forviaCAR modal was ever opened
+let desckModalClosed = false; // Track if user has manually closed the desck modal
+let desckModalOpened = false; // Track if the desck modal was ever opened
 
 // === Drawer Management ===
-const drawerModels = ['drawer1', 'drawer2', 'drawer3', 'drawer4', 'steering', 'pc', 'forge', 'mail-box', 'trashTruck', 'convoyeur', 'sensorSensei', 'medical', 'forviaCAR'];
+const drawerModels = ['drawer1', 'drawer2', 'drawer3', 'drawer4', 'steering', 'pc', 'forge', 'mail-box', 'trashTruck', 'convoyeur', 'sensorSensei', 'medical', 'forviaCAR', 'desck'];
 const drawers = [];
 const interactiveObjects = []; // Separate array for collision detection optimization
 const drawerOriginalPositions = new Map();
 const unreadDrawers = new Set([
   'drawer1', 'drawer2', 'drawer3', 'drawer4', 
-  'steering', 'forge', 'mail-box', 'trashTruck', 'convoyeur', 'sensorSensei', 'medical', 'forviaCAR',
+  'steering', 'forge', 'mail-box', 'trashTruck', 'convoyeur', 'sensorSensei', 'medical', 'forviaCAR', 'desck',
   // Individual skillFlowers for CV theme badges
   'skillFlower1', 'skillFlower2', 'skillFlower3', 'skillFlower4', 'skillFlower5',
   'skillFlower6', 'skillFlower7', 'skillFlower8', 'skillFlower9'
@@ -885,7 +887,7 @@ function getLanguageFlowerByName(name) {
 
 // === Drawer Configuration ===
 const animatedDrawers = ['drawer1', 'drawer2', 'drawer3', 'drawer4', 'skillFlower1', 'skillFlower2', 'skillFlower3', 'skillFlower4', 'skillFlower5', 'skillFlower6', 'skillFlower7', 'skillFlower8', 'skillFlower9']; // Drawers that animate on hover
-const clickAnimatedDrawers = ['pc', 'steering', 'trashTruck', 'convoyeur', 'sensorSensei', 'medical', 'forviaCAR']; // Drawers that animate camera on click
+const clickAnimatedDrawers = ['pc', 'steering', 'trashTruck', 'convoyeur', 'sensorSensei', 'medical', 'forviaCAR', 'desck']; // Drawers that animate camera on click
 const drawerInfoFiles = {
   drawer1: "project1.html",
   drawer2: "project2.html", 
@@ -908,6 +910,7 @@ const drawerThemes = {
   'sensorSensei': 'projects',
   'medical': 'garage',
   'forviaCAR': 'garage',
+  'desck': 'home',
   'skillFlower': 'cv' // All skillFlowers belong to CV theme
 };
 
@@ -940,6 +943,10 @@ const drawerCameraTargets = {
   forviaCAR: {
     x: -1.738, y: 0.018, z: 0.160,
     lookAt: { x: -2.256, y: -0.070, z: 1.011 }
+  },
+  desck: {
+    x: 0, y: 0, z: 0,
+    lookAt: { x: 0, y: 0, z: 0 }
   }
 };
 
@@ -1625,6 +1632,8 @@ window.addEventListener('mousemove', (event) => {
             message = `<div>VivaTech Medical App - 3D Eye-Tracking Telemedicine</div>`;
           } else if (object.userData.type === 'forviaCAR') {
             message = `<div>FORVIA Car Project - Interactive Car Interior CES 2023</div>`;
+          } else if (object.userData.type === 'desck') {
+            message = `<div>Desk Project - Interactive workspace and productivity tools</div>`;
           } else if (object.userData.type === 'skillFlower1') {
             message = `<div><strong>Unity Game Engine</strong><br/>3D game development and interactive experiences</div>`;
           } else if (object.userData.type === 'skillFlower2') {
@@ -3228,6 +3237,10 @@ window.addEventListener('wheel', (event) => {
     forviaCarModalClosed = false;
     forviaCarModalOpened = false;
     
+    // Reset desck modal state when going back to overview
+    desckModalClosed = false;
+    desckModalOpened = false;
+    
     // Return to orbital position instead of fixed original position
     const orbitalPosition = {
       x: orbitCenter.x + orbitRadius * Math.cos(currentCameraAngle),
@@ -3333,6 +3346,10 @@ window.addEventListener('click', (event) => {
       forviaCarModalClosed = false;
       forviaCarModalOpened = false;
       
+      // Reset desck modal state when navigating to different areas
+      desckModalClosed = false;
+      desckModalOpened = false;
+      
       const hexPosition = object.position;
       const hexData = hexMap.find(hex => hex.q === object.userData.q && hex.r === object.userData.r);
       const cameraPos = hexData?.cameraPos || { x: 0, y: 5, z: 10 }; // Default camera position
@@ -3381,7 +3398,7 @@ window.addEventListener('click', (event) => {
       }
       
       // Handle objects that don't need camera movement (trashTruck, convoyeur, sensorSensei, medical, forviaCAR)
-      if (object.userData.type === 'trashTruck' || object.userData.type === 'convoyeur' || object.userData.type === 'sensorSensei' || object.userData.type === 'medical' || object.userData.type === 'forviaCAR') {
+      if (object.userData.type === 'trashTruck' || object.userData.type === 'convoyeur' || object.userData.type === 'sensorSensei' || object.userData.type === 'medical' || object.userData.type === 'forviaCAR' || object.userData.type === 'desck') {
         if (object.userData.type === 'trashTruck' && !trashModalClosed) {
           showTrashModal();
         }
@@ -3396,6 +3413,9 @@ window.addEventListener('click', (event) => {
         }
         if (object.userData.type === 'forviaCAR' && !forviaCarModalClosed) {
           showForviaCarModal();
+        }
+        if (object.userData.type === 'desck' && !desckModalClosed) {
+          showDesckModal();
         }
         return; // Don't animate camera for these objects
       }
@@ -3749,6 +3769,10 @@ function handleInteraction(event) {
       forviaCarModalClosed = false;
       forviaCarModalOpened = false;
       
+      // Reset desck modal state when navigating to different areas
+      desckModalClosed = false;
+      desckModalOpened = false;
+      
       const hexPosition = object.position;
       const hexData = hexMap.find(hex => hex.q === object.userData.q && hex.r === object.userData.r);
       const cameraPos = hexData?.cameraPos || { x: 0, y: 5, z: 10 }; // Default camera position
@@ -3797,7 +3821,7 @@ function handleInteraction(event) {
       }
       
       // Handle objects that don't need camera movement (trashTruck, convoyeur, sensorSensei, medical, forviaCAR)
-      if (object.userData.type === 'trashTruck' || object.userData.type === 'convoyeur' || object.userData.type === 'sensorSensei' || object.userData.type === 'medical' || object.userData.type === 'forviaCAR') {
+      if (object.userData.type === 'trashTruck' || object.userData.type === 'convoyeur' || object.userData.type === 'sensorSensei' || object.userData.type === 'medical' || object.userData.type === 'forviaCAR' || object.userData.type === 'desck') {
         if (object.userData.type === 'trashTruck' && !trashModalClosed) {
           showTrashModal();
         }
@@ -3812,6 +3836,9 @@ function handleInteraction(event) {
         }
         if (object.userData.type === 'forviaCAR' && !forviaCarModalClosed) {
           showForviaCarModal();
+        }
+        if (object.userData.type === 'desck' && !desckModalClosed) {
+          showDesckModal();
         }
         return; // Don't animate camera for these objects
       }
@@ -4358,6 +4385,70 @@ function showForviaCarModal() {
     content.innerHTML = '<div style="color: white; padding: 20px; text-align: center;">Error loading FORVIA car project content</div>';
   };
 
+  content.appendChild(iframe);
+  document.body.appendChild(modal);
+}
+
+function showDesckModal() {
+  let existingModal = document.getElementById('desckModal');
+  if (existingModal) return; // Already open
+  
+  desckModalOpened = true; // Mark that the modal was opened
+  
+  // Create modal element
+  const modal = document.createElement('div');
+  modal.id = 'desckModal';
+  modal.className = 'modal';
+  modal.style.cssText = `
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.8); z-index: 10000; display: flex;
+    align-items: center; justify-content: center; padding: 20px;
+  `;
+  
+  // Create content container
+  const content = document.createElement('div');
+  content.style.cssText = `
+    background: white; border-radius: 12px; width: 90%; max-width: 800px;
+    height: 80%; overflow: hidden; position: relative;
+  `;
+  
+  // Add close button
+  const closeBtn = document.createElement('button');
+  closeBtn.innerHTML = '✕';
+  closeBtn.style.cssText = `
+    position: absolute; top: 15px; right: 20px; background: none;
+    border: none; font-size: 24px; cursor: pointer; z-index: 1;
+    width: 35px; height: 35px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(0,0,0,0.1); transition: background 0.2s;
+  `;
+  closeBtn.onmouseover = () => closeBtn.style.background = 'rgba(0,0,0,0.2)';
+  closeBtn.onmouseout = () => closeBtn.style.background = 'rgba(0,0,0,0.1)';
+  
+  closeBtn.onclick = () => {
+    document.body.removeChild(modal);
+    desckModalClosed = true; // Mark as manually closed
+  };
+  
+  // Add iframe for desck project content
+  const iframe = document.createElement('iframe');
+  iframe.src = 'sidepages/desck.html'; // You'll need to create this page
+  iframe.style.cssText = 'width: 100%; height: 100%; border: none;';
+  iframe.onerror = () => {
+    // Fallback content if page doesn't exist
+    iframe.style.display = 'none';
+    const fallback = document.createElement('div');
+    fallback.style.cssText = 'padding: 40px; text-align: center;';
+    fallback.innerHTML = `
+      <h2>Desck Project</h2>
+      <p>This project showcases desk-related work and implementations.</p>
+      <p>Content coming soon...</p>
+    `;
+    content.appendChild(fallback);
+  };
+  
+  modal.appendChild(content);
+  content.appendChild(closeBtn);
   content.appendChild(iframe);
   document.body.appendChild(modal);
 }
@@ -5042,3 +5133,5 @@ function updateCameraAngleFromPosition() {
   const deltaZ = camera.position.z - orbitCenter.z;
   currentCameraAngle = Math.atan2(deltaZ, deltaX);
 }
+
+

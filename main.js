@@ -609,7 +609,7 @@ setupLogging();
 class AssetValidator {
   static requiredAssets = {
     models: [
-      'Hex.glb', 'skillFlower.glb', 'drawer1.glb', 'drawer2.glb', 
+      'skillFlower.glb', 'drawer1.glb', 'drawer2.glb', 
       'drawer3.glb', 'drawer4.glb', 'steering.glb', 'pc.glb', 
       'forge.glb', 'mail-box.glb', 'trashTruck.glb', 'convoyeur.glb',
       'sensorSensei.glb', 'desck.glb', 'unityFlower.glb', 'UnrealFlower.glb',

@@ -1,7 +1,7 @@
 /**
  * Interactive Portfolio Map - Thomas Menu
  * A Three.js-based hexagonal portfolio interface with smooth animations and interactivity
- * 
+ *
  * Features:
  * - Hexagonal grid world map
  * - Interactive drawer objects with hover effects
@@ -9,22 +9,15 @@
  * - Dynamic lighting and ocean simulation
  * - Modal integration for project details
  * - Navigation sidebar with unread indicators
- * 
+ *
  * @author Thomas Menu
  * @version 2.0.0
  */
-
 import * as THREE from 'https://esm.sh/three@0.150.1';
 import { GLTFLoader } from 'https://esm.sh/three@0.150.1/examples/jsm/loaders/GLTFLoader.js';
 import { gsap } from 'https://esm.sh/gsap@3.12.2';
-
-// === REMOVED FOR PRODUCTION ===
 // SEO Manager and Analytics modules removed to reduce bundle size
-
-// === GLOBAL STATE VARIABLES ===
 let interactionsDisabled = false; // Global flag to disable all 3D interactions
-
-// === CONFIGURATION CONSTANTS ===
 const CONFIG = {
   SCENE: {
     BACKGROUND_COLOR: 0x111111,
@@ -53,69 +46,53 @@ const CONFIG = {
     SIDEBAR_WIDTH: 220
   }
 };
-
-// === LOADING COMPLETION SYSTEM ===
 let totalAssetsToLoad = 0;
 let assetsLoaded = 0;
 let allAssetsLoaded = false;
 let cinematicMode = false;
-
 function incrementTotalAssets() {
   totalAssetsToLoad++;
 }
-
 function markAssetLoaded() {
   assetsLoaded++;
   if (!isProduction) {
     console.log(`Asset loaded: ${assetsLoaded}/${totalAssetsToLoad}`);
   }
-  
   if (assetsLoaded === totalAssetsToLoad && !allAssetsLoaded) {
     allAssetsLoaded = true;
     if (!isProduction) console.log('All assets loaded successfully');
-    
     // Signal to loading page that portfolio assets are ready
     sessionStorage.setItem('portfolioAssetsLoaded', 'true');
-    
     onAllAssetsLoaded();
   }
 }
-
-// === Cinematic Entrance Animation ===
 function startCinematicEntrance() {
   if (!isProduction) {
     console.log('=== STARTING UNDERWATER EMERGENCE CINEMATIC ===');
   }
-  
   // Set cinematic mode and disable cursor interactions
   cinematicMode = true;
   document.body.style.cursor = 'wait';
-  
   // Underwater emergence parameters
   const centerX = 0;
   const centerZ = 0;
   const finalRadius = 7.5; // Final orbital distance
   const finalHeight = 6; // Final camera height
   const emergenceDuration = 4; // 4 seconds for underwater emergence
-  
   // Final position in front of the island (90°)
   const finalAngle = Math.PI / 2;
   const finalX = centerX + finalRadius * Math.cos(finalAngle);
   const finalZ = centerZ + finalRadius * Math.sin(finalAngle);
-  
   // Starting position: further back and at sea level
   const startDistance = 12; // Start further away
   const startX = centerX + startDistance * Math.cos(finalAngle);
   const startY = 0; // Start at sea level
   const startZ = centerZ + startDistance * Math.sin(finalAngle);
-  
   // Look at center of the island (better visual experience)
   const lookAtCenter = { x: centerX, y: 0.3, z: centerZ };
-  
   // Set initial position
   camera.position.set(startX, startY, startZ);
   camera.lookAt(lookAtCenter.x, lookAtCenter.y, lookAtCenter.z);
-  
   // Create underwater emergence animation
   gsap.to(camera.position, {
     x: finalX,
@@ -131,58 +108,44 @@ function startCinematicEntrance() {
       // Animation complete - now look at center and enable controls
       const lookAtCenter = { x: centerX, y: 0.3, z: centerZ };
       camera.lookAt(lookAtCenter.x, lookAtCenter.y, lookAtCenter.z);
-      
       if (!isProduction) console.log('Underwater emergence complete - controls enabled');
       cinematicMode = false;
       document.body.style.cursor = 'default';
-      
       // Re-enable interactions after cinematic completes
       interactionsDisabled = false;
       window.interactionsDisabled = false;
-      
       // Update orbital camera angle to current position
       updateCameraAngleFromPosition();
-      
       // Sync lookAtTarget with the actual camera look-at direction
       lookAtTarget.x = lookAtCenter.x;
       lookAtTarget.y = lookAtCenter.y;
       lookAtTarget.z = lookAtCenter.z;
     }
   });
-  
   return true; // Animation started
 }
-
 function onAllAssetsLoaded() {
   // Signal that portfolio assets are loaded
   sessionStorage.setItem('portfolioAssetsLoaded', 'true');
   if (!isProduction) console.log('Assets loaded, waiting for overlay to be manually dismissed...');
-  
   // Set global flag for guide system
   window.allAssetsLoaded = true;
-  
   // Ensure fresh state after all assets are loaded
   initializeFreshState();
-  
   // Initialize badges once all assets are loaded
   updateThemeUnreadBadges();
-  
   // Initialize hex info display
   initHexInfo();
-  
   // Initialize portfolio experience system
   initPortfolioExperience();
-  
   // Wait for loading overlay to be hidden before starting cinematic animation
   function checkAndStartCinematic() {
     const overlayHidden = sessionStorage.getItem('loadingOverlayHidden');
     const overlayElement = document.getElementById('loadingOverlay');
     const videoTransitionComplete = sessionStorage.getItem('videoTransitionComplete');
-    
     // Double check - ensure overlay is actually hidden
-    const isOverlayActuallyHidden = overlayHidden === 'true' && 
+    const isOverlayActuallyHidden = overlayHidden === 'true' &&
       (!overlayElement || overlayElement.classList.contains('hidden'));
-    
     // Start animation when overlay is hidden, regardless of video state
     if (isOverlayActuallyHidden) {
       if (!isProduction) console.log('Overlay confirmed hidden, starting cinematic animation immediately...');
@@ -190,7 +153,6 @@ function onAllAssetsLoaded() {
       if (videoTransitionComplete) {
         sessionStorage.removeItem('videoTransitionComplete');
       }
-      
       // Start cinematic animation if conditions are met
       if (!virtualModalOpened || virtualModalClosed) {
         // Minimal delay to ensure everything is ready
@@ -203,12 +165,9 @@ function onAllAssetsLoaded() {
       setTimeout(checkAndStartCinematic, 50);
     }
   }
-  
   // Start checking for overlay hidden signal
   checkAndStartCinematic();
 }
-
-// === Orbital Camera Controls Variables ===
 let isOrbiting = false;
 let previousMouseX = 0;
 let currentCameraAngle = Math.PI / 2; // Start at front of island (end position of cinematic)
@@ -216,22 +175,17 @@ const orbitRadius = 7.5; // Same radius as cinematic animation
 const orbitHeight = 6; // Same height as cinematic animation
 const orbitCenter = { x: 0, y: 0.3, z: 0 }; // Same center as cinematic animation
 const orbitSensitivity = 0.005; // How fast the camera rotates
-
-// === Scene Initialization ===
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(CONFIG.SCENE.BACKGROUND_COLOR);
-
 const camera = new THREE.PerspectiveCamera(
-  CONFIG.CAMERA.FOV, 
-  window.innerWidth / window.innerHeight, 
-  CONFIG.CAMERA.NEAR, 
+  CONFIG.CAMERA.FOV,
+  window.innerWidth / window.innerHeight,
+  CONFIG.CAMERA.NEAR,
   CONFIG.CAMERA.FAR
 );
-
 // Check if we should use cinematic camera position (when loading overlay is present)
 const loadingOverlay = document.getElementById('loadingOverlay');
 const shouldUseCinematicStart = loadingOverlay && !loadingOverlay.classList.contains('hidden');
-
 if (shouldUseCinematicStart) {
   // Use exact same parameters as underwater emergence animation to prevent any jumps
   const centerX = 0;
@@ -239,38 +193,32 @@ if (shouldUseCinematicStart) {
   const finalAngle = Math.PI / 2; // Front of island - same as cinematic end position
   const startY = 0; // Sea level - same as cinematic start
   const startDistance = 12; // Further back - same as cinematic start
-  
   // Calculate starting position (same as cinematic animation)
   const startX = centerX + startDistance * Math.cos(finalAngle);
   const startZ = centerZ + startDistance * Math.sin(finalAngle);
-  
   // Position camera at exact starting position of cinematic animation
   camera.position.set(startX, startY, startZ);
-  
   // Look at center (same as cinematic animation)
   const lookAtCenter = { x: centerX, y: 0.3, z: centerZ };
   camera.lookAt(lookAtCenter.x, lookAtCenter.y, lookAtCenter.z);
-  
   // Set currentCameraAngle to match the final position angle (prevents orbital controls from moving camera)
   currentCameraAngle = finalAngle;
-  
   // Disable all interactions while loading overlay is visible
   interactionsDisabled = true;
   window.interactionsDisabled = true;
 } else {
   // Normal position for direct access
   camera.position.set(
-    CONFIG.CAMERA.ORIGINAL_POSITION.x, 
-    CONFIG.CAMERA.ORIGINAL_POSITION.y, 
+    CONFIG.CAMERA.ORIGINAL_POSITION.x,
+    CONFIG.CAMERA.ORIGINAL_POSITION.y,
     CONFIG.CAMERA.ORIGINAL_POSITION.z
   );
   camera.lookAt(
-    CONFIG.CAMERA.ORIGINAL_LOOK_AT.x, 
-    CONFIG.CAMERA.ORIGINAL_LOOK_AT.y, 
+    CONFIG.CAMERA.ORIGINAL_LOOK_AT.x,
+    CONFIG.CAMERA.ORIGINAL_LOOK_AT.y,
     CONFIG.CAMERA.ORIGINAL_LOOK_AT.z
   );
 }
-
 const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.shadowMap.enabled = true;
@@ -280,14 +228,10 @@ renderer.toneMappingExposure = CONFIG.RENDERER.TONE_MAPPING_EXPOSURE;
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.useLegacyLights = false; // Modern lighting
 document.body.appendChild(renderer.domElement);
-
-// === Mouse and Raycaster Setup ===
 const mouse = new THREE.Vector2();
 const raycaster = new THREE.Raycaster();
 let hoveredDrawer = null;
 let currentHoveredSkillFlowerIndex = null; // Track currently hovered skillFlower to prevent duplicate language flower triggers
-
-// === Touch Support Variables ===
 let isTouchDevice = false;
 let touchStart = { x: 0, y: 0 };
 let lastTouchTime = 0;
@@ -295,32 +239,23 @@ let touchMoved = false;
 const TOUCH_SENSITIVITY = 0.008;
 const TAP_THRESHOLD = 10; // pixels
 const DOUBLE_TAP_DELAY = 300; // ms
-
-// === Mobile Navigation Variables ===
 let isMobileDevice = false;
 let isNavigationOpen = false;
-
 // Detect touch device
 function detectTouchDevice() {
   isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
   isMobileDevice = window.innerWidth <= 768 || isTouchDevice;
-  
   // Force mobile detection for testing - remove this line later
   if (window.innerWidth <= 768) {
     isTouchDevice = true;
     isMobileDevice = true;
   }
-  
   if (isTouchDevice && !isProduction) {
     console.log('Touch device detected - enabling mobile controls');
-    console.log('isMobileDevice:', isMobileDevice);
-    console.log('Window width:', window.innerWidth);
   }
-  
   if (isTouchDevice) {
     // Add mobile-specific styles
     document.body.style.touchAction = 'manipulation'; // Changed from 'none' to allow some touch behaviors
-    
     // Add mobile UI indicators
     const mobileInfo = document.createElement('div');
     mobileInfo.id = 'mobile-info';
@@ -332,7 +267,6 @@ function detectTouchDevice() {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     `;
     document.body.appendChild(mobileInfo);
-    
     // Add touch indicator animation styles
     const style = document.createElement('style');
     style.textContent = `
@@ -346,7 +280,6 @@ function detectTouchDevice() {
       }
     `;
     document.head.appendChild(style);
-    
     // Auto-hide mobile info after 5 seconds
     setTimeout(() => {
       if (mobileInfo.parentElement) {
@@ -355,13 +288,9 @@ function detectTouchDevice() {
       }
     }, 5000);
   }
-  
   return isTouchDevice;
 }
-
 detectTouchDevice();
-
-// === Global Keyboard Shortcuts ===
 document.addEventListener('keydown', (event) => {
   // Camera Editor Toggle (Ctrl + E)
   if (event.ctrlKey && event.key.toLowerCase() === 'e') {
@@ -369,14 +298,12 @@ document.addEventListener('keydown', (event) => {
     cameraEditor.toggle();
     return;
   }
-  
   // Debug Light Manager (Ctrl + L)
   if (event.ctrlKey && event.key.toLowerCase() === 'l') {
     event.preventDefault();
     ImportedLightManager.debugLights();
     return;
   }
-  
   // Quick position print (Ctrl + P) - only when editor is not active
   if (event.ctrlKey && event.key.toLowerCase() === 'p' && !cameraEditor.isActive) {
     event.preventDefault();
@@ -388,37 +315,27 @@ document.addEventListener('keydown', (event) => {
     return;
   }
 });
-
-// === Transition Video Helper Functions ===
 function getTransitionVideo() {
   return document.getElementById('transitionVideo');
 }
-
 function isTransitionVideoPlaying() {
   const video = getTransitionVideo();
   return video && video.style.display === 'block' && !video.ended && !video.paused;
 }
-
-// === Application State Variables ===
 let currentActiveHexType = null; // Tracks the currently active hex type for navigation sync
-let lookAtTarget = { 
+let lookAtTarget = {
   x: 0, // Will be set to orbitCenter.x after cinematic or orbital center
-  y: 0.3, // Will be set to orbitCenter.y after cinematic or orbital center  
+  y: 0.3, // Will be set to orbitCenter.y after cinematic or orbital center
   z: 0 // Will be set to orbitCenter.z after cinematic or orbital center
 };
 window.interactionsDisabled = interactionsDisabled; // Expose to window for access from portfolio.html
-
-// === Expose useful variables for guide system ===
 window.getCurrentActiveHexType = () => currentActiveHexType;
 window.getHoveredDrawer = () => hoveredDrawer;
 window.getUnreadDrawers = () => unreadDrawers;
 window.getUnreadCountForTheme = getUnreadCountForTheme;
-
-// === Error Handling ===
 class ErrorHandler {
   static logError(error, context = '') {
     console.error(`[Portfolio Error${context ? ` - ${context}` : ''}]:`, error);
-    
     // Send error to analytics if available
     if (typeof gtag !== 'undefined') {
       gtag('event', 'exception', {
@@ -426,13 +343,11 @@ class ErrorHandler {
         fatal: false
       });
     }
-    
     // Show user-friendly error message if needed
     if (context.includes('Critical')) {
       this.showUserError('Erreur critique lors du chargement. Veuillez actualiser la page.', true);
     }
   }
-  
   static showUserError(message, persistent = false) {
     // Show user-friendly error message
     const errorDiv = document.createElement('div');
@@ -450,7 +365,6 @@ class ErrorHandler {
       box-shadow: 0 4px 12px rgba(0,0,0,0.3);
       animation: slideInRight 0.3s ease-out;
     `;
-    
     // Add animation styles if not present
     if (!document.getElementById('error-animations')) {
       const style = document.createElement('style');
@@ -463,9 +377,7 @@ class ErrorHandler {
       `;
       document.head.appendChild(style);
     }
-    
     document.body.appendChild(errorDiv);
-    
     if (!persistent) {
       setTimeout(() => {
         if (errorDiv.parentElement) {
@@ -475,20 +387,16 @@ class ErrorHandler {
       }, 5000);
     }
   }
-  
   static handleAsyncError(promise, context = '') {
     return promise.catch(error => {
       this.logError(error, context);
-      
       // Show user error for critical failures
       if (context.includes('Critical') || context.includes('Environment') || context.includes('WebGL')) {
         this.showUserError(`Erreur: ${context}. Certaines fonctionnalités peuvent être limitées.`, true);
       }
-      
       return null; // Return null instead of throwing to allow graceful degradation
     });
   }
-  
   static checkWebGLSupport() {
     try {
       const canvas = document.createElement('canvas');
@@ -496,19 +404,16 @@ class ErrorHandler {
       if (!gl) {
         throw new Error('WebGL not supported');
       }
-      
       // Test for essential extensions
       const extensions = [
         'OES_element_index_uint',
         'WEBGL_depth_texture'
       ];
-      
       extensions.forEach(ext => {
         if (!gl.getExtension(ext)) {
           console.warn(`WebGL extension ${ext} not available`);
         }
       });
-      
       return true;
     } catch (error) {
       this.logError(error, 'WebGL Support Check');
@@ -516,33 +421,26 @@ class ErrorHandler {
       return false;
     }
   }
-  
   static checkRequiredElements() {
     const requiredSelectors = [
       'body',
       '#loadingOverlay'
     ];
-    
     // Note: #zoneNavSidebar is created dynamically by main.js navigation system
     const missingElements = [];
-    
     requiredSelectors.forEach(selector => {
       const element = selector === 'body' ? document.body : document.querySelector(selector);
       if (!element) {
         missingElements.push(selector);
       }
     });
-    
     if (missingElements.length > 0) {
       this.logError(new Error(`Missing required elements: ${missingElements.join(', ')}`), 'DOM Check');
       return false;
     }
-    
     return true;
   }
 }
-
-// === Performance Monitor ===
 class PerformanceMonitor {
   constructor() {
     this.frameCount = 0;
@@ -550,53 +448,39 @@ class PerformanceMonitor {
     this.fps = 0;
     this.enabled = false; // Only enable in development
   }
-
   update() {
     if (!this.enabled) return;
-    
     this.frameCount++;
     const currentTime = performance.now();
-    
     if (currentTime >= this.lastTime + 1000) {
       this.fps = Math.round((this.frameCount * 1000) / (currentTime - this.lastTime));
       this.frameCount = 0;
       this.lastTime = currentTime;
-      
       if (this.fps < 30) {
         console.warn(`Low FPS detected: ${this.fps}`);
       }
     }
   }
-
   getFPS() {
     return this.fps;
   }
 }
-
 const performanceMonitor = new PerformanceMonitor();
 // Enable performance monitoring
 performanceMonitor.enabled = true;
-
-// === INITIALIZATION CHECKS ===
 // Check WebGL support before initializing Three.js
 const webGLSupported = ErrorHandler.checkWebGLSupport();
 const domElementsValid = ErrorHandler.checkRequiredElements();
-
 if (!webGLSupported || !domElementsValid) {
   console.error('Critical startup checks failed');
   // Continue with degraded functionality
 }
-
-// === Production Configuration ===
 const isProduction = !window.location.hostname.includes('localhost') && !window.location.hostname.includes('127.0.0.1');
-
-// === Debug Logging Control ===
 const originalConsole = {
   log: console.log,
   warn: console.warn,
   error: console.error
 };
-
 function setupLogging() {
   if (isProduction) {
     // In production, reduce console noise but keep errors
@@ -609,15 +493,12 @@ function setupLogging() {
     };
   }
 }
-
 setupLogging();
-
-// === Asset Validation System ===
 class AssetValidator {
   static requiredAssets = {
     models: [
-      'skillFlower.glb', 'drawer1.glb', 'drawer2.glb', 
-      'drawer3.glb', 'drawer4.glb', 'steering.glb', 'pc.glb', 
+      'skillFlower.glb', 'drawer1.glb', 'drawer2.glb',
+      'drawer3.glb', 'drawer4.glb', 'steering.glb', 'pc.glb',
       'forge.glb', 'mail-box.glb', 'trashTruck.glb', 'convoyeur.glb',
       'sensorSensei.glb', 'desck.glb', 'unityFlower.glb', 'UnrealFlower.glb',
       'c++Flower.glb', 'CFlower.glb', 'pythonFlower.glb', 'javaFlower.glb',
@@ -629,11 +510,10 @@ class AssetValidator {
     pages: [
       'project1.html', 'project2.html', 'project3.html', 'project4.html',
       'forge.html', 'virtual.html', 'sidepages/contact.html',
-      'sidepages/trashProject.html', 'sidepages/convoyeur.html', 
+      'sidepages/trashProject.html', 'sidepages/convoyeur.html',
       'sidepages/sensorSensei.html', 'sidepages/desck.html'
     ]
   };
-
   static async validateAsset(path, type = 'model') {
     try {
       const response = await fetch(path, { method: 'HEAD' });
@@ -643,41 +523,34 @@ class AssetValidator {
       return false;
     }
   }
-
   static async validateAllAssets() {
     const results = {
       models: [],
       textures: [],
       pages: []
     };
-
     // Validate models
     for (const model of this.requiredAssets.models) {
       const path = `./public/models/${model}`;
       const exists = await this.validateAsset(path);
       results.models.push({ name: model, exists, path });
     }
-
-    // Validate textures  
+    // Validate textures
     for (const texture of this.requiredAssets.textures) {
       const path = `./public/textures/${texture}`;
       const exists = await this.validateAsset(path);
       results.textures.push({ name: texture, exists, path });
     }
-
     // Validate pages
     for (const page of this.requiredAssets.pages) {
       const exists = await this.validateAsset(page);
       results.pages.push({ name: page, exists, path: page });
     }
-
     this.reportValidationResults(results);
     return results;
   }
-
   static reportValidationResults(results) {
     const missing = [];
-    
     ['models', 'textures', 'pages'].forEach(type => {
       results[type].forEach(asset => {
         if (!asset.exists) {
@@ -685,7 +558,6 @@ class AssetValidator {
         }
       });
     });
-
     if (missing.length > 0) {
       console.warn('Missing assets detected:', missing);
       if (!isProduction) {
@@ -699,13 +571,10 @@ class AssetValidator {
     }
   }
 }
-
 // Validate assets in development mode
 if (!isProduction) {
   AssetValidator.validateAllAssets();
 }
-
-// === Modal State Tracking ===
 let virtualModalClosed = false; // Track if user has manually closed the virtual modal
 let virtualModalOpened = false; // Track if the virtual modal was ever opened
 let steeringWheelClicked = false; // Track if user actually clicked on the steering wheel
@@ -726,22 +595,18 @@ let desckModalClosed = false; // Track if user has manually closed the desck mod
 let desckModalOpened = false; // Track if the desck modal was ever opened
 let pcModalClosed = false; // Track if user has manually closed the pc modal
 let pcModalOpened = false; // Track if the pc modal was ever opened
-
-// === Drawer Management ===
 const drawerModels = ['drawer1', 'drawer2', 'drawer3', 'drawer4', 'steering', 'pc', 'forge', 'mail-box', 'trashTruck', 'convoyeur', 'sensorSensei', 'medical', 'forviaCAR', 'desck'];
 const drawers = [];
 const interactiveObjects = []; // Separate array for collision detection optimization
 const drawerOriginalPositions = new Map();
 const unreadDrawers = new Set([
-  'drawer1', 'drawer2', 'drawer3', 'drawer4', 
+  'drawer1', 'drawer2', 'drawer3', 'drawer4',
   'steering', 'forge', 'mail-box', 'trashTruck', 'convoyeur', 'sensorSensei', 'medical', 'forviaCAR',
   'pc', 'desck', // Added missing home objects
   // Individual skillFlowers for CV theme badges
   'skillFlower1', 'skillFlower2', 'skillFlower3', 'skillFlower4', 'skillFlower5',
   'skillFlower6', 'skillFlower7', 'skillFlower8', 'skillFlower9'
 ]);
-
-// === Drawer Management Utilities ===
 function addToDrawers(object, isInteractive = true) {
   if (!drawers.includes(object)) {
     drawers.push(object);
@@ -750,116 +615,103 @@ function addToDrawers(object, isInteractive = true) {
     }
   }
 }
-
 function optimizeDrawersArray() {
   // Remove duplicates and organize for better performance
   const uniqueDrawers = [...new Set(drawers)];
   drawers.length = 0;
   drawers.push(...uniqueDrawers);
-  
   console.log(`Optimized drawers array: ${drawers.length} unique objects`);
 }
-
-// === Skill Flowers and Language Flowers Management ===
 const skillFlowers = []; // Array to store the 9 skillFlowers
 const languageFlowers = []; // Array to store the 9 language flowers
-
 // FIXED flower configuration based on actual user testing
 // Mapping based on grid positions: (-1,1), (0,1), (1,1), (-1,0), (0,0), (1,0), (-1,-1), (0,-1), (1,-1)
 const languageFlowerData = [
-  { 
-    name: 'unity', 
+  {
+    name: 'unity',
     model: 'unityFlower.glb',
     displayName: 'Unity Engine',
     category: 'Game Development',
     gridPosition: 'position-0'
-  },        
-  { 
-    name: 'unreal', 
+  },
+  {
+    name: 'unreal',
     model: 'UnrealFlower.glb',
     displayName: 'Unreal Engine',
-    category: 'Game Development', 
+    category: 'Game Development',
     gridPosition: 'position-1'
-  },      
-  { 
-    name: 'cpp', 
+  },
+  {
+    name: 'cpp',
     model: 'c++Flower.glb',
     displayName: 'C++',
     category: 'Programming Language',
     gridPosition: 'position-2'
-  },            
-  { 
-    name: 'csharp', 
+  },
+  {
+    name: 'csharp',
     model: 'CFlower.glb',
     displayName: 'C#',
     category: 'Programming Language',
     gridPosition: 'position-3'
-  },           
-  { 
-    name: 'python', 
+  },
+  {
+    name: 'python',
     model: 'pythonFlower.glb',
     displayName: 'Python',
     category: 'Programming Language',
     gridPosition: 'position-4'
-  },      
-  { 
-    name: 'java', 
+  },
+  {
+    name: 'java',
     model: 'javaFlower.glb',
     displayName: 'Java',
     category: 'Programming Language',
     gridPosition: 'position-5'
-  },          
-  { 
-    name: 'git', 
+  },
+  {
+    name: 'git',
     model: 'gitFlower.glb',
     displayName: 'Git',
     category: 'Version Control',
     gridPosition: 'position-6'
-  },            
-  { 
-    name: 'arduino', 
+  },
+  {
+    name: 'arduino',
     model: 'arduinoFlower.glb',
     displayName: 'Arduino',
     category: 'Hardware Development',
     gridPosition: 'position-7'
-  },    
-  { 
-    name: 'meta', 
+  },
+  {
+    name: 'meta',
     model: 'MetaFlower.glb',
     displayName: 'Meta Quest SDK',
     category: 'VR/AR Development',
     gridPosition: 'position-8'
-  }           
+  }
 ];
-
 const activeLanguageFlowers = new Set(); // Track which language flowers are currently visible
 const languageFlowerRotations = new Map(); // Track rotation animations
 const stayUpSkillFlowers = new Set(); // Track which skill flowers should stay up permanently
 const stayUpLanguageFlowers = new Set(); // Track which language flowers should stay up permanently
-
-// === Fresh State Initialization ===
 function initializeFreshState() {
   // Clear all persistent states to ensure clean startup on each page load
   activeLanguageFlowers.clear();
   languageFlowerRotations.clear();
   stayUpSkillFlowers.clear();
   stayUpLanguageFlowers.clear();
-  
   // Reset hover tracking
   currentHoveredSkillFlowerIndex = null;
   hoveredDrawer = null;
-  
   // Kill any existing GSAP animations to prevent conflicts
   if (typeof gsap !== 'undefined') {
     gsap.killTweensOf("*"); // Kill all existing animations
   }
-  
-  console.log('Portfolio state initialized fresh for this session');
+  if (!isProduction) console.log('Portfolio state initialized fresh for this session');
 }
-
 // Initialize fresh state immediately
 initializeFreshState();
-
 // Helper function to get language flower info by grid index
 function getLanguageFlowerInfo(gridIndex) {
   if (gridIndex >= 0 && gridIndex < languageFlowerData.length) {
@@ -867,27 +719,22 @@ function getLanguageFlowerInfo(gridIndex) {
   }
   return null;
 }
-
 // Helper function to get language flower info by name
 function getLanguageFlowerByName(name) {
   return languageFlowerData.find(flower => flower.name === name);
 }
-
-// === Drawer Configuration ===
 const animatedDrawers = ['drawer1', 'drawer2', 'drawer3', 'drawer4', 'skillFlower1', 'skillFlower2', 'skillFlower3', 'skillFlower4', 'skillFlower5', 'skillFlower6', 'skillFlower7', 'skillFlower8', 'skillFlower9']; // Drawers that animate on hover
 const clickAnimatedDrawers = ['desck', 'steering', 'trashTruck', 'convoyeur', 'sensorSensei', 'medical', 'forviaCAR', 'pc']; // Drawers that animate camera on click
 const drawerInfoFiles = {
   drawer1: "project1.html",
-  drawer2: "project2.html", 
+  drawer2: "project2.html",
   drawer3: "project3.html",
   drawer4: "project4.html"
 };
-
-// === Theme Configuration ===
 const drawerThemes = {
   'drawer1': 'home',
   'drawer2': 'home',
-  'drawer3': 'home', 
+  'drawer3': 'home',
   'drawer4': 'home',
   'steering': 'garage',
   'pc': 'home',
@@ -901,8 +748,6 @@ const drawerThemes = {
   'desck': 'home',
   'skillFlower': 'cv' // All skillFlowers belong to CV theme
 };
-
-// === Hex Names Configuration ===
 const hexNames = {
   'home': 'Home',
   'cv': 'Curriculum Vitae',
@@ -912,7 +757,7 @@ const hexNames = {
   'champ1': 'Champs Florissants',
   'garage': 'Garage Technologique',
   'forest1': 'Forêt Mystique',
-  'forest2': 'Forêt Enchantée', 
+  'forest2': 'Forêt Enchantée',
   'forest3': 'Forêt Ancienne',
   'marais': 'Marais Tranquille',
   'marais2': 'Marais Profond',
@@ -921,8 +766,6 @@ const hexNames = {
   'plain1': 'Plaines Verdoyantes',
   'forge2': 'Forge du Créateur'
 };
-
-// === Objects by Hex Configuration ===
 const objectsByHex = {
   'home': ['drawer1', 'drawer2', 'drawer3', 'drawer4', 'pc', 'trashTruck', 'convoyeur', 'desck'],
   'cv': [], // SkillFlowers are dynamic based on theme
@@ -941,8 +784,6 @@ const objectsByHex = {
   'plain1': [],
   'forge2': ['forge']
 };
-
-// === Portfolio Experience Configuration ===
 const portfolioExperiences = [
   // Main objects
   'drawer1', 'drawer2', 'drawer3', 'drawer4', 'pc', 'trashTruck', 'convoyeur', 'desck',
@@ -951,10 +792,8 @@ const portfolioExperiences = [
   'skillFlower1', 'skillFlower2', 'skillFlower3', 'skillFlower4', 'skillFlower5',
   'skillFlower6', 'skillFlower7', 'skillFlower8', 'skillFlower9'
 ];
-
 // Global portfolio state
 let portfolioVisitedExperiences = new Set();
-
 // Camera target positions for click-animated drawers
 const drawerCameraTargets = {
   desck: {
@@ -990,14 +829,11 @@ const drawerCameraTargets = {
     lookAt: { x: 0, y: 0, z: 0 }
   }
 };
-
-// === Lighting Setup ===
 function setupLighting() {
   // Main directional light (golden hour sun) - warm golden tones
   const directionalLight = new THREE.DirectionalLight(0xffb347, 3.8); // Slightly reduced intensity
   directionalLight.position.set(15, 20, 10); // Lower angle for golden hour
   directionalLight.castShadow = true;
-  
   // Improved shadow settings
   directionalLight.shadow.mapSize.width = 2048;
   directionalLight.shadow.mapSize.height = 2048;
@@ -1010,11 +846,9 @@ function setupLighting() {
   directionalLight.shadow.bias = -0.0001;
   directionalLight.shadow.normalBias = 0.02;
   scene.add(directionalLight);
-
   // Ambient light with golden hour warmth
   const ambientLight = new THREE.AmbientLight(0xffd4a3, 0.8); // Warm golden ambient
   scene.add(ambientLight);
-
   // Key fill light - golden rim lighting
   const keyLight = new THREE.PointLight(0xffa500, 3.0, 60); // Orange golden light
   keyLight.position.set(10, 18, 12);
@@ -1025,33 +859,25 @@ function setupLighting() {
   keyLight.shadow.camera.far = 60;
   keyLight.shadow.bias = -0.0001;
   scene.add(keyLight);
-
   // Secondary warm light for depth
   const secondaryLight = new THREE.PointLight(0xff8c42, 2.5, 45);
   secondaryLight.position.set(-8, 15, 8);
   scene.add(secondaryLight);
-
   // Hemisphere light for natural golden hour atmosphere
   const hemiLight = new THREE.HemisphereLight(0xffd4a3, 0xd2691e, 0.7); // Golden sky to warm ground
   hemiLight.position.set(0, 50, 0);
   scene.add(hemiLight);
-
   // Warm back light for atmospheric glow
   const backLight = new THREE.PointLight(0xffc649, 2.0, 35);
   backLight.position.set(-12, 8, -15);
   scene.add(backLight);
-
   // Subtle accent light for underwater areas
   const accentLight = new THREE.PointLight(0x4da6ff, 1.2, 25); // Cooler blue for contrast
   accentLight.position.set(0, -1, 0);
   scene.add(accentLight);
 }
 setupLighting();
-
-// === Fog Setup for Better Atmosphere ===
 scene.fog = new THREE.Fog(CONFIG.SCENE.FOG_COLOR, CONFIG.SCENE.FOG_NEAR, CONFIG.SCENE.FOG_FAR);
-
-// === Hex Map Setup ===
 const hexMap = [
   { q: 0, r: 0, type: 'home', cameraPos: { x: 0.5, y: 0.08, z: 0} },
   { q: 1, r: 0, type: 'cv', cameraPos: { x: 2.45, y: 0.5, z: 0.5 } },
@@ -1078,20 +904,15 @@ const hexMap = [
   { q: -3, r: 1, type: 'desert1', cameraPos: { x: -2.6, y: 1, z: 4.7} },
   { q: -2, r: 1, type: 'desert2', cameraPos: { x: -2.6, y: 1, z: 4.7} },
 ];
-
 const loader = new GLTFLoader();
 const hexObjects = [];
-
 // Load hex objects with error handling
 let loadedHexCount = 0;
 const totalHexCount = hexMap.length;
-
 // Register hex assets for loading tracking
 hexMap.forEach(() => incrementTotalAssets());
-
 hexMap.forEach(({ q, r, type }) => {
   const { x, z } = hexToWorld(q, r);
-  
   ErrorHandler.handleAsyncError(
     new Promise((resolve, reject) => {
       loader.load(
@@ -1105,12 +926,10 @@ hexMap.forEach(({ q, r, type }) => {
             hex.userData = { type, q, r };
             scene.add(hex);
             hexObjects.push(hex);
-            
             loadedHexCount++;
             markAssetLoaded(); // Mark this asset as loaded
-            
             if (loadedHexCount === totalHexCount) {
-              console.log('All hex objects loaded successfully');
+              if (!isProduction) console.log('All hex objects loaded successfully');
             }
             resolve(hex);
           } catch (error) {
@@ -1124,29 +943,24 @@ hexMap.forEach(({ q, r, type }) => {
         },
         (error) => {
           console.error(`Failed to load Hex-${type}.glb:`, error);
-          
           // Create fallback hex geometry
           const fallbackGeometry = new THREE.CylinderGeometry(0.8, 0.8, 0.1, 6);
-          const fallbackMaterial = new THREE.MeshStandardMaterial({ 
-            color: type === 'home' ? 0x4a9eff : 
+          const fallbackMaterial = new THREE.MeshStandardMaterial({
+            color: type === 'home' ? 0x4a9eff :
                    type === 'cv' ? 0x9c27b0 :
                    type === 'projects' ? 0xff9800 :
-                   type === 'contact' ? 0x4caf50 : 
+                   type === 'contact' ? 0x4caf50 :
                    type.includes('forge') ? 0xff5722 : 0x607d8b
           });
-          
           const fallbackHex = new THREE.Mesh(fallbackGeometry, fallbackMaterial);
           fallbackHex.position.set(x, 0, z);
           fallbackHex.userData = { type, q, r, fallback: true };
           fallbackHex.castShadow = true;
           fallbackHex.receiveShadow = true;
-          
           scene.add(fallbackHex);
           hexObjects.push(fallbackHex);
-          
           loadedHexCount++;
           markAssetLoaded(); // Still mark as loaded even with fallback
-          
           console.warn(`Using fallback geometry for ${type} hex`);
           reject(error);
         }
@@ -1155,52 +969,41 @@ hexMap.forEach(({ q, r, type }) => {
     `Critical - Hex loading - ${type}`
   );
 });
-
-// === Ocean Setup ===
 function createOcean() {
   try {
     const geometry = new THREE.PlaneGeometry(100, 100, 50, 50);
     geometry.rotateX(-Math.PI / 2);
-
     const vertData = [];
     const v3 = new THREE.Vector3();
-
     for (let i = 0; i < geometry.attributes.position.count; i++) {
       v3.fromBufferAttribute(geometry.attributes.position, i);
-
       const distanceFromCenter = Math.sqrt(v3.x * v3.x + v3.z * v3.z);
       const waveHeight = Math.sin(distanceFromCenter * 0.2 + Math.PI / 4) * 0.5;
       v3.y += waveHeight;
-
       vertData.push({
         initH: v3.y,
         amplitude: THREE.MathUtils.randFloatSpread(0.5),
         phase: THREE.MathUtils.randFloat(0, Math.PI),
       });
-
       geometry.attributes.position.setXYZ(i, v3.x, v3.y, v3.z);
     }
     geometry.attributes.position.needsUpdate = true;
-
     // Create ocean texture
     const canvas = document.createElement('canvas');
     canvas.width = 1;
     canvas.height = 256;
     const ctx = canvas.getContext('2d');
-
     const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
     gradient.addColorStop(0, '#1a82f7');
     gradient.addColorStop(0.7, '#1e3a8a');
     gradient.addColorStop(1, '#1f2937');
     ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
-
     const texture = new THREE.CanvasTexture(canvas);
     texture.wrapS = THREE.ClampToEdgeWrapping;
     texture.wrapT = THREE.ClampToEdgeWrapping;
-
     // Improved ocean material with better lighting response
-    const material = new THREE.MeshStandardMaterial({ 
+    const material = new THREE.MeshStandardMaterial({
       map: texture,
       transparent: true,
       opacity: 0.9,
@@ -1209,7 +1012,6 @@ function createOcean() {
       emissive: new THREE.Color(0x000000), // Ensure emissive is always a Color
       normalScale: new THREE.Vector2(1, 1) // Ensure normalScale is always a Vector2
     });
-    
     // Temporarily disable environment mapping to avoid uniform issues
     /*
     // Safely apply environment map if available
@@ -1227,12 +1029,10 @@ function createOcean() {
       console.warn('Environment map assignment failed for ocean:', envError);
     }
     */
-    
     const mesh = new THREE.Mesh(geometry, material);
     mesh.position.y = -1;
     mesh.receiveShadow = true;
     scene.add(mesh);
-
     return { geometry, vertData };
   } catch (error) {
     ErrorHandler.logError(error, 'Ocean creation');
@@ -1242,39 +1042,29 @@ function createOcean() {
   }
 }
 const { geometry: oceanGeometry, vertData: oceanVertData } = createOcean();
-
-// === Display Text Update Function ===
 function updateDisplayText(text) {
   // Update page title and potentially other UI elements
   document.title = `Portfolio - ${text}`;
 }
-
-// === Utility Functions ===
 function hexToWorld(q, r, size = 1) {
   const x = size * Math.sqrt(3) * (q + r / 2);
   const z = size * 1.5 * r;
   return { x, z };
 }
-
-// === Helper Functions for Unread Tracking ===
 function getUnreadCountForTheme(themeId) {
   let count = 0;
   unreadDrawers.forEach(drawer => {
     let drawerTheme = drawerThemes[drawer];
-    
     // Handle skillFlowers - they all belong to CV theme
     if (drawer.startsWith('skillFlower')) {
       drawerTheme = 'cv';
     }
-    
     if (drawerTheme === themeId) {
       count++;
     }
   });
-  
   return count;
 }
-
 function updateThemeUnreadBadges() {
   const themes = ['home', 'garage', 'forge', 'contact', 'projects', 'cv'];
   themes.forEach(themeId => {
@@ -1290,51 +1080,42 @@ function updateThemeUnreadBadges() {
     }
   });
 }
-
-// === Theme-based Interaction Helper ===
 function isDrawerClickableAtCurrentLocation(drawerType) {
   // If we're in orbital mode (no specific hex), only allow 'home' theme drawers
   if (currentActiveHexType === null) {
     console.log(`Drawer ${drawerType}: currentActiveHexType is null, allowing only home theme`);
     return drawerThemes[drawerType] === 'home';
   }
-  
   // Get the theme of the current active hex
   const currentTheme = getCurrentHexTheme(currentActiveHexType);
-  
   // Get the theme required for this drawer
   let drawerTheme = drawerThemes[drawerType];
-  
   // Handle skillFlowers - they all belong to CV theme
   if (drawerType.startsWith('skillFlower')) {
     drawerTheme = 'cv';
   }
-  
   if (!isProduction) {
     console.log(`Drawer ${drawerType}: currentActiveHexType="${currentActiveHexType}", currentTheme="${currentTheme}", drawerTheme="${drawerTheme}"`);
-    
     // Special debug for skillFlowers
     if (drawerType.startsWith('skillFlower')) {
       console.log(`SkillFlower debug: ${drawerType} - currentActiveHexType="${currentActiveHexType}", currentTheme="${currentTheme}", drawerTheme="${drawerTheme}", match: ${currentTheme === drawerTheme}`);
     }
   }
-  
   // Allow interaction if themes match
   return currentTheme === drawerTheme;
 }
-
 function getCurrentHexTheme(hexType) {
   // Define which hex types belong to which themes
   const hexThemes = {
     'home': 'home',
-    'cv': 'cv', 
+    'cv': 'cv',
     'projects': 'projects',
     'contact': 'contact',
     'bridge': 'home',
     'champ1': 'home',
     'garage': 'garage',
     'forest1': 'home',
-    'forest2': 'home', 
+    'forest2': 'home',
     'forest3': 'home',
     'marais': 'home',
     'marais2': 'home',
@@ -1343,22 +1124,17 @@ function getCurrentHexTheme(hexType) {
     'plain1': 'home',
     'forge2': 'forge'
   };
-  
   return hexThemes[hexType] || 'home'; // Default to 'home' theme
 }
-
-// === Label Positioning Helper ===
 function positionDrawerLabel(mouseX, mouseY) {
   // Initial position
   drawerLabel.style.left = `${mouseX + 60}px`;
   drawerLabel.style.top = `${mouseY - 180}px`;
-  
   // Adjust if out of viewport
   requestAnimationFrame(() => {
     const rect = drawerLabel.getBoundingClientRect();
     let left = rect.left, top = rect.top;
     let needUpdate = false;
-    
     if (rect.right > window.innerWidth) {
       left = Math.max(window.innerWidth - rect.width - 8, 8);
       needUpdate = true;
@@ -1375,15 +1151,12 @@ function positionDrawerLabel(mouseX, mouseY) {
       top = 8;
       needUpdate = true;
     }
-    
     if (needUpdate) {
       drawerLabel.style.left = `${left}px`;
       drawerLabel.style.top = `${top}px`;
     }
   });
 }
-
-// === Drawer Hover Label Setup ===
 const drawerLabel = document.createElement("div");
 drawerLabel.id = "drawerLabel";
 drawerLabel.style.position = "fixed";
@@ -1402,15 +1175,11 @@ drawerLabel.style.lineHeight = "1.5";
 drawerLabel.style.border = "1px solid #eee";
 drawerLabel.style.transition = "opacity 0.2s";
 document.body.appendChild(drawerLabel);
-
-// === Hex Information Display Functions ===
 function getHexDisplayName(hexType) {
   return hexNames[hexType] || 'Zone Inconnue';
 }
-
 function getObjectsForHex(hexType) {
   let objects = [...(objectsByHex[hexType] || [])];
-  
   // Add skill flowers if on CV hex
   if (getCurrentHexTheme(hexType) === 'cv') {
     // Add all 9 skill flowers directly
@@ -1420,10 +1189,8 @@ function getObjectsForHex(hexType) {
     ];
     objects = objects.concat(allSkillFlowers);
   }
-  
   return objects;
 }
-
 function getVisitedObjectsForHex(hexType) {
   const objects = getObjectsForHex(hexType);
   return objects.filter(objType => {
@@ -1434,24 +1201,19 @@ function getVisitedObjectsForHex(hexType) {
     return !unreadDrawers.has(objType);
   });
 }
-
 function getHexesWithUnexploredObjects() {
   const hexesWithObjects = [];
-  
   // Check all hexes that have objects
   Object.keys(objectsByHex).forEach(hexType => {
     const totalObjects = getObjectsForHex(hexType);
     const visitedObjects = getVisitedObjectsForHex(hexType);
-    
     // If there are unvisited objects in this hex, count it
     if (totalObjects.length > 0 && visitedObjects.length < totalObjects.length) {
       hexesWithObjects.push(hexType);
     }
   });
-  
   return hexesWithObjects;
 }
-
 function getTotalHexesWithObjects() {
   // Count all hexes that have at least one object
   let count = 0;
@@ -1463,7 +1225,6 @@ function getTotalHexesWithObjects() {
   });
   return count;
 }
-
 function updateHexInfo(hexType = null) {
   const hexInfoElement = document.getElementById('hexInfo');
   const hexTitleElement = document.getElementById('hexTitle');
@@ -1471,11 +1232,9 @@ function updateHexInfo(hexType = null) {
   const objectsTotalElement = document.getElementById('objectsTotal');
   const objectsCountElement = document.getElementById('hexObjectsCount');
   const objectsTextElement = document.getElementById('objectsText');
-  
   if (!hexInfoElement || !hexTitleElement || !objectsRemainingElement || !objectsTotalElement || !objectsCountElement) {
     return;
   }
-  
   // Check if we're in global view (no specific hex clicked) or specific hex view
   if (hexType === null || currentActiveHexType === null) {
     // Global portfolio view - show portfolio title and hex exploration counter
@@ -1483,16 +1242,13 @@ function updateHexInfo(hexType = null) {
     const hexesWithUnexplored = getHexesWithUnexploredObjects();
     const totalHexesWithObjects = getTotalHexesWithObjects();
     const exploredHexes = totalHexesWithObjects - hexesWithUnexplored.length;
-    
     hexTitleElement.textContent = portfolioTitle;
     objectsRemainingElement.textContent = exploredHexes;
     objectsTotalElement.textContent = totalHexesWithObjects;
-    
     // Update icon and text for global view
     const objectsIcon = objectsCountElement.querySelector('.objects-icon');
     if (objectsIcon) objectsIcon.textContent = '🗺️';
     if (objectsTextElement) objectsTextElement.textContent = 'zones explorées';
-    
     console.log(`Global Portfolio View: ${exploredHexes}/${totalHexesWithObjects} zones explorées (${hexesWithUnexplored.length} zones restantes)`);
   } else {
     // Specific hex view - show hex name and hex-specific objects
@@ -1500,30 +1256,24 @@ function updateHexInfo(hexType = null) {
     const hexDisplayName = getHexDisplayName(currentHex);
     const totalObjects = getObjectsForHex(currentHex);
     const visitedObjects = getVisitedObjectsForHex(currentHex);
-    
     hexTitleElement.textContent = hexDisplayName;
     objectsRemainingElement.textContent = visitedObjects.length;
     objectsTotalElement.textContent = totalObjects.length;
-    
     // Update icon and text for hex view
     const objectsIcon = objectsCountElement.querySelector('.objects-icon');
     if (objectsIcon) objectsIcon.textContent = '🔍';
     if (objectsTextElement) objectsTextElement.textContent = 'objets découverts';
-    
     console.log(`Hex Info Updated: ${hexDisplayName} - ${visitedObjects.length}/${totalObjects.length} objects discovered`);
   }
-  
   // Add updating animation
   hexInfoElement.classList.add('updating');
   setTimeout(() => {
     hexInfoElement.classList.remove('updating');
   }, 300);
 }
-
 function initHexInfo() {
   // Initialize with global portfolio view (no specific hex)
   updateHexInfo(null);
-  
   // Make functions available globally for debugging
   window.updateHexInfo = updateHexInfo;
   window.getObjectsForHex = getObjectsForHex;
@@ -1531,17 +1281,10 @@ function initHexInfo() {
   window.getHexesWithUnexploredObjects = getHexesWithUnexploredObjects;
   window.getTotalHexesWithObjects = getTotalHexesWithObjects;
   window.markObjectAsDiscovered = markObjectAsDiscovered;
-  
   if (!isProduction) {
-    console.log('Portfolio Info System initialized - Available debug commands:');
-    console.log('- updateHexInfo(hexType) - Update display for specific hex (null for global view)');
-    console.log('- getObjectsForHex(hexType) - Get all objects for a hex');
-    console.log('- getVisitedObjectsForHex(hexType) - Get discovered objects for a hex');
-    console.log('- getHexesWithUnexploredObjects() - Get hexes with unexplored objects');
-    console.log('- getTotalHexesWithObjects() - Get total number of hexes with objects');
+    console.log('Portfolio Info System initialized');
   }
 }
-
 // Helper function to update hex info when an object is discovered
 function onObjectDiscovered(objectType) {
   // Update the appropriate display based on current context
@@ -1556,7 +1299,6 @@ function onObjectDiscovered(objectType) {
     updateHexInfo(null);
   }
 }
-
 // Wrapper function for marking objects as discovered
 function markObjectAsDiscovered(objectType) {
   if (unreadDrawers.has(objectType)) {
@@ -1566,16 +1308,12 @@ function markObjectAsDiscovered(objectType) {
     updatePortfolioExperience(objectType);
   }
 }
-
-// === PORTFOLIO EXPERIENCE FUNCTIONS ===
-
 function updatePortfolioExperience(discoveredObject = null) {
   if (discoveredObject) {
     portfolioVisitedExperiences.add(discoveredObject);
     console.log(`Portfolio Experience: ${portfolioVisitedExperiences.size}/${portfolioExperiences.length} experiences discovered`);
   }
 }
-
 function initPortfolioExperience() {
   // Load visited experiences from localStorage
   const savedExperiences = localStorage.getItem('portfolioVisitedExperiences');
@@ -1589,7 +1327,6 @@ function initPortfolioExperience() {
       portfolioVisitedExperiences = new Set();
     }
   }
-  
   // Save to localStorage whenever the set changes
   const originalAdd = portfolioVisitedExperiences.add.bind(portfolioVisitedExperiences);
   portfolioVisitedExperiences.add = function(value) {
@@ -1597,26 +1334,21 @@ function initPortfolioExperience() {
     localStorage.setItem('portfolioVisitedExperiences', JSON.stringify([...portfolioVisitedExperiences]));
     return result;
   };
-  
   // Make functions available globally for debugging
   window.updatePortfolioExperience = updatePortfolioExperience;
   window.portfolioVisitedExperiences = portfolioVisitedExperiences;
-  
-  console.log('Portfolio Experience System initialized');
-  console.log('- updatePortfolioExperience(objectType) - Update global experience counter');
-  console.log('- portfolioVisitedExperiences - Set of discovered experiences');
+  if (!isProduction) {
+    console.log('Portfolio Experience System initialized');
+  }
 }
-
 window.addEventListener('mousemove', (event) => {
   // Skip interactions during cinematic mode
   if (cinematicMode) return;
-  
   // Skip 3D interactions if loading overlay is visible
   const loadingOverlay = document.getElementById('loadingOverlay');
   if (loadingOverlay && !loadingOverlay.classList.contains('hidden')) {
     return; // Don't process 3D canvas hover if loading overlay is visible
   }
-  
   // Check if mouse is over the navigation sidebar
   const navSidebar = document.getElementById('zoneNavSidebar');
   if (navSidebar && navSidebar.contains(event.target)) {
@@ -1648,23 +1380,17 @@ window.addEventListener('mousemove', (event) => {
     }
     return; // Don't process 3D canvas hover if over nav
   }
-
   const canvasBounds = renderer.domElement.getBoundingClientRect();
   mouse.x = ((event.clientX - canvasBounds.left) / canvasBounds.width) * 2 - 1;
   mouse.y = -((event.clientY - canvasBounds.top) / canvasBounds.height) * 2 + 1;
-
   raycaster.setFromCamera(mouse, camera);
   const intersects = raycaster.intersectObjects([...hexObjects, ...drawers], true); // Include both hexObjects and drawers
-
   let foundDrawer = null;
-
   if (intersects.length > 0) {
     let object = intersects[0].object;
     while (object.parent && !hexObjects.includes(object) && !drawers.includes(object)) object = object.parent;
-
     if (object.userData.type) {
       updateDisplayText(object.userData.type);
-
       // Drawer hover logic
       if (drawers.includes(object)) {
         // Make desck completely non-interactive
@@ -1672,10 +1398,8 @@ window.addEventListener('mousemove', (event) => {
           drawerLabel.style.display = "none";
           return; // Don't process hover for desck
         }
-        
         // Check if this drawer is interactive at current location/theme
         const isClickable = isDrawerClickableAtCurrentLocation(object.userData.type);
-        
         // Only show hover effects and labels for clickable drawers
         if (!isClickable) {
           // Reset any existing hover state and don't show label
@@ -1692,13 +1416,10 @@ window.addEventListener('mousemove', (event) => {
           drawerLabel.style.display = "none";
           return; // Don't process hover for non-clickable drawers
         }
-        
         foundDrawer = object;
-        
         // FIXED: For skillFlowers, treat collision box and target drawer as the same object
         let normalizedDrawer = foundDrawer;
         let gridIndex = foundDrawer.userData.gridIndex;
-        
         if (foundDrawer.userData.type && foundDrawer.userData.type.startsWith('skillFlower') && foundDrawer.userData.targetDrawer) {
           // If this is a collision box, use the target drawer for comparison and get gridIndex from either
           normalizedDrawer = foundDrawer.userData.targetDrawer;
@@ -1706,7 +1427,6 @@ window.addEventListener('mousemove', (event) => {
           gridIndex = foundDrawer.userData.gridIndex;
         }
         
-        // === Only animate if in animatedDrawers AND clickable ===
         if (animatedDrawers.includes(object.userData.type)) {
           // FIXED: Compare using normalized drawer to avoid flickering between collision box and mesh
           if (hoveredDrawer !== normalizedDrawer) {
@@ -1714,7 +1434,6 @@ window.addEventListener('mousemove', (event) => {
             if (hoveredDrawer && drawerOriginalPositions.has(hoveredDrawer.userData.targetDrawer || hoveredDrawer)) {
               const targetDrawer = hoveredDrawer.userData.targetDrawer || hoveredDrawer;
               const orig = drawerOriginalPositions.get(targetDrawer);
-              
               // Check if previous drawer was a skillFlower
               if (hoveredDrawer.userData.type.startsWith('skillFlower')) {
                 // Only animate back down if this skillFlower is not marked to stay up
@@ -1727,7 +1446,6 @@ window.addEventListener('mousemove', (event) => {
                     ease: CONFIG.ANIMATION.HOVER_EASE,
                   });
                 }
-                
                 // Hide language flower when stopping hover on any skillFlower
                 if (hoveredDrawer.userData.type.startsWith('skillFlower') && hoveredDrawer.userData.gridIndex !== undefined) {
                   hideLanguageFlower(hoveredDrawer.userData.gridIndex);
@@ -1747,12 +1465,10 @@ window.addEventListener('mousemove', (event) => {
               // Handle collision boxes by animating the target drawer
               const targetDrawer = foundDrawer.userData.targetDrawer || foundDrawer;
               const orig = drawerOriginalPositions.get(targetDrawer);
-              
               if (orig) {
                 // Mark this skillFlower to stay up permanently
                 if (gridIndex !== undefined) {
                   stayUpSkillFlowers.add(gridIndex);
-                  
                   // Only animate up if it's not already in the up position
                   // Check if the flower is not already elevated (y position higher than original)
                   if (targetDrawer.position.y <= orig.y + 0.05) { // Small tolerance for floating point precision
@@ -1775,7 +1491,6 @@ window.addEventListener('mousemove', (event) => {
                   });
                 }
               }
-              
               // FIXED: Show corresponding language flower using grid index from any skillFlower component
               if (gridIndex !== undefined) {
                 // Only trigger language flower if we're hovering a different skillFlower
@@ -1829,7 +1544,6 @@ window.addEventListener('mousemove', (event) => {
           }
           hoveredDrawer = normalizedDrawer; // Store the normalized drawer
         }
-        
         // Show label for clickable drawers only
         const infoFile = drawerInfoFiles[object.userData.type];
         if (infoFile) {
@@ -1841,18 +1555,15 @@ window.addEventListener('mousemove', (event) => {
             .then(html => {
               // Add unread indicator if drawer is unread
               const isUnread = unreadDrawers.has(object.userData.type);
-              const unreadIndicator = isUnread ? 
+              const unreadIndicator = isUnread ?
                 `<div style="background: #ff4444; color: #fff; padding: 4px 8px; border-radius: 6px; font-size: 0.8rem; font-weight: bold; margin-bottom: 8px; text-align: center;">UNREAD</div>` : '';
-              
               drawerLabel.innerHTML = unreadIndicator + html;
               drawerLabel.style.display = "block";
               drawerLabel.style.border = isUnread ? "2px solid #ff4444" : "1px solid #eee";
               drawerLabel.style.opacity = "1";
-
               // Better positioning logic
               positionDrawerLabel(event.clientX, event.clientY);
               
-              // Mark drawer as read (except forge - steering can be marked as read)
               if (isUnread && object.userData.type !== 'forge') {
                 unreadDrawers.delete(object.userData.type);
                 updateThemeUnreadBadges();
@@ -1904,15 +1615,13 @@ window.addEventListener('mousemove', (event) => {
           } else if (object.userData.type === 'skillFlower9') {
             message = `<div><strong>Meta & VR Development</strong><br/>Virtual reality and metaverse applications</div>`;
           }
-          
           drawerLabel.innerHTML = message;
           drawerLabel.style.display = "block";
           drawerLabel.style.border = "1px solid #eee";
           drawerLabel.style.opacity = "1";
           positionDrawerLabel(event.clientX, event.clientY);
           
-          // Mark drawer as read (except forge - steering can be marked as read)
-          if (unreadDrawers.has(object.userData.type) && 
+          if (unreadDrawers.has(object.userData.type) &&
               object.userData.type !== 'forge') {
             // For skillFlowers, use markObjectAsDiscovered instead of just deleting from unreadDrawers
             if (object.userData.type.startsWith('skillFlower')) {
@@ -1932,7 +1641,6 @@ window.addEventListener('mousemove', (event) => {
         ) {
           const targetDrawer = hoveredDrawer.userData.targetDrawer || hoveredDrawer;
           const orig = drawerOriginalPositions.get(targetDrawer);
-          
           // Check if it's a skillFlower
           if (hoveredDrawer.userData.type.startsWith('skillFlower')) {
             // Only animate back down if this skillFlower is not marked to stay up
@@ -1945,7 +1653,6 @@ window.addEventListener('mousemove', (event) => {
                 ease: 'power2.out',
               });
             }
-            
             // Hide language flower when stopping hover on any skillFlower
             if (hoveredDrawer.userData.type.startsWith('skillFlower') && hoveredDrawer.userData.gridIndex !== undefined) {
               hideLanguageFlower(hoveredDrawer.userData.gridIndex);
@@ -1987,7 +1694,6 @@ window.addEventListener('mousemove', (event) => {
             ease: 'power2.out',
           });
         }
-        
         // Hide language flower when stopping hover on any skillFlower
         if (hoveredDrawer.userData.type.startsWith('skillFlower') && hoveredDrawer.userData.gridIndex !== undefined) {
           hideLanguageFlower(hoveredDrawer.userData.gridIndex);
@@ -2008,15 +1714,11 @@ window.addEventListener('mousemove', (event) => {
     drawerLabel.style.display = "none";
   }
 });
-
-// === Material Validation Utility ===
 function validateSceneMaterials() {
   let invalidMaterials = 0;
-  
   scene.traverse((child) => {
     if (child.isMesh && child.material) {
       const materials = Array.isArray(child.material) ? child.material : [child.material];
-      
       materials.forEach((material, index) => {
         if (material) {
           try {
@@ -2026,19 +1728,16 @@ function validateSceneMaterials() {
               material.envMap = null;
               invalidMaterials++;
             }
-            
             // Ensure normal scale is a Vector2
             if (material.normalScale && !(material.normalScale instanceof THREE.Vector2)) {
               material.normalScale = new THREE.Vector2(1, 1);
               invalidMaterials++;
             }
-            
             // Ensure emissive is a Color
             if (material.emissive && !(material.emissive instanceof THREE.Color)) {
               material.emissive = new THREE.Color(0x000000);
               invalidMaterials++;
             }
-
             // Check for invalid uniforms that might cause .value errors
             if (material.uniforms) {
               Object.keys(material.uniforms).forEach(uniformName => {
@@ -2051,12 +1750,10 @@ function validateSceneMaterials() {
                 }
               });
             }
-
             // Ensure proper material flags
             if (material.transparent === undefined) material.transparent = false;
             if (material.alphaTest === undefined) material.alphaTest = 0;
             if (material.side === undefined) material.side = THREE.FrontSide;
-            
           } catch (validationError) {
             console.warn(`Material validation error on ${child.name || 'unnamed object'}:`, validationError);
             invalidMaterials++;
@@ -2065,27 +1762,21 @@ function validateSceneMaterials() {
       });
     }
   });
-  
   if (invalidMaterials > 0) {
     console.log(`Fixed ${invalidMaterials} invalid material properties`);
   }
 }
-
-// === Problematic Material Isolation ===
 function isolateProblematicMaterials() {
   let isolatedCount = 0;
   const fallbackMaterial = new THREE.MeshBasicMaterial({ color: 0x808080, transparent: true, opacity: 0.5 });
-  
   scene.traverse((child) => {
     if (child.isMesh && child.material) {
       const materials = Array.isArray(child.material) ? child.material : [child.material];
-      
       materials.forEach((material, index) => {
         if (material) {
           try {
             // Test if material has problematic uniforms
             let hasProblematicUniforms = false;
-            
             if (material.uniforms) {
               Object.keys(material.uniforms).forEach(uniformName => {
                 const uniform = material.uniforms[uniformName];
@@ -2094,25 +1785,20 @@ function isolateProblematicMaterials() {
                 }
               });
             }
-            
             // If material has issues, temporarily replace it
             if (hasProblematicUniforms) {
               console.warn(`Isolating problematic material on ${child.name || 'unnamed object'}[${index}]`);
-              
               if (Array.isArray(child.material)) {
                 child.material[index] = fallbackMaterial;
               } else {
                 child.material = fallbackMaterial;
               }
-              
               isolatedCount++;
-              
               // Mark the object for material restoration later
               child.userData.materialIsolated = true;
             }
           } catch (isolationError) {
             console.warn(`Material isolation error on ${child.name || 'unnamed object'}:`, isolationError);
-            
             // As a last resort, use fallback material
             if (Array.isArray(child.material)) {
               child.material[index] = fallbackMaterial;
@@ -2126,20 +1812,16 @@ function isolateProblematicMaterials() {
       });
     }
   });
-  
   if (isolatedCount > 0) {
     console.log(`Isolated ${isolatedCount} problematic materials with fallback materials`);
   }
 }
-
-// === GLB Material and Light Processing ===
 function processGLBMaterials(gltf, sourceName = 'unknown') {
   gltf.scene.traverse((child) => {
     if (child.isMesh) {
       // Enable shadow casting and receiving
       child.castShadow = true;
       child.receiveShadow = true;
-      
       if (child.material) {
         // Ensure proper material properties for PBR rendering
         if (child.material.isMeshStandardMaterial || child.material.isMeshPhysicalMaterial) {
@@ -2149,28 +1831,23 @@ function processGLBMaterials(gltf, sourceName = 'unknown') {
               child.material.envMap = scene.environment;
               child.material.envMapIntensity = 0.8;
             }
-            
             // Improve material properties for better lighting response
             if (child.material.metalness === undefined) child.material.metalness = 0.1;
             if (child.material.roughness === undefined) child.material.roughness = 0.7;
-            
             // Enable proper normal mapping with better scale
             if (child.material.normalMap) {
               child.material.normalScale = child.material.normalScale || new THREE.Vector2(1.2, 1.2);
             }
-            
             // Add subtle emission for better visibility in dark areas
             if (!child.material.emissive) {
               child.material.emissive = new THREE.Color(0x000000);
             }
-            
             // Update material
             child.material.needsUpdate = true;
           } catch (materialError) {
             console.warn(`Material processing error for ${sourceName}:`, materialError);
           }
         }
-        
         // Handle multiple materials (arrays)
         if (Array.isArray(child.material)) {
           child.material.forEach((mat, index) => {
@@ -2197,30 +1874,24 @@ function processGLBMaterials(gltf, sourceName = 'unknown') {
         }
       }
     }
-    
     // Process cameras imported from GLB files
     if (child.isCamera) {
       console.log('Found embedded camera:', child.name || 'unnamed', 'in', sourceName);
-      
       // Register the camera for position editing
       if (cameraEditor) {
         cameraEditor.registerEmbeddedCamera(child, sourceName);
       }
     }
-    
     // Process lights imported from GLB files
     if (child.isLight) {
       console.log('Found imported light:', child.type, 'with intensity:', child.intensity);
-      
       // Register the light for management
       ImportedLightManager.registerLight(child, sourceName);
-      
       // Handle SpotLight specifically
       if (child.type === 'SpotLight') {
         // Reduce intensity to prevent overwhelming brightness
         const originalIntensity = child.intensity;
         child.intensity = Math.min(originalIntensity * 0.3, 2.0); // Reduce to 30% of original, max 2.0
-        
         // Configure shadow settings for better quality and prevent light bleeding
         child.castShadow = true;
         child.shadow.mapSize.width = 1024;
@@ -2229,31 +1900,24 @@ function processGLBMaterials(gltf, sourceName = 'unknown') {
         child.shadow.camera.far = Math.min(child.distance || 50, 30); // Limit shadow distance
         child.shadow.bias = -0.0005; // Prevent shadow acne
         child.shadow.normalBias = 0.02; // Prevent peter panning
-        
         // Limit the spotlight angle to prevent excessive spread
         if (child.angle > Math.PI / 3) { // If angle > 60 degrees
           child.angle = Math.PI / 4; // Limit to 45 degrees
         }
-        
         // Set penumbra for softer light edges (prevents harsh cutoffs)
         child.penumbra = Math.max(child.penumbra || 0, 0.2); // Min 20% penumbra
-        
         // Limit distance to prevent light bleeding through walls
         if (child.distance === 0 || child.distance > 20) {
           child.distance = 15; // Set reasonable max distance
         }
-        
         // Add decay for more realistic falloff
         child.decay = Math.max(child.decay || 1, 1.5); // Ensure some decay
-        
         console.log(`Adjusted SpotLight: intensity ${originalIntensity} -> ${child.intensity}, angle: ${(child.angle * 180 / Math.PI).toFixed(1)}°, distance: ${child.distance}`);
       }
-      
       // Handle PointLight
       else if (child.type === 'PointLight') {
         const originalIntensity = child.intensity;
         child.intensity = Math.min(originalIntensity * 0.4, 3.0); // Reduce intensity
-        
         // Configure shadows
         child.castShadow = true;
         child.shadow.mapSize.width = 512;
@@ -2261,22 +1925,17 @@ function processGLBMaterials(gltf, sourceName = 'unknown') {
         child.shadow.camera.near = 0.1;
         child.shadow.camera.far = Math.min(child.distance || 30, 20);
         child.shadow.bias = -0.0005;
-        
         // Limit distance
         if (child.distance === 0 || child.distance > 25) {
           child.distance = 20;
         }
-        
         child.decay = Math.max(child.decay || 1, 1.2);
-        
         console.log(`Adjusted PointLight: intensity ${originalIntensity} -> ${child.intensity}, distance: ${child.distance}`);
       }
-      
       // Handle DirectionalLight
       else if (child.type === 'DirectionalLight') {
         const originalIntensity = child.intensity;
         child.intensity = Math.min(originalIntensity * 0.5, 2.0);
-        
         // Configure shadows with smaller area to prevent conflicts
         child.castShadow = true;
         child.shadow.mapSize.width = 1024;
@@ -2289,10 +1948,8 @@ function processGLBMaterials(gltf, sourceName = 'unknown') {
         child.shadow.camera.bottom = -10;
         child.shadow.bias = -0.0001;
         child.shadow.normalBias = 0.02;
-        
         console.log(`Adjusted DirectionalLight: intensity ${originalIntensity} -> ${child.intensity}`);
       }
-      
       // For any other light types, just reduce intensity
       else if (child.intensity !== undefined) {
         const originalIntensity = child.intensity;
@@ -2302,11 +1959,8 @@ function processGLBMaterials(gltf, sourceName = 'unknown') {
     }
   });
 }
-
-// === Light Management Utilities ===
 class ImportedLightManager {
   static importedLights = new Set();
-  
   // Register an imported light for management
   static registerLight(light, source = 'unknown') {
     this.importedLights.add(light);
@@ -2314,7 +1968,6 @@ class ImportedLightManager {
     light.userData.originalIntensity = light.intensity;
     console.log(`Registered imported ${light.type} from ${source}`);
   }
-  
   // Adjust all imported lights intensity
   static adjustAllLights(intensityMultiplier = 0.3) {
     this.importedLights.forEach(light => {
@@ -2324,7 +1977,6 @@ class ImportedLightManager {
     });
     console.log(`Adjusted ${this.importedLights.size} imported lights by factor ${intensityMultiplier}`);
   }
-  
   // Toggle all imported lights
   static toggleAllLights(enabled = true) {
     this.importedLights.forEach(light => {
@@ -2332,17 +1984,14 @@ class ImportedLightManager {
     });
     console.log(`${enabled ? 'Enabled' : 'Disabled'} ${this.importedLights.size} imported lights`);
   }
-  
   // Get all lights of a specific type
   static getLightsByType(type) {
     return Array.from(this.importedLights).filter(light => light.type === type);
   }
-  
   // Remove a light from management
   static unregisterLight(light) {
     this.importedLights.delete(light);
   }
-  
   // Debug: List all imported lights
   static debugLights() {
     console.log('=== Imported Lights Debug ===');
@@ -2358,11 +2007,8 @@ class ImportedLightManager {
     console.log('=============================');
   }
 }
-
 // Make the light manager available globally for debugging
 window.ImportedLightManager = ImportedLightManager;
-
-// === Camera Position Editor System ===
 class CameraPositionEditor {
   constructor() {
     this.isActive = false;
@@ -2372,7 +2018,6 @@ class CameraPositionEditor {
     this.originalCameraPosition = null;
     this.originalCameraTarget = null;
   }
-
   // Register a camera found in a GLB file
   registerEmbeddedCamera(camera, sourceName) {
     const key = `${sourceName}_${camera.name || 'camera'}`;
@@ -2384,24 +2029,21 @@ class CameraPositionEditor {
     });
     console.log(`Registered embedded camera: ${key} from ${sourceName}`);
   }
-
   // Toggle editor mode
   toggle() {
     this.isActive = !this.isActive;
-    
     if (this.isActive) {
       this.activate();
     } else {
       this.deactivate();
     }
   }
-
   activate() {
     console.log('🎥 Camera Position Editor ACTIVATED');
     console.log('Controls:');
     console.log('- Z: Move forward (camera direction)');
     console.log('- S: Move backward');
-    console.log('- Q: Move left');  
+    console.log('- Q: Move left');
     console.log('- D: Move right');
     console.log('- A: Move up');
     console.log('- E: Move down');
@@ -2412,36 +2054,27 @@ class CameraPositionEditor {
     console.log('- C: Clear all markers');
     console.log('- ESC: Exit editor');
     console.log('※ Works with both AZERTY and QWERTY layouts');
-
     // Store original camera state
     this.originalCameraPosition = camera.position.clone();
     this.originalCameraTarget = lookAtTarget ? { ...lookAtTarget } : { x: 0, y: 0, z: 0 };
-
     // Initialize camera rotation tracking
     this.cameraRotation = {
       x: camera.rotation.x,
       y: camera.rotation.y
     };
-
     // Set proper rotation order for camera
     camera.rotation.order = 'YXZ';
-
     // Disable cinematic mode and orbital controls
     cinematicMode = true; // Prevent other interactions
-    
     // Create editor UI
     this.createEditorUI();
-    
     // Add event listeners
     this.addEventListeners();
-
     // Show embedded cameras if any
     this.displayEmbeddedCameras();
   }
-
   deactivate() {
     console.log('🎥 Camera Position Editor DEACTIVATED');
-    
     // Restore original camera state
     if (this.originalCameraPosition) {
       camera.position.copy(this.originalCameraPosition);
@@ -2449,23 +2082,17 @@ class CameraPositionEditor {
     if (this.originalCameraTarget) {
       camera.lookAt(this.originalCameraTarget.x, this.originalCameraTarget.y, this.originalCameraTarget.z);
     }
-
     // Reset camera rotation tracking
     this.cameraRotation = null;
-
     // Re-enable normal interactions
     cinematicMode = false;
-    
     // Remove editor UI
     this.removeEditorUI();
-    
     // Remove event listeners
     this.removeEventListeners();
-
     // Clear temporary markers
     this.clearMarkers();
   }
-
   createEditorUI() {
     // Create editor panel
     const panel = document.createElement('div');
@@ -2477,34 +2104,28 @@ class CameraPositionEditor {
       min-width: 300px; max-height: 80vh; overflow-y: auto;
       border: 2px solid #00ff00; box-shadow: 0 0 20px rgba(0,255,0,0.3);
     `;
-
     panel.innerHTML = `
       <div style="color: #00ff00; font-weight: bold; margin-bottom: 15px;">
         🎥 CAMERA POSITION EDITOR
       </div>
-      
       <div id="camera-position-display" style="margin-bottom: 15px; padding: 10px; background: rgba(0,255,0,0.1); border-radius: 6px;">
         <div>Position: <span id="pos-display">0, 0, 0</span></div>
         <div>Looking at: <span id="target-display">0, 0, 0</span></div>
       </div>
-
       <div style="margin-bottom: 15px;">
         <button id="print-position" style="background: #333; color: white; border: 1px solid #666; padding: 5px 10px; margin: 2px; cursor: pointer; border-radius: 4px;">Print Position (P)</button>
         <button id="place-marker" style="background: #333; color: white; border: 1px solid #666; padding: 5px 10px; margin: 2px; cursor: pointer; border-radius: 4px;">Place Marker (M)</button>
         <button id="clear-markers" style="background: #333; color: white; border: 1px solid #666; padding: 5px 10px; margin: 2px; cursor: pointer; border-radius: 4px;">Clear Markers (C)</button>
         <button id="export-positions" style="background: #0066cc; color: white; border: 1px solid #0088ff; padding: 5px 10px; margin: 2px; cursor: pointer; border-radius: 4px;">Export Code</button>
       </div>
-
       <div id="embedded-cameras" style="margin-bottom: 15px;">
         <div style="color: #ffaa00; font-weight: bold;">Embedded Cameras:</div>
         <div id="embedded-cameras-list" style="margin-top: 5px;"></div>
       </div>
-
       <div id="markers-list" style="margin-bottom: 15px;">
         <div style="color: #ff6600; font-weight: bold;">Placed Markers:</div>
         <div id="markers-content" style="margin-top: 5px;"></div>
       </div>
-
       <div style="color: #888; font-size: 10px; line-height: 1.4;">
         <strong>Controls:</strong><br>
         Physical Keys (works with any layout):<br>
@@ -2516,51 +2137,40 @@ class CameraPositionEditor {
         P/M/C/ESC: Print/Mark/Clear/Exit
       </div>
     `;
-
     document.body.appendChild(panel);
-
     // Add button event listeners
     document.getElementById('print-position').onclick = () => this.printCurrentPosition();
     document.getElementById('place-marker').onclick = () => this.placeMarker();
     document.getElementById('clear-markers').onclick = () => this.clearMarkers();
     document.getElementById('export-positions').onclick = () => this.exportPositions();
-
     // Start position update loop
     this.updatePositionDisplay();
   }
-
   removeEditorUI() {
     const panel = document.getElementById('camera-editor-panel');
     if (panel) panel.remove();
   }
-
   addEventListeners() {
     this.keydownHandler = (event) => this.handleKeyDown(event);
     this.mousemoveHandler = (event) => this.handleMouseMove(event);
     this.clickHandler = (event) => this.handleClick(event);
-
     document.addEventListener('keydown', this.keydownHandler);
     document.addEventListener('mousemove', this.mousemoveHandler);
     document.addEventListener('click', this.clickHandler);
-
     // Disable right-click context menu during editing
     document.addEventListener('contextmenu', this.preventContext = (e) => e.preventDefault());
   }
-
   removeEventListeners() {
     if (this.keydownHandler) document.removeEventListener('keydown', this.keydownHandler);
     if (this.mousemoveHandler) document.removeEventListener('mousemove', this.mousemoveHandler);
     if (this.clickHandler) document.removeEventListener('click', this.clickHandler);
     if (this.preventContext) document.removeEventListener('contextmenu', this.preventContext);
   }
-
   handleKeyDown(event) {
     if (!this.isActive) return;
-
     const moveSpeed = event.shiftKey ? 0.2 : 0.05; // Much smaller movement steps
     const direction = new THREE.Vector3();
     const key = event.key.toLowerCase(); // Use actual character typed
-
     // Use character-based movement for universal AZERTY/QWERTY support
     switch(key) {
       case 'z': // Z = Forward (camera direction) - works on both layouts
@@ -2588,29 +2198,26 @@ class CameraPositionEditor {
         camera.position.y -= moveSpeed;
         break;
       case 'p': // Print position
-        this.printCurrentPosition(); 
+        this.printCurrentPosition();
         break;
       case 'm': // Place marker
-        this.placeMarker(); 
+        this.placeMarker();
         break;
       case 'c': // Clear markers
-        this.clearMarkers(); 
+        this.clearMarkers();
         break;
       case 'escape': // Exit editor
-        this.toggle(); 
+        this.toggle();
         break;
     }
   }
-
   handleMouseMove(event) {
     if (!this.isActive) return;
-
     // Proper mouse look implementation
     if (event.buttons === 1) { // Left mouse button held
       const sensitivity = 0.002;
       const deltaX = event.movementX * sensitivity;
       const deltaY = event.movementY * sensitivity;
-
       // Store current rotation values
       if (!this.cameraRotation) {
         this.cameraRotation = {
@@ -2618,14 +2225,11 @@ class CameraPositionEditor {
           y: camera.rotation.y
         };
       }
-
       // Update rotation values
       this.cameraRotation.y -= deltaX; // Horizontal rotation (left/right)
       this.cameraRotation.x -= deltaY; // Vertical rotation (up/down)
-      
       // Clamp vertical rotation to prevent flipping
       this.cameraRotation.x = Math.max(-Math.PI/2 + 0.1, Math.min(Math.PI/2 - 0.1, this.cameraRotation.x));
-
       // Apply rotation using Euler angles in the correct order
       camera.rotation.order = 'YXZ'; // Yaw, Pitch, Roll order
       camera.rotation.y = this.cameraRotation.y;
@@ -2633,18 +2237,14 @@ class CameraPositionEditor {
       camera.rotation.z = 0; // No roll
     }
   }
-
   handleClick(event) {
     if (!this.isActive) return;
-    
     // Cast ray to find clicked object
     const rect = renderer.domElement.getBoundingClientRect();
     mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
     mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
-
     raycaster.setFromCamera(mouse, camera);
     const intersects = raycaster.intersectObjects([...hexObjects, ...drawers], true);
-
     if (intersects.length > 0) {
       const point = intersects[0].point;
       this.currentTarget = point.clone();
@@ -2652,10 +2252,8 @@ class CameraPositionEditor {
       console.log(`🎯 Set look-at target: (${point.x.toFixed(3)}, ${point.y.toFixed(3)}, ${point.z.toFixed(3)})`);
     }
   }
-
   printCurrentPosition() {
     const pos = camera.position;
-    
     // Calculate current look direction from camera rotation
     const direction = new THREE.Vector3(0, 0, -1);
     direction.applyQuaternion(camera.quaternion);
@@ -2664,7 +2262,6 @@ class CameraPositionEditor {
       y: pos.y + direction.y,
       z: pos.z + direction.z
     };
-    
     console.log('📍 CURRENT CAMERA POSITION:');
     console.log(`Position: { x: ${pos.x.toFixed(3)}, y: ${pos.y.toFixed(3)}, z: ${pos.z.toFixed(3)} }`);
     console.log(`LookAt: { x: ${lookAt.x.toFixed(3)}, y: ${lookAt.y.toFixed(3)}, z: ${lookAt.z.toFixed(3)} }`);
@@ -2672,10 +2269,8 @@ class CameraPositionEditor {
     console.log(`cameraPos: { x: ${pos.x.toFixed(2)}, y: ${pos.y.toFixed(2)}, z: ${pos.z.toFixed(2)} },`);
     console.log(`lookAt: { x: ${lookAt.x.toFixed(2)}, y: ${lookAt.y.toFixed(2)}, z: ${lookAt.z.toFixed(2)} }`);
   }
-
   placeMarker() {
     const pos = camera.position.clone();
-    
     // Calculate current look direction from camera rotation
     const direction = new THREE.Vector3(0, 0, -1);
     direction.applyQuaternion(camera.quaternion);
@@ -2684,31 +2279,25 @@ class CameraPositionEditor {
       pos.y + direction.y * 5,
       pos.z + direction.z * 5
     );
-    
     // Create visual marker
     const markerGeometry = new THREE.SphereGeometry(0.1, 8, 6);
     const markerMaterial = new THREE.MeshBasicMaterial({ color: 0xff00ff });
     const marker = new THREE.Mesh(markerGeometry, markerMaterial);
     marker.position.copy(pos);
-    
     // Add line to show look direction
     const lineGeometry = new THREE.BufferGeometry().setFromPoints([pos, target]);
     const lineMaterial = new THREE.LineBasicMaterial({ color: 0xff00ff });
     const line = new THREE.Line(lineGeometry, lineMaterial);
     scene.add(line);
     marker.userData.line = line;
-    
     marker.userData.position = pos.clone();
     marker.userData.target = target.clone();
     marker.userData.id = Date.now();
-    
     scene.add(marker);
     this.tempMarkers.add(marker);
-    
     console.log(`📌 Placed marker ${this.tempMarkers.size} at position (${pos.x.toFixed(3)}, ${pos.y.toFixed(3)}, ${pos.z.toFixed(3)})`);
     this.updateMarkersDisplay();
   }
-
   clearMarkers() {
     this.tempMarkers.forEach(marker => {
       scene.remove(marker);
@@ -2720,12 +2309,9 @@ class CameraPositionEditor {
     console.log('🗑️ Cleared all markers');
     this.updateMarkersDisplay();
   }
-
   updatePositionDisplay() {
     if (!this.isActive) return;
-
     const pos = camera.position;
-    
     // Calculate current look direction from camera rotation
     const direction = new THREE.Vector3(0, 0, -1);
     direction.applyQuaternion(camera.quaternion);
@@ -2734,30 +2320,24 @@ class CameraPositionEditor {
       y: pos.y + direction.y,
       z: pos.z + direction.z
     };
-    
     const posDisplay = document.getElementById('pos-display');
     const targetDisplay = document.getElementById('target-display');
-    
     if (posDisplay) {
       posDisplay.textContent = `${pos.x.toFixed(3)}, ${pos.y.toFixed(3)}, ${pos.z.toFixed(3)}`;
     }
     if (targetDisplay) {
       targetDisplay.textContent = `${lookAt.x.toFixed(3)}, ${lookAt.y.toFixed(3)}, ${lookAt.z.toFixed(3)}`;
     }
-
     // Continue updating
     requestAnimationFrame(() => this.updatePositionDisplay());
   }
-
   updateMarkersDisplay() {
     const container = document.getElementById('markers-content');
     if (!container) return;
-
     if (this.tempMarkers.size === 0) {
       container.innerHTML = '<div style="color: #666;">No markers placed</div>';
       return;
     }
-
     let html = '';
     let index = 1;
     this.tempMarkers.forEach(marker => {
@@ -2774,16 +2354,13 @@ class CameraPositionEditor {
     });
     container.innerHTML = html;
   }
-
   displayEmbeddedCameras() {
     const container = document.getElementById('embedded-cameras-list');
     if (!container) return;
-
     if (this.embeddedCameras.size === 0) {
       container.innerHTML = '<div style="color: #666;">No embedded cameras found</div>';
       return;
     }
-
     let html = '';
     this.embeddedCameras.forEach((camData, key) => {
       const pos = camData.position;
@@ -2799,22 +2376,17 @@ class CameraPositionEditor {
     });
     container.innerHTML = html;
   }
-
   jumpToEmbeddedCamera(key) {
     const camData = this.embeddedCameras.get(key);
     if (!camData) return;
-
     camera.position.copy(camData.position);
     camera.lookAt(camData.target);
     this.currentTarget = camData.target.clone();
-    
     console.log(`🎥 Jumped to embedded camera: ${key}`);
   }
-
   exportPositions() {
     console.log('\n🎯 CAMERA POSITIONS EXPORT:');
     console.log('='.repeat(50));
-    
     // Export embedded cameras
     if (this.embeddedCameras.size > 0) {
       console.log('\n// Embedded cameras found in GLB files:');
@@ -2827,7 +2399,6 @@ class CameraPositionEditor {
         console.log('');
       });
     }
-
     // Export placed markers
     if (this.tempMarkers.size > 0) {
       console.log('\n// Manually placed markers:');
@@ -2842,23 +2413,18 @@ class CameraPositionEditor {
         index++;
       });
     }
-
     // Current position
     const currentPos = camera.position;
     const currentTarget = this.currentTarget || { x: 0, y: 0, z: 0 };
     console.log('\n// Current camera position:');
     console.log(`cameraPos: { x: ${currentPos.x.toFixed(2)}, y: ${currentPos.y.toFixed(2)}, z: ${currentPos.z.toFixed(2)} },`);
     console.log(`lookAt: { x: ${currentTarget.x.toFixed(2)}, y: ${currentTarget.y.toFixed(2)}, z: ${currentTarget.z.toFixed(2)} },`);
-    
     console.log('='.repeat(50));
   }
 }
-
 // Create global camera editor instance
 const cameraEditor = new CameraPositionEditor();
 window.cameraEditor = cameraEditor;
-
-// === Camera Position Utilities (Global Access) ===
 window.cameraUtils = {
   // Quick access functions
   startEditor: () => cameraEditor.toggle(),
@@ -2867,7 +2433,6 @@ window.cameraUtils = {
     console.log(`Position: { x: ${camera.position.x.toFixed(3)}, y: ${camera.position.y.toFixed(3)}, z: ${camera.position.z.toFixed(3)} }`);
     console.log(`Looking at: { x: ${lookAtTarget.x.toFixed(3)}, y: ${lookAtTarget.y.toFixed(3)}, z: ${lookAtTarget.z.toFixed(3)} }`);
   },
-  
   // Move camera to specific position
   setPosition: (x, y, z, lookX = 0, lookY = 0, lookZ = 0) => {
     camera.position.set(x, y, z);
@@ -2875,7 +2440,6 @@ window.cameraUtils = {
     lookAtTarget = { x: lookX, y: lookY, z: lookZ };
     console.log(`📷 Camera moved to (${x}, ${y}, ${z}) looking at (${lookX}, ${lookY}, ${lookZ})`);
   },
-  
   // Useful preset positions
   presets: {
     overview: () => window.cameraUtils.setPosition(0, 8, 12, 0, 0, 0),
@@ -2883,7 +2447,6 @@ window.cameraUtils = {
     closeUp: () => window.cameraUtils.setPosition(2, 2, 4, 0, 0, 0),
     sideView: () => window.cameraUtils.setPosition(10, 4, 0, 0, 0, 0)
   },
-  
   // Help function
   help: () => {
     console.log('\n🎥 CAMERA UTILITIES HELP:');
@@ -2902,29 +2465,22 @@ window.cameraUtils = {
     console.log('='.repeat(40));
   }
 };
-
 // Show help on load (in development)
 if (!isProduction) {
   console.log('\n🎥 Camera positioning system loaded!');
   console.log('Type "cameraUtils.help()" for available commands.');
   console.log('Press Ctrl + E to start the camera editor.');
 }
-
-// === Environment Texture Loading ===
 const textureLoader = new THREE.TextureLoader();
-
 // Register environment texture for loading tracking
 incrementTotalAssets();
-
 // Try multiple environment texture formats
 const envTexturePaths = [
   './public/textures/env.jpg',
   './public/textures/env.png',
   './public/textures/env.hdr'
 ];
-
 let envTextureLoaded = false;
-
 function loadEnvironmentTexture(paths, index = 0) {
   if (index >= paths.length) {
     // All texture formats failed, create fallback
@@ -2935,7 +2491,6 @@ function loadEnvironmentTexture(paths, index = 0) {
     markAssetLoaded();
     return;
   }
-  
   ErrorHandler.handleAsyncError(
     new Promise((resolve, reject) => {
       textureLoader.load(
@@ -2944,14 +2499,11 @@ function loadEnvironmentTexture(paths, index = 0) {
           try {
             if (envTextureLoaded) return; // Prevent double loading
             envTextureLoaded = true;
-            
             texture.mapping = THREE.EquirectangularReflectionMapping;
             texture.colorSpace = THREE.SRGBColorSpace;
-            
             // Set as both background and environment for reflections
             scene.background = texture;
             scene.environment = texture;
-            
             // Process existing materials to use the new environment
             scene.traverse((child) => {
               if (child.isMesh && child.material) {
@@ -2971,7 +2523,6 @@ function loadEnvironmentTexture(paths, index = 0) {
                 }
               }
             });
-            
             console.log(`Environment texture loaded successfully: ${paths[index]}`);
             markAssetLoaded();
             resolve(texture);
@@ -2994,50 +2545,40 @@ function loadEnvironmentTexture(paths, index = 0) {
     }
   });
 }
-
 function createFallbackEnvironment() {
   // Create a simple gradient environment texture as fallback
   const canvas = document.createElement('canvas');
   canvas.width = 512;
   canvas.height = 256;
   const ctx = canvas.getContext('2d');
-  
   const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
   gradient.addColorStop(0, '#87CEEB'); // Sky blue
   gradient.addColorStop(0.7, '#FFD4A3'); // Warm horizon
   gradient.addColorStop(1, '#8B4513'); // Ground brown
-  
   ctx.fillStyle = gradient;
   ctx.fillRect(0, 0, canvas.width, canvas.height);
-  
   const texture = new THREE.CanvasTexture(canvas);
   texture.mapping = THREE.EquirectangularReflectionMapping;
   texture.colorSpace = THREE.SRGBColorSpace;
-  
   return texture;
 }
-
 // Start loading environment textures
 loadEnvironmentTexture(envTexturePaths);
-
-// === Skill Flowers Grid Generation ===
 function generateSkillFlowersGrid() {
   const cvHex = hexMap.find(hex => hex.type === 'cv');
   if (!cvHex) {
     console.error('CV hex not found');
     return;
   }
-  
   const cvWorldPos = hexToWorld(cvHex.q, cvHex.r);
   const gridSpacing = { x: 0.2, z: 0.27 }; // Grid dimensions reduced by half
   const collisionBoxYOffset = -0.1; // Configurable Y offset for collision boxes (negative = lower)
-  
   // 3x3 grid positions (center at 0,0 relative to CV hex)
   // NOTE: The coordinate system is relative to the camera's viewing angle
   // From the user's perspective when looking at the CV hex:
   // - Negative Z is "forward" (top row)
-  // - Positive Z is "backward" (bottom row)  
-  // - Negative X is "left" 
+  // - Positive Z is "backward" (bottom row)
+  // - Negative X is "left"
   // - Positive X is "right"
   const gridPositions = [
     { x: -gridSpacing.x, z: -gridSpacing.z }, // Index 0: Top-left -> Unity
@@ -3050,40 +2591,32 @@ function generateSkillFlowersGrid() {
     { x: 0, z: gridSpacing.z },               // Index 7: Bottom-center -> Arduino
     { x: gridSpacing.x, z: gridSpacing.z }    // Index 8: Bottom-right -> Meta
   ];
-  
   if (!isProduction) {
     console.log('=== SkillFlower Grid Debug ===');
     console.log('CV hex world position:', cvWorldPos);
     console.log('Grid spacing:', gridSpacing);
   }
-  
   // Load skillFlower model and create 9 instances
   gridPositions.forEach((gridPos, index) => {
     const loader = new GLTFLoader();
     incrementTotalAssets(); // Register for loading tracking
-    
     // Calculate final world position
     const finalWorldPos = {
       x: cvWorldPos.x + gridPos.x,
       y: 0,
       z: cvWorldPos.z + gridPos.z
     };
-    
     const expectedFlower = languageFlowerData[index];
     console.log(`SkillFlower ${index}: Grid(${gridPos.x.toFixed(2)}, ${gridPos.z.toFixed(2)}) -> World(${finalWorldPos.x.toFixed(2)}, ${finalWorldPos.z.toFixed(2)}) -> ${expectedFlower?.displayName} (${expectedFlower?.name})`);
-    
     // Additional debug: Show which position this represents in user view
     let viewPosition = 'unknown';
     if (gridPos.z < 0) viewPosition = 'top';
     else if (gridPos.z > 0) viewPosition = 'bottom';
     else viewPosition = 'middle';
-    
     if (gridPos.x < 0) viewPosition += '-left';
     else if (gridPos.x > 0) viewPosition += '-right';
     else viewPosition += '-center';
-    
     console.log(`  -> Visual position: ${viewPosition} (should show ${expectedFlower?.displayName})`);
-    
     ErrorHandler.handleAsyncError(
       new Promise((resolve, reject) => {
         loader.load(
@@ -3092,41 +2625,34 @@ function generateSkillFlowersGrid() {
             try {
               processGLBMaterials(gltf, 'skillFlower.glb');
               const skillFlower = gltf.scene;
-              
               // Position at grid location relative to CV hex
               skillFlower.position.set(
                 finalWorldPos.x,
                 finalWorldPos.y,
                 finalWorldPos.z
               );
-              
               skillFlower.scale.set(1, 1, 1);
               skillFlower.userData.type = `skillFlower${index + 1}`;
               skillFlower.userData.gridIndex = index;
-              
               // Create collision box for enhanced mouse detection
               const collisionGeometry = new THREE.BoxGeometry(0.05, 0.2, 0.05);
-              const collisionMaterial = new THREE.MeshBasicMaterial({ 
+              const collisionMaterial = new THREE.MeshBasicMaterial({
                 visible: false,
                 transparent: true,
-                opacity: 0 
+                opacity: 0
               });
               const collisionBox = new THREE.Mesh(collisionGeometry, collisionMaterial);
-              
               collisionBox.position.copy(skillFlower.position);
               collisionBox.position.y += collisionBoxYOffset; // Apply configurable Y offset
               collisionBox.userData.type = `skillFlower${index + 1}`;
               collisionBox.userData.targetDrawer = skillFlower;
               collisionBox.userData.gridIndex = index;
-              
               scene.add(skillFlower);
               scene.add(collisionBox);
-              
               skillFlowers.push(skillFlower);
               drawers.push(collisionBox);
               drawers.push(skillFlower); // FIXED: Add skillFlower mesh to drawers array too
               drawerOriginalPositions.set(skillFlower, skillFlower.position.clone());
-              
               console.log(`SkillFlower ${index + 1} loaded at world position:`, skillFlower.position, `-> Maps to: ${expectedFlower?.displayName}`);
               markAssetLoaded();
               resolve(skillFlower);
@@ -3142,18 +2668,13 @@ function generateSkillFlowersGrid() {
     );
   });
 }
-
-// === Language Flowers Management ===
 function loadLanguageFlowers() {
   console.log('Loading language flowers with enhanced mapping...');
-  
   // Pre-initialize the array with the correct size to ensure proper indexing
   languageFlowers.length = languageFlowerData.length;
-  
   languageFlowerData.forEach((flowerData, index) => {
     const loader = new GLTFLoader();
     incrementTotalAssets(); // Register for loading tracking
-    
     ErrorHandler.handleAsyncError(
       new Promise((resolve, reject) => {
         loader.load(
@@ -3162,12 +2683,10 @@ function loadLanguageFlowers() {
             try {
               processGLBMaterials(gltf, flowerData.model);
               const languageFlower = gltf.scene;
-              
               // FIXED: Start hidden below ground at origin (will be positioned correctly when shown)
               languageFlower.position.set(0, -2, 0);
               languageFlower.scale.set(1, 1, 1);
               languageFlower.visible = false;
-              
               // Enhanced userData with complete flower information - reset for fresh state
               languageFlower.userData = {
                 type: flowerData.name,
@@ -3177,11 +2696,9 @@ function loadLanguageFlowers() {
                 gridIndex: index,
                 isAnimating: false // Ensure fresh animation state
               };
-              
               scene.add(languageFlower);
               // FIXED: Place language flower at the correct array index instead of pushing
               languageFlowers[index] = languageFlower;
-              
               console.log(`Language flower loaded - Index: ${index}, Name: ${flowerData.name}, Display: ${flowerData.displayName}, Position: ${flowerData.gridPosition}`);
               markAssetLoaded();
               resolve(languageFlower);
@@ -3196,19 +2713,16 @@ function loadLanguageFlowers() {
       `Language flower ${flowerData.displayName} (${flowerData.name}) loading`
     );
   });
-  
   // Log the complete mapping for verification
   console.log('Language Flower Grid Mapping:');
   languageFlowerData.forEach((flower, index) => {
     console.log(`Grid ${index} (${flower.gridPosition}): ${flower.displayName} (${flower.name}) - ${flower.category}`);
   });
 }
-
 function showLanguageFlower(gridIndex) {
   const languageFlower = languageFlowers[gridIndex];
   const skillFlower = skillFlowers[gridIndex];
   const flowerInfo = getLanguageFlowerInfo(gridIndex);
-  
   // Enhanced checks to prevent duplicate animations
   if (!languageFlower || !skillFlower) {
     console.warn(`Cannot show language flower at index ${gridIndex}:`, {
@@ -3217,48 +2731,39 @@ function showLanguageFlower(gridIndex) {
     });
     return;
   }
-  
   // If already active or currently animating, don't start another animation
   if (activeLanguageFlowers.has(gridIndex)) {
     console.log(`Language flower ${flowerInfo?.displayName} already active at grid ${gridIndex} - skipping duplicate show`);
     return;
   }
-  
   // Check if there's already a running animation on this language flower
   if (languageFlower.userData && languageFlower.userData.isAnimating) {
     console.log(`Language flower ${flowerInfo?.displayName} currently animating at grid ${gridIndex} - skipping duplicate show`);
     return;
   }
-  
   // Mark as active and animating immediately to prevent duplicates
   activeLanguageFlowers.add(gridIndex);
   stayUpLanguageFlowers.add(gridIndex); // Mark this language flower to stay up permanently
   languageFlower.visible = true;
   languageFlower.userData = languageFlower.userData || {};
   languageFlower.userData.isAnimating = true;
-  
   // Kill any existing animations on this language flower to prevent conflicts
   gsap.killTweensOf(languageFlower.position);
   gsap.killTweensOf(languageFlower.rotation);
-  
   // Clear any existing rotation animation tracking
   const existingRotation = languageFlowerRotations.get(gridIndex);
   if (existingRotation) {
     existingRotation.kill();
     languageFlowerRotations.delete(gridIndex);
   }
-  
   // Log what we're showing
   console.log(`Showing language flower: ${flowerInfo?.displayName || 'Unknown'} (${flowerInfo?.name || 'unknown'}) at grid position ${gridIndex} (${flowerInfo?.gridPosition || 'unknown'})`);
-  
   // FIXED: Position directly above the corresponding skillFlower using exact coordinates
   const targetX = skillFlower.position.x;
   const targetY = skillFlower.position.y + 0.42; // Height above skillFlower
   const targetZ = skillFlower.position.z;
-  
   // Set the language flower to the exact X,Z position of the skillFlower, but below ground
   languageFlower.position.set(targetX, targetY - 0.5, targetZ);
-  
   // Animate rising to the target position
   gsap.to(languageFlower.position, {
     y: targetY,
@@ -3271,7 +2776,6 @@ function showLanguageFlower(gridIndex) {
       }
     }
   });
-  
   // Start rotation animation
   const rotationAnim = gsap.to(languageFlower.rotation, {
     y: "+=6.283", // Full rotation (2π radians)
@@ -3279,47 +2783,36 @@ function showLanguageFlower(gridIndex) {
     ease: "none",
     repeat: -1
   });
-  
   languageFlowerRotations.set(gridIndex, rotationAnim);
 }
-
 function hideLanguageFlower(gridIndex) {
   const languageFlower = languageFlowers[gridIndex];
   const skillFlower = skillFlowers[gridIndex];
   const flowerInfo = getLanguageFlowerInfo(gridIndex);
-  
   if (!languageFlower || !activeLanguageFlowers.has(gridIndex)) return;
-  
   // Don't hide if marked to stay up permanently
   if (stayUpLanguageFlowers.has(gridIndex)) {
     console.log(`Language flower ${flowerInfo?.displayName || 'Unknown'} at grid ${gridIndex} marked to stay up - not hiding`);
     return;
   }
-  
   console.log(`Hiding language flower: ${flowerInfo?.displayName || 'Unknown'} (${flowerInfo?.name || 'unknown'}) at grid position ${gridIndex}`);
-  
   // Clear animation state immediately to prevent conflicts
   if (languageFlower.userData) {
     languageFlower.userData.isAnimating = false;
   }
-  
   // Kill any running animations immediately
   gsap.killTweensOf(languageFlower.position);
   gsap.killTweensOf(languageFlower.rotation);
-  
   activeLanguageFlowers.delete(gridIndex);
-  
   // Stop rotation
   const rotationAnim = languageFlowerRotations.get(gridIndex);
   if (rotationAnim) {
     rotationAnim.kill();
     languageFlowerRotations.delete(gridIndex);
   }
-  
   // FIXED: Animate sinking down to below ground at the same X,Z coordinates
   const targetX = skillFlower ? skillFlower.position.x : languageFlower.position.x;
   const targetZ = skillFlower ? skillFlower.position.z : languageFlower.position.z;
-  
   gsap.to(languageFlower.position, {
     y: languageFlower.position.y - 0.5,
     duration: 0.3,
@@ -3336,12 +2829,9 @@ function hideLanguageFlower(gridIndex) {
     }
   });
 }
-
 // Initialize skill flowers and language flowers
 generateSkillFlowersGrid();
 loadLanguageFlowers();
-
-// === Legacy Unity Flower Functions (keeping for compatibility) ===
 function showUnityFlower() {
   // Legacy function - Unity flower is now at index 0 (top-left position)
   const unityFlower = getLanguageFlowerByName('unity');
@@ -3353,7 +2843,6 @@ function showUnityFlower() {
     console.warn('Unity flower not found in language flower data');
   }
 }
-
 function hideUnityFlower() {
   // Legacy function - Unity flower is now at index 0 (top-left position)
   const unityIndex = languageFlowerData.findIndex(flower => flower.name === 'unity');
@@ -3364,27 +2853,21 @@ function hideUnityFlower() {
     console.warn('Unity flower not found in language flower data');
   }
 }
-
-// === Animation Loop ===
 const clock = new THREE.Clock();
 let lastErrorTime = 0;
 let errorCount = 0;
 let lastMaterialValidation = 0;
 const MAX_ERRORS_PER_SECOND = 5;
 const MATERIAL_VALIDATION_INTERVAL = 10; // seconds
-
 function animate() {
   requestAnimationFrame(animate);
-  
   try {
     const time = clock.getElapsedTime();
-
     // Validate materials periodically to prevent uniform errors
     if (time - lastMaterialValidation > MATERIAL_VALIDATION_INTERVAL) {
       validateSceneMaterials();
       lastMaterialValidation = time;
     }
-
     // Animate ocean waves if ocean data is available
     if (oceanVertData && oceanVertData.length > 0) {
       try {
@@ -3404,12 +2887,10 @@ function animate() {
         }
       }
     }
-
     // Update language flowers positions to stay above their corresponding skillFlowers
     activeLanguageFlowers.forEach(gridIndex => {
       const languageFlower = languageFlowers[gridIndex];
       const skillFlower = skillFlowers[gridIndex];
-      
       if (languageFlower && skillFlower && languageFlower.visible) {
         // Keep language flower positioned above its skillFlower
         languageFlower.position.x = skillFlower.position.x;
@@ -3417,10 +2898,8 @@ function animate() {
         // Y position is handled by animations, don't override here
       }
     });
-
     // Update performance monitor
     performanceMonitor.update();
-
     // Safe rendering with error handling
     try {
       renderer.render(scene, camera);
@@ -3431,7 +2910,6 @@ function animate() {
         ErrorHandler.logError(renderError, 'Rendering');
         lastErrorTime = currentTime;
         errorCount = 0;
-        
         // If it's a uniform/shader error, try to isolate and fix problematic materials
         if (renderError.message && renderError.message.includes('value')) {
           console.warn('Detected uniform value error, attempting material isolation...');
@@ -3456,57 +2934,44 @@ function animate() {
   }
 }
 animate();
-
-// === Event Listeners === 
-
 window.addEventListener('wheel', (event) => {
   // Skip interactions during cinematic mode
   if (cinematicMode) return;
-  
   if (event.deltaY > 0) { // Detect scroll down
     // Reset active nav state since we're going back to overview
     currentActiveHexType = null;
     updateNavActiveState(null);
     updateHexInfo(null); // Update to global portfolio view
-    
     // Reset virtual modal state when going back to overview
     virtualModalClosed = false;
     virtualModalOpened = false;
     steeringWheelClicked = false;
-    
     // Reset trash modal state when going back to overview
     trashModalClosed = false;
     trashModalOpened = false;
     trashTruckClicked = false;
-    
     // Reset convoyeur modal state when going back to overview
     convoyeurModalClosed = false;
     convoyeurModalOpened = false;
     convoyeurClicked = false;
-    
     // Reset sensorSensei modal state when going back to overview
     sensorSenseiModalClosed = false;
     sensorSenseiModalOpened = false;
-    
     // Reset medical modal state when going back to overview
     medicalModalClosed = false;
     medicalModalOpened = false;
-    
     // Reset forviaCAR modal state when going back to overview
     forviaCarModalClosed = false;
     forviaCarModalOpened = false;
-    
     // Reset desck modal state when going back to overview
     desckModalClosed = false;
     desckModalOpened = false;
-    
     // Return to orbital position instead of fixed original position
     const orbitalPosition = {
       x: orbitCenter.x + orbitRadius * Math.cos(currentCameraAngle),
       y: orbitHeight,
       z: orbitCenter.z + orbitRadius * Math.sin(currentCameraAngle)
     };
-    
     // Animate camera position
     gsap.to(camera.position, {
       x: orbitalPosition.x,
@@ -3515,7 +2980,6 @@ window.addEventListener('wheel', (event) => {
       duration: CONFIG.ANIMATION.CAMERA_DURATION,
       ease: CONFIG.ANIMATION.EASE,
     });
-
     // Smoothly animate look-at target to the center of the island (orbital mode)
     gsap.to(lookAtTarget, {
       x: orbitCenter.x,
@@ -3533,7 +2997,6 @@ window.addEventListener('wheel', (event) => {
     });
   }
 });
-
 window.addEventListener('click', (event) => {
   // FIRST: Check global interactions disabled flag
   if (interactionsDisabled) {
@@ -3541,7 +3004,6 @@ window.addEventListener('click', (event) => {
     event.stopImmediatePropagation();
     return false;
   }
-  
   // SECOND: Skip 3D interactions if loading overlay is visible
   const loadingOverlay = document.getElementById('loadingOverlay');
   if (loadingOverlay && !loadingOverlay.classList.contains('hidden')) {
@@ -3549,85 +3011,67 @@ window.addEventListener('click', (event) => {
     event.stopImmediatePropagation();
     return false;
   }
-  
   // THIRD: Skip 3D interactions if any modal is open
   const existingModals = document.querySelectorAll('[id$="Modal"]');
   if (existingModals.length > 0) {
     // Don't process 3D canvas clicks if any modal is open
     return false;
   }
-  
   // Skip interactions during cinematic mode or if currently orbiting
   if (cinematicMode || isOrbiting) return;
-  
   // Check if click is on the navigation sidebar
   const navSidebar = document.getElementById('zoneNavSidebar');
   if (navSidebar && navSidebar.contains(event.target)) {
     return; // Don't process 3D canvas clicks if clicking on nav
   }
-
   const canvasBounds = renderer.domElement.getBoundingClientRect();
   mouse.x = ((event.clientX - canvasBounds.left) / canvasBounds.width) * 2 - 1;
   mouse.y = -((event.clientY - canvasBounds.top) / canvasBounds.height) * 2 + 1;
-
   raycaster.setFromCamera(mouse, camera);
   const intersects = raycaster.intersectObjects([...hexObjects, ...drawers], true);
-
   if (intersects.length > 0) {
     let object = intersects[0].object;
     while (object.parent && !hexObjects.includes(object) && !drawers.includes(object)) object = object.parent;
-
     // Animation caméra pour hexagones classiques
     if (object.userData.q !== undefined && object.userData.r !== undefined) {
       currentActiveHexType = object.userData.type; // Update active type on 3D click
       updateHexInfo(currentActiveHexType); // Update hex info display
-      
       // Stop any ongoing orbital movement
       isOrbiting = false;
       document.body.style.cursor = 'default';
-      
       // Reset virtual modal state when navigating to different areas
       virtualModalClosed = false;
       virtualModalOpened = false;
       steeringWheelClicked = false;
-      
       // Reset trash modal state when navigating to different areas
       trashModalClosed = false;
       trashModalOpened = false;
       trashTruckClicked = false;
-      
       // Reset convoyeur modal state when navigating to different areas
       convoyeurModalClosed = false;
       convoyeurModalOpened = false;
       convoyeurClicked = false;
-      
       // Reset sensorSensei modal state when navigating to different areas
       sensorSenseiModalClosed = false;
       sensorSenseiModalOpened = false;
-      
       // Reset medical modal state when navigating to different areas
       medicalModalClosed = false;
       medicalModalOpened = false;
-      
       // Reset forviaCAR modal state when navigating to different areas
       forviaCarModalClosed = false;
       forviaCarModalOpened = false;
-      
       // Reset desck modal state when navigating to different areas
       desckModalClosed = false;
         desckModalOpened = false;
-      
       const hexPosition = object.position;
       const hexData = hexMap.find(hex => hex.q === object.userData.q && hex.r === object.userData.r);
-      const cameraPos = hexData?.cameraPos || { x: 0, y: 5, z: 10 }; // Default camera position
-
+      const cameraPos = hexData?.cameraPos || { x: 0, y: 5, z: 10 };
       // Store current camera position to ensure smooth transition
       const currentPos = {
         x: camera.position.x,
         y: camera.position.y,
         z: camera.position.z
       };
-
       gsap.to(camera.position, {
         x: cameraPos.x,
         y: cameraPos.y,
@@ -3635,7 +3079,6 @@ window.addEventListener('click', (event) => {
         duration: CONFIG.ANIMATION.CAMERA_DURATION,
         ease: CONFIG.ANIMATION.EASE,
       });
-
       gsap.to(lookAtTarget, {
         x: hexPosition.x,
         y: hexPosition.y,
@@ -3646,7 +3089,6 @@ window.addEventListener('click', (event) => {
           camera.lookAt(lookAtTarget.x, lookAtTarget.y, lookAtTarget.z);
         },
       });
-
       // Update active nav item when clicking on 3D objects
       updateNavActiveState(object.userData.type);
     }
@@ -3657,13 +3099,11 @@ window.addEventListener('click', (event) => {
         console.log(`Drawer ${object.userData.type} not clickable at current location/theme`);
         return; // Don't allow interaction if not at correct theme
       }
-      
       // Mark drawer as read when clicked (except forge)
       if (unreadDrawers.has(object.userData.type) && object.userData.type !== 'forge') {
         unreadDrawers.delete(object.userData.type);
         updateThemeUnreadBadges();
       }
-      
       // Handle objects that don't need camera movement (trashTruck, convoyeur, sensorSensei, medical, forviaCAR)
       if (object.userData.type === 'trashTruck' || object.userData.type === 'convoyeur' || object.userData.type === 'sensorSensei' || object.userData.type === 'medical' || object.userData.type === 'forviaCAR' || object.userData.type === 'pc') {
         if (object.userData.type === 'trashTruck' && !trashModalClosed) {
@@ -3686,7 +3126,6 @@ window.addEventListener('click', (event) => {
         }
         return; // Don't animate camera for these objects
       }
-      
       const camTarget = drawerCameraTargets[object.userData.type];
       if (camTarget) {
         // Set flag only if user clicked on steering wheel
@@ -3696,7 +3135,6 @@ window.addEventListener('click', (event) => {
         if (object.userData.type === 'desck') {
           desckClicked = true;
         }
-        
         gsap.to(camera.position, {
           x: camTarget.x,
           y: camTarget.y,
@@ -3732,14 +3170,11 @@ window.addEventListener('click', (event) => {
     else if (object.userData.type === 'forge') {
       // Check if forge is clickable at the current location/theme
       if (!isDrawerClickableAtCurrentLocation('forge')) {
-        console.log('Forge not clickable at current location/theme');
+        if (!isProduction) console.log('Forge not clickable at current location/theme');
         return; // Don't allow interaction if not at correct theme
       }
-      
-      // Mark forge as read
       if (unreadDrawers.has('forge')) {
         markObjectAsDiscovered('forge');
-
       }
       showForgeModal();
     }
@@ -3747,16 +3182,13 @@ window.addEventListener('click', (event) => {
     else if (object.userData.type === 'mail-box') {
       // Check if mail-box is clickable at the current location/theme
       if (!isDrawerClickableAtCurrentLocation('mail-box')) {
-        console.log('Mail-box not clickable at current location/theme');
+        if (!isProduction) console.log('Mail-box not clickable at current location/theme');
         return; // Don't allow interaction if not at correct theme
       }
-      
-      // Mark mail-box as read
       if (unreadDrawers.has('mail-box')) {
         unreadDrawers.delete('mail-box');
         updateThemeUnreadBadges();
       }
-      
       // Show contact modal instead of navigating to a new page
       showContactModal();
     }
@@ -3767,7 +3199,6 @@ window.addEventListener('click', (event) => {
         console.log(`SkillFlower ${object.userData.type} not clickable at current location/theme`);
         return; // Don't allow interaction if not at correct theme
       }
-      
       // Mark skillFlower as discovered when clicked
       if (unreadDrawers.has(object.userData.type)) {
         markObjectAsDiscovered(object.userData.type);
@@ -3775,112 +3206,91 @@ window.addEventListener('click', (event) => {
     }
   }
 });
-
-// === Touch Event Handlers for Mobile Support ===
 if (isTouchDevice) {
   // Touch start
   window.addEventListener('touchstart', (event) => {
     if (cinematicMode || isOrbiting) return;
-    
     // Check if touch is on UI elements - don't interfere
     const loadingOverlay = document.getElementById('loadingOverlay');
     const navSidebar = document.getElementById('zoneNavSidebar');
     const toggleButton = document.getElementById('mobile-nav-toggle');
     const mobileNavOverlay = document.getElementById('mobile-nav-overlay');
-    
     // Allow loading overlay interactions
     if (loadingOverlay && !loadingOverlay.classList.contains('hidden')) {
       if (loadingOverlay.contains(event.target)) {
         return; // Let loading overlay handle its own touch events
       }
     }
-    
     // Allow navigation interactions
-    if ((navSidebar && navSidebar.contains(event.target)) || 
+    if ((navSidebar && navSidebar.contains(event.target)) ||
         (toggleButton && toggleButton.contains(event.target)) ||
         (mobileNavOverlay && mobileNavOverlay.contains(event.target))) {
       return; // Let navigation handle its own touch events
     }
-    
     const touch = event.touches[0];
     touchStart.x = touch.clientX;
     touchStart.y = touch.clientY;
     touchMoved = false;
-    
     // Only prevent default for 3D canvas interactions
     const canvasBounds = renderer.domElement.getBoundingClientRect();
-    const isOnCanvas = touch.clientX >= canvasBounds.left && 
+    const isOnCanvas = touch.clientX >= canvasBounds.left &&
                       touch.clientX <= canvasBounds.right &&
-                      touch.clientY >= canvasBounds.top && 
+                      touch.clientY >= canvasBounds.top &&
                       touch.clientY <= canvasBounds.bottom;
-    
     if (isOnCanvas) {
       event.preventDefault();
     }
   }, { passive: false });
-  
   // Touch move for orbital camera controls
   window.addEventListener('touchmove', (event) => {
     if (cinematicMode || event.touches.length !== 1) return;
-    
     // Check if touch is on UI elements - don't interfere
     const loadingOverlay = document.getElementById('loadingOverlay');
     const navSidebar = document.getElementById('zoneNavSidebar');
     const toggleButton = document.getElementById('mobile-nav-toggle');
     const mobileNavOverlay = document.getElementById('mobile-nav-overlay');
-    
     // Allow loading overlay interactions
     if (loadingOverlay && !loadingOverlay.classList.contains('hidden')) {
       if (loadingOverlay.contains(event.target)) {
         return; // Let loading overlay handle its own touch events
       }
     }
-    
     // Allow navigation interactions
-    if ((navSidebar && navSidebar.contains(event.target)) || 
+    if ((navSidebar && navSidebar.contains(event.target)) ||
         (toggleButton && toggleButton.contains(event.target)) ||
         (mobileNavOverlay && mobileNavOverlay.contains(event.target))) {
       return; // Let navigation handle its own touch events
     }
-    
     const touch = event.touches[0];
     const deltaX = touch.clientX - touchStart.x;
     const deltaY = touch.clientY - touchStart.y;
-    
     // Check if movement is significant enough to be considered a drag
     if (Math.abs(deltaX) > TAP_THRESHOLD || Math.abs(deltaY) > TAP_THRESHOLD) {
       touchMoved = true;
-      
       // Orbital camera rotation (only horizontal for simplicity on mobile)
       if (currentActiveHexType === null) { // Only in orbital mode
         currentCameraAngle += deltaX * TOUCH_SENSITIVITY;
-        
         const newCameraPos = {
           x: orbitCenter.x + orbitRadius * Math.cos(currentCameraAngle),
           y: orbitHeight,
           z: orbitCenter.z + orbitRadius * Math.sin(currentCameraAngle)
         };
-        
         camera.position.set(newCameraPos.x, newCameraPos.y, newCameraPos.z);
         camera.lookAt(orbitCenter.x, orbitCenter.y, orbitCenter.z);
-        
         touchStart.x = touch.clientX;
         touchStart.y = touch.clientY;
       }
     }
-    
     // Only prevent default for 3D canvas interactions
     const canvasBounds = renderer.domElement.getBoundingClientRect();
-    const isOnCanvas = touch.clientX >= canvasBounds.left && 
+    const isOnCanvas = touch.clientX >= canvasBounds.left &&
                       touch.clientX <= canvasBounds.right &&
-                      touch.clientY >= canvasBounds.top && 
+                      touch.clientY >= canvasBounds.top &&
                       touch.clientY <= canvasBounds.bottom;
-    
     if (isOnCanvas) {
       event.preventDefault();
     }
   }, { passive: false });
-  
   // Touch end - handle tap
   window.addEventListener('touchend', (event) => {
     if (!isProduction) {
@@ -3889,20 +3299,16 @@ if (isTouchDevice) {
       console.log('touchMoved:', touchMoved);
       console.log('event.target:', event.target);
     }
-    
     if (cinematicMode) return;
-    
     // Check if touch is on UI elements - don't interfere
     const loadingOverlay = document.getElementById('loadingOverlay');
     const navSidebar = document.getElementById('zoneNavSidebar');
     const toggleButton = document.getElementById('mobile-nav-toggle');
     const mobileNavOverlay = document.getElementById('mobile-nav-overlay');
-    
     if (!isProduction) {
       console.log('loadingOverlay exists:', !!loadingOverlay);
       console.log('loadingOverlay hidden:', loadingOverlay ? loadingOverlay.classList.contains('hidden') : 'n/a');
     }
-    
     // Allow loading overlay interactions
     if (loadingOverlay && !loadingOverlay.classList.contains('hidden')) {
       if (loadingOverlay.contains(event.target)) {
@@ -3910,40 +3316,33 @@ if (isTouchDevice) {
         return; // Let loading overlay handle its own touch events
       }
     }
-    
     // Allow navigation interactions
-    if ((navSidebar && navSidebar.contains(event.target)) || 
+    if ((navSidebar && navSidebar.contains(event.target)) ||
         (toggleButton && toggleButton.contains(event.target)) ||
         (mobileNavOverlay && mobileNavOverlay.contains(event.target))) {
       if (!isProduction) console.log('Touch on navigation - letting it handle the event');
       return; // Let navigation handle its own touch events
     }
-    
     // If no significant movement, treat as tap
     if (!touchMoved) {
       const touch = event.changedTouches[0];
       const currentTime = Date.now();
-      
       if (!isProduction) {
         console.log('Processing tap - no movement detected');
         console.log('Touch coordinates:', touch.clientX, touch.clientY);
       }
-      
       // Only handle taps on the 3D canvas
       const canvasBounds = renderer.domElement.getBoundingClientRect();
-      const isOnCanvas = touch.clientX >= canvasBounds.left && 
+      const isOnCanvas = touch.clientX >= canvasBounds.left &&
                         touch.clientX <= canvasBounds.right &&
-                        touch.clientY >= canvasBounds.top && 
+                        touch.clientY >= canvasBounds.top &&
                         touch.clientY <= canvasBounds.bottom;
-      
       if (!isProduction) {
         console.log('Canvas bounds:', canvasBounds);
         console.log('Is on canvas:', isOnCanvas);
       }
-      
       if (isOnCanvas) {
         if (!isProduction) console.log('Calling handleInteraction for touch tap');
-        
         // Add visual feedback for mobile touches
         const touchIndicator = document.createElement('div');
         touchIndicator.style.cssText = `
@@ -3954,33 +3353,26 @@ if (isTouchDevice) {
         `;
         document.body.appendChild(touchIndicator);
         setTimeout(() => touchIndicator.remove(), 500);
-        
         // Call handleInteraction with separate coordinates
         handleInteraction(touch.clientX, touch.clientY);
-        
         lastTouchTime = currentTime;
       }
     }
-    
     touchMoved = false;
     // Only prevent default for 3D canvas interactions
     const touch = event.changedTouches[0];
     const canvasBounds = renderer.domElement.getBoundingClientRect();
-    const isOnCanvas = touch.clientX >= canvasBounds.left && 
+    const isOnCanvas = touch.clientX >= canvasBounds.left &&
                       touch.clientX <= canvasBounds.right &&
-                      touch.clientY >= canvasBounds.top && 
+                      touch.clientY >= canvasBounds.top &&
                       touch.clientY <= canvasBounds.bottom;
-    
     if (isOnCanvas) {
       event.preventDefault();
     }
   }, { passive: false });
 }
-
-// === Shared Interaction Handler ===
 function handleInteraction(event) {
   if (!isProduction) console.log('handleInteraction called with event:', event);
-  
   // FIRST: Check global interactions disabled flag
   if (interactionsDisabled) {
     if (!isProduction) console.log('Interactions disabled - stopping');
@@ -3988,7 +3380,6 @@ function handleInteraction(event) {
     event.stopImmediatePropagation();
     return false;
   }
-  
   // SECOND: Skip 3D interactions if loading overlay is visible
   const loadingOverlay = document.getElementById('loadingOverlay');
   if (loadingOverlay && !loadingOverlay.classList.contains('hidden')) {
@@ -3997,89 +3388,69 @@ function handleInteraction(event) {
     event.stopImmediatePropagation();
     return false;
   }
-  
   // Skip interactions during cinematic mode or if currently orbiting
   if (cinematicMode || isOrbiting) {
     if (!isProduction) console.log('Cinematic mode or orbiting - stopping');
     return;
   }
-  
   // Check if click is on the navigation sidebar
   const navSidebar = document.getElementById('zoneNavSidebar');
   if (navSidebar && navSidebar.contains(event.target)) {
     if (!isProduction) console.log('Event on navigation sidebar - stopping');
     return; // Don't process 3D canvas clicks if clicking on nav
   }
-
   const canvasBounds = renderer.domElement.getBoundingClientRect();
   mouse.x = ((event.clientX - canvasBounds.left) / canvasBounds.width) * 2 - 1;
   mouse.y = -((event.clientY - canvasBounds.top) / canvasBounds.height) * 2 + 1;
-
   if (!isProduction) console.log('Mouse coordinates calculated:', mouse.x, mouse.y);
-
   raycaster.setFromCamera(mouse, camera);
   const intersects = raycaster.intersectObjects([...hexObjects, ...drawers], true);
-
   if (!isProduction) console.log('Raycaster intersects:', intersects.length);
-
   if (intersects.length > 0) {
     let object = intersects[0].object;
     while (object.parent && !hexObjects.includes(object) && !drawers.includes(object)) object = object.parent;
-
     if (!isProduction) console.log('Found object:', object.userData.type);
-
     // Animation caméra pour hexagones classiques
     if (object.userData.q !== undefined && object.userData.r !== undefined) {
       if (!isProduction) console.log('Hex object clicked:', object.userData.type);
       currentActiveHexType = object.userData.type; // Update active type on 3D click
       updateHexInfo(currentActiveHexType); // Update hex info display
-      
       // Stop any ongoing orbital movement
       isOrbiting = false;
       document.body.style.cursor = 'default';
-      
       // Reset virtual modal state when navigating to different areas
       virtualModalClosed = false;
       virtualModalOpened = false;
       steeringWheelClicked = false;
-      
       // Reset trash modal state when navigating to different areas
       trashModalClosed = false;
       trashModalOpened = false;
       trashTruckClicked = false;
-      
       // Reset convoyeur modal state when navigating to different areas
       convoyeurModalClosed = false;
       convoyeurModalOpened = false;
       convoyeurClicked = false;
-      
       // Reset sensorSensei modal state when navigating to different areas
       sensorSenseiModalClosed = false;
       sensorSenseiModalOpened = false;
-      
       // Reset medical modal state when navigating to different areas
       medicalModalClosed = false;
       medicalModalOpened = false;
-      
       // Reset forviaCAR modal state when navigating to different areas
       forviaCarModalClosed = false;
       forviaCarModalOpened = false;
-      
       // Reset desck modal state when navigating to different areas
       desckModalClosed = false;
         desckModalOpened = false;
-      
       const hexPosition = object.position;
       const hexData = hexMap.find(hex => hex.q === object.userData.q && hex.r === object.userData.r);
-      const cameraPos = hexData?.cameraPos || { x: 0, y: 5, z: 10 }; // Default camera position
-
+      const cameraPos = hexData?.cameraPos || { x: 0, y: 5, z: 10 };
       // Store current camera position to ensure smooth transition
       const currentPos = {
         x: camera.position.x,
         y: camera.position.y,
         z: camera.position.z
       };
-
       gsap.to(camera.position, {
         x: cameraPos.x,
         y: cameraPos.y,
@@ -4087,7 +3458,6 @@ function handleInteraction(event) {
         duration: CONFIG.ANIMATION.CAMERA_DURATION,
         ease: CONFIG.ANIMATION.EASE,
       });
-
       gsap.to(lookAtTarget, {
         x: hexPosition.x,
         y: hexPosition.y,
@@ -4098,7 +3468,6 @@ function handleInteraction(event) {
           camera.lookAt(lookAtTarget.x, lookAtTarget.y, lookAtTarget.z);
         },
       });
-
       // Update active nav item when clicking on 3D objects
       updateNavActiveState(object.userData.type);
     }
@@ -4109,13 +3478,11 @@ function handleInteraction(event) {
         console.log(`Drawer ${object.userData.type} not clickable at current location/theme`);
         return; // Don't allow interaction if not at correct theme
       }
-      
       // Mark drawer as read when clicked (except forge)
       if (unreadDrawers.has(object.userData.type) && object.userData.type !== 'forge') {
         unreadDrawers.delete(object.userData.type);
         updateThemeUnreadBadges();
       }
-      
       // Handle objects that don't need camera movement (trashTruck, convoyeur, sensorSensei, medical, forviaCAR)
       if (object.userData.type === 'trashTruck' || object.userData.type === 'convoyeur' || object.userData.type === 'sensorSensei' || object.userData.type === 'medical' || object.userData.type === 'forviaCAR' || object.userData.type === 'pc') {
         if (object.userData.type === 'trashTruck' && !trashModalClosed) {
@@ -4138,7 +3505,6 @@ function handleInteraction(event) {
         }
         return; // Don't animate camera for these objects
       }
-      
       const camTarget = drawerCameraTargets[object.userData.type];
       if (camTarget) {
         // Set flag only if user clicked on steering wheel
@@ -4148,7 +3514,6 @@ function handleInteraction(event) {
         if (object.userData.type === 'desck') {
           desckClicked = true;
         }
-        
         gsap.to(camera.position, {
           x: camTarget.x,
           y: camTarget.y,
@@ -4184,14 +3549,11 @@ function handleInteraction(event) {
     else if (object.userData.type === 'forge') {
       // Check if forge is clickable at the current location/theme
       if (!isDrawerClickableAtCurrentLocation('forge')) {
-        console.log('Forge not clickable at current location/theme');
+        if (!isProduction) console.log('Forge not clickable at current location/theme');
         return; // Don't allow interaction if not at correct theme
       }
-      
-      // Mark forge as read
       if (unreadDrawers.has('forge')) {
         markObjectAsDiscovered('forge');
-
       }
       showForgeModal();
     }
@@ -4199,23 +3561,18 @@ function handleInteraction(event) {
     else if (object.userData.type === 'mail-box') {
       // Check if mail-box is clickable at the current location/theme
       if (!isDrawerClickableAtCurrentLocation('mail-box')) {
-        console.log('Mail-box not clickable at current location/theme');
+        if (!isProduction) console.log('Mail-box not clickable at current location/theme');
         return; // Don't allow interaction if not at correct theme
       }
-      
-      // Mark mail-box as read
       if (unreadDrawers.has('mail-box')) {
         unreadDrawers.delete('mail-box');
         updateThemeUnreadBadges();
       }
-      
       // Show contact modal instead of navigating to a new page
       showContactModal();
     }
   }
 }
-
-// === Modal Functions ===
 function createModalBase(id, onClose = null) {
   const modal = document.createElement('div');
   modal.id = id;
@@ -4231,7 +3588,6 @@ function createModalBase(id, onClose = null) {
     justify-content: center;
     z-index: 9999;
   `;
-
   const content = document.createElement('div');
   content.style.cssText = `
     background: #222;
@@ -4244,7 +3600,6 @@ function createModalBase(id, onClose = null) {
     display: flex;
     flex-direction: column;
   `;
-
   const closeBtn = document.createElement('button');
   closeBtn.textContent = '✕';
   closeBtn.style.cssText = `
@@ -4264,17 +3619,14 @@ function createModalBase(id, onClose = null) {
     align-items: center;
     justify-content: center;
   `;
-  
   closeBtn.onclick = (event) => {
     event.stopPropagation();
     event.preventDefault();
     if (onClose) onClose();
     modal.remove();
   };
-
   content.appendChild(closeBtn);
   modal.appendChild(content);
-  
   // Prevent clicks on modal from propagating to 3D scene and close modal on overlay click
   modal.addEventListener('click', (event) => {
     event.stopPropagation();
@@ -4285,22 +3637,17 @@ function createModalBase(id, onClose = null) {
       modal.remove();
     }
   });
-  
   // Prevent clicks on content from closing modal and propagating
   content.addEventListener('click', (event) => {
     event.stopPropagation();
     event.preventDefault();
   });
-  
   return { modal, content };
 }
-
 function showForgeModal() {
   let existingModal = document.getElementById('forgeModal');
   if (existingModal) return; // Already open
-  
   const { modal, content } = createModalBase('forgeModal');
-  
   const iframe = document.createElement('iframe');
   iframe.src = 'forge.html';
   iframe.style.cssText = `
@@ -4309,21 +3656,16 @@ function showForgeModal() {
     border: none;
     background: #fff;
   `;
-  
   iframe.onerror = () => {
     content.innerHTML = '<div style="color: white; padding: 20px; text-align: center;">Error loading content</div>';
   };
-
   content.appendChild(iframe);
   document.body.appendChild(modal);
 }
-
 function showContactModal() {
   let existingModal = document.getElementById('contactModal');
   if (existingModal) return; // Already open
-  
   const { modal, content } = createModalBase('contactModal');
-  
   const iframe = document.createElement('iframe');
   iframe.src = 'sidepages/contact.html';
   iframe.style.cssText = `
@@ -4332,26 +3674,20 @@ function showContactModal() {
     border: none;
     background: #fff;
   `;
-  
   iframe.onerror = () => {
     content.innerHTML = '<div style="color: white; padding: 20px; text-align: center;">Error loading contact form</div>';
   };
-
   content.appendChild(iframe);
   document.body.appendChild(modal);
 }
-
 function showVirtualModal() {
   let existingModal = document.getElementById('virtualModal');
   if (existingModal) return; // Already open
-  
   virtualModalOpened = true; // Mark that the modal was opened
-  
   const { modal, content } = createModalBase('virtualModal', () => {
     virtualModalClosed = true; // Mark that user has closed the modal
     // Camera stays in current position - no movement on modal close
   });
-  
   const iframe = document.createElement('iframe');
   iframe.src = 'virtual.html';
   iframe.style.cssText = `
@@ -4360,26 +3696,20 @@ function showVirtualModal() {
     border: none;
     background: #fff;
   `;
-  
   iframe.onerror = () => {
     content.innerHTML = '<div style="color: white; padding: 20px; text-align: center;">Error loading virtual content</div>';
   };
-
   content.appendChild(iframe);
   document.body.appendChild(modal);
 }
-
 function showTrashModal() {
   let existingModal = document.getElementById('trashModal');
   if (existingModal) return; // Already open
-  
   trashModalOpened = true; // Mark that the modal was opened
-  
   const { modal, content } = createModalBase('trashModal', () => {
     trashModalClosed = true; // Mark that user has closed the modal
     // Camera stays in current position - no movement on modal close
   });
-  
   const iframe = document.createElement('iframe');
   iframe.src = 'sidepages/trashProject.html';
   iframe.style.cssText = `
@@ -4388,26 +3718,20 @@ function showTrashModal() {
     border: none;
     background: #fff;
   `;
-  
   iframe.onerror = () => {
     content.innerHTML = '<div style="color: white; padding: 20px; text-align: center;">Error loading trash project content</div>';
   };
-
   content.appendChild(iframe);
   document.body.appendChild(modal);
 }
-
 function showConvoyeurModal() {
   let existingModal = document.getElementById('convoyeurModal');
   if (existingModal) return; // Already open
-  
   convoyeurModalOpened = true; // Mark that the modal was opened
-  
   const { modal, content } = createModalBase('convoyeurModal', () => {
     convoyeurModalClosed = true; // Mark that user has closed the modal
     // Camera stays in current position - no movement on modal close
   });
-  
   const iframe = document.createElement('iframe');
   iframe.src = 'sidepages/convoyeur.html';
   iframe.style.cssText = `
@@ -4416,26 +3740,20 @@ function showConvoyeurModal() {
     border: none;
     background: #fff;
   `;
-  
   iframe.onerror = () => {
     content.innerHTML = '<div style="color: white; padding: 20px; text-align: center;">Error loading convoyeur project content</div>';
   };
-
   content.appendChild(iframe);
   document.body.appendChild(modal);
 }
-
 function showSensorSenseiModal() {
   let existingModal = document.getElementById('sensorSenseiModal');
   if (existingModal) return; // Already open
-  
   sensorSenseiModalOpened = true; // Mark that the modal was opened
-  
   const { modal, content } = createModalBase('sensorSenseiModal', () => {
     sensorSenseiModalClosed = true; // Mark that user has closed the modal
     // Camera stays in current position - no movement on modal close
   });
-  
   const iframe = document.createElement('iframe');
   iframe.src = 'sidepages/sensorSensei.html';
   iframe.style.cssText = `
@@ -4444,26 +3762,20 @@ function showSensorSenseiModal() {
     border: none;
     background: #fff;
   `;
-  
   iframe.onerror = () => {
     content.innerHTML = '<div style="color: white; padding: 20px; text-align: center;">Error loading sensor sensei project content</div>';
   };
-
   content.appendChild(iframe);
   document.body.appendChild(modal);
 }
-
 function showMedicalModal() {
   let existingModal = document.getElementById('medicalModal');
   if (existingModal) return; // Already open
-  
   medicalModalOpened = true; // Mark that the modal was opened
-  
   const { modal, content } = createModalBase('medicalModal', () => {
     medicalModalClosed = true; // Mark that user has closed the modal
     // Camera stays in current position - no movement on modal close
   });
-  
   const iframe = document.createElement('iframe');
   iframe.src = 'sidepages/medicalApp.html';
   iframe.style.cssText = `
@@ -4472,26 +3784,20 @@ function showMedicalModal() {
     border: none;
     background: #fff;
   `;
-  
   iframe.onerror = () => {
     content.innerHTML = '<div style="color: white; padding: 20px; text-align: center;">Error loading medical app project content</div>';
   };
-
   content.appendChild(iframe);
   document.body.appendChild(modal);
 }
-
 function showForviaCarModal() {
   let existingModal = document.getElementById('forviaCarModal');
   if (existingModal) return; // Already open
-  
   forviaCarModalOpened = true; // Mark that the modal was opened
-  
   const { modal, content } = createModalBase('forviaCarModal', () => {
     forviaCarModalClosed = true; // Mark that user has closed the modal
     // Camera stays in current position - no movement on modal close
   });
-  
   const iframe = document.createElement('iframe');
   iframe.src = 'sidepages/forviaCar.html';
   iframe.style.cssText = `
@@ -4500,21 +3806,16 @@ function showForviaCarModal() {
     border: none;
     background: #fff;
   `;
-  
   iframe.onerror = () => {
     content.innerHTML = '<div style="color: white; padding: 20px; text-align: center;">Error loading FORVIA car project content</div>';
   };
-
   content.appendChild(iframe);
   document.body.appendChild(modal);
 }
-
 function showDesckModal() {
   let existingModal = document.getElementById('desckModal');
   if (existingModal) return; // Already open
-  
   desckModalOpened = true; // Mark that the modal was opened
-  
   // Create modal element
   const modal = document.createElement('div');
   modal.id = 'desckModal';
@@ -4524,14 +3825,12 @@ function showDesckModal() {
     background: rgba(0,0,0,0.8); z-index: 10000; display: flex;
     align-items: center; justify-content: center; padding: 20px;
   `;
-  
   // Create content container
   const content = document.createElement('div');
   content.style.cssText = `
     background: white; border-radius: 12px; width: 90%; max-width: 800px;
     height: 80%; overflow: hidden; position: relative;
   `;
-  
   // Add close button
   const closeBtn = document.createElement('button');
   closeBtn.innerHTML = '✕';
@@ -4544,12 +3843,10 @@ function showDesckModal() {
   `;
   closeBtn.onmouseover = () => closeBtn.style.background = 'rgba(0,0,0,0.2)';
   closeBtn.onmouseout = () => closeBtn.style.background = 'rgba(0,0,0,0.1)';
-  
   closeBtn.onclick = () => {
     document.body.removeChild(modal);
     desckModalClosed = true; // Mark as manually closed
   };
-  
   // Add iframe for desck project content
   const iframe = document.createElement('iframe');
   iframe.src = 'sidepages/desck.html'; // You'll need to create this page
@@ -4566,28 +3863,18 @@ function showDesckModal() {
     `;
     content.appendChild(fallback);
   };
-  
   modal.appendChild(content);
   content.appendChild(closeBtn);
   content.appendChild(iframe);
   document.body.appendChild(modal);
 }
-
 // Store original positions of drawers
 // (drawerOriginalPositions already declared at top)
-
-
-// === Unread Drawers Tracking Functions ===
 // (Functions already declared at top)
-
-
-// === Load Drawer Models ===
 let loadedDrawerCount = 0;
 const totalDrawerCount = drawerModels.length;
-
 // Register drawer assets for loading tracking
 drawerModels.forEach(() => incrementTotalAssets());
-
 drawerModels.forEach((model) => {
   ErrorHandler.handleAsyncError(
     new Promise((resolve, reject) => {
@@ -4599,61 +3886,51 @@ drawerModels.forEach((model) => {
             const drawer = gltf.scene;
             drawer.scale.set(1, 1, 1);
             drawer.userData.type = model;
-            
             // Position mail-box at contact hex location
             if (model === 'mail-box') {
               // Get contact hex position (q: 2, r: 2)
               const { x, z } = hexToWorld(2, 2);
               drawer.position.set(x, 0, z);
             }
-            
             // Position steering at garage hex location
             if (model === 'steering') {
               // Get garage hex position (q: -1, r: 0)
               const { x, z } = hexToWorld(-1, 0);
               drawer.position.set(x, 0, z);
             }
-            
             // Position trash truck at default position (matches hex coordinate system)
             if (model === 'trashTruck') {
               // Use default position (0, 0, 0) as it's already aligned to hex coordinates
               drawer.position.set(0, 0, 0);
             }
-            
             // Position convoyeur at default position (matches hex coordinate system)
             if (model === 'convoyeur') {
               // Use default position (0, 0, 0) as it's already aligned to hex coordinates
               drawer.position.set(0, 0, 0);
             }
-            
             // Position sensorSensei at projects hex location
             if (model === 'sensorSensei') {
               // Get projects hex position (q: 0, r: 1)
               const { x, z } = hexToWorld(0, 1);
               drawer.position.set(x, 0, z);
             }
-            
             // Position medical at garage hex location
             if (model === 'medical') {
               // Get garage hex position (q: -1, r: 0)
               const { x, z } = hexToWorld(-1, 0);
               drawer.position.set(x, 0, z); // Position at exact garage hex center (0,0,0 relative)
             }
-            
             // Position forviaCAR at garage hex location
             if (model === 'forviaCAR') {
               // Get garage hex position (q: -1, r: 0)
               const { x, z } = hexToWorld(-1, 0);
               drawer.position.set(x, 0, z); // Position at exact garage hex center (0,0,0 relative)
             }
-            
             scene.add(drawer);
             drawers.push(drawer);
             drawerOriginalPositions.set(drawer, drawer.position.clone());
-            
             loadedDrawerCount++;
             markAssetLoaded(); // Mark this asset as loaded
-            
             if (loadedDrawerCount === totalDrawerCount) {
               console.log('All drawer models loaded successfully');
               // Initialize unread badges after all drawers are loaded
@@ -4671,11 +3948,7 @@ drawerModels.forEach((model) => {
     `Drawer loading - ${model}`
   );
 });
-
-// === Legacy Unity Flower Model Loading (now handled by language flowers system) ===
 // This section has been replaced by the new language flowers system
-
-// === Navigation Sidebar for Zones ===
 const mainZones = [
   { type: 'home', label: 'Accueil', themeId: 'home' },
   { type: 'garage', label: 'Garage', themeId: 'garage' },
@@ -4684,16 +3957,11 @@ const mainZones = [
   { type: 'contact', label: 'Contact', themeId: 'contact' },
   { type: 'forge2', label: 'Conception', themeId: 'forge' },
 ];
-
-// === Mobile Navigation Toggle ===
 function toggleMobileNavigation() {
   const navSidebar = document.getElementById('zoneNavSidebar');
   const overlay = document.getElementById('mobile-nav-overlay');
-  
   if (!navSidebar) return;
-  
   isNavigationOpen = !isNavigationOpen;
-  
   if (isNavigationOpen) {
     // Open navigation
     navSidebar.style.transform = 'translateX(0)';
@@ -4704,11 +3972,8 @@ function toggleMobileNavigation() {
     if (overlay) overlay.style.display = 'none';
   }
 }
-
-// === Create Mobile Navigation Toggle Button ===
 function createMobileNavToggle() {
   if (!isMobileDevice) return;
-  
   const toggleButton = document.createElement('button');
   toggleButton.id = 'mobile-nav-toggle';
   toggleButton.innerHTML = '☰';
@@ -4732,19 +3997,15 @@ function createMobileNavToggle() {
     transition: all 0.3s ease;
     touch-action: manipulation;
   `;
-  
   toggleButton.addEventListener('click', (e) => {
     e.stopPropagation();
     toggleMobileNavigation();
   });
-  
   // Prevent 3D interactions
   toggleButton.addEventListener('touchstart', (e) => e.stopPropagation());
   toggleButton.addEventListener('touchmove', (e) => e.stopPropagation());
   toggleButton.addEventListener('touchend', (e) => e.stopPropagation());
-  
   document.body.appendChild(toggleButton);
-  
   // Create overlay for mobile navigation
   const overlay = document.createElement('div');
   overlay.id = 'mobile-nav-overlay';
@@ -4759,22 +4020,18 @@ function createMobileNavToggle() {
     display: none;
     touch-action: none;
   `;
-  
   overlay.addEventListener('click', () => {
     toggleMobileNavigation();
   });
-  
   document.body.appendChild(overlay);
-  
   // Apply mobile-specific navigation styling if on mobile device
   if (isMobileDevice) {
     setTimeout(() => {
       const navSidebar = document.getElementById('zoneNavSidebar');
       if (navSidebar) {
-        // Mobile-specific navigation styling  
+        // Mobile-specific navigation styling
         navSidebar.style.transform = 'translateX(-100%)';
         navSidebar.style.zIndex = '1000';
-        
         // Make navigation items touch-friendly on mobile
         const navItems = navSidebar.querySelectorAll('div');
         navItems.forEach(item => {
@@ -4785,7 +4042,6 @@ function createMobileNavToggle() {
             item.style.padding = '12px 20px';
             item.style.fontSize = '16px';
             item.style.borderBottom = '1px solid rgba(255,255,255,0.1)';
-            
             // Enhanced touch feedback
             item.addEventListener('touchstart', () => {
               item.style.backgroundColor = 'rgba(255,255,255,0.1)';
@@ -4801,12 +4057,9 @@ function createMobileNavToggle() {
     }, 100); // Small delay to ensure navigation is created
   }
 }
-
 // Define drawer-to-theme mapping (already declared at top)
-
 const navSidebar = document.createElement('nav');
 navSidebar.id = 'zoneNavSidebar';
-
 // Base styles for navigation
 const baseNavStyles = {
   position: 'fixed',
@@ -4825,7 +4078,6 @@ const baseNavStyles = {
   fontWeight: 'bold',
   letterSpacing: '0.02em'
 };
-
 // Apply responsive styles
 if (isMobileDevice) {
   // Mobile styles
@@ -4840,16 +4092,13 @@ if (isMobileDevice) {
   Object.assign(navSidebar.style, baseNavStyles);
   navSidebar.style.width = CONFIG.NAVIGATION.SIDEBAR_WIDTH + 'px';
 }
-
 navSidebar.innerHTML = `<div style="font-size:1.3rem;margin-bottom:18px;font-weight:bold;">${isMobileDevice ? 'Navigation' : 'Zones à explorer'}</div><ul id="zoneNavList" style="list-style:none;padding:0;margin:0;width:100%;"></ul>`;
 document.body.appendChild(navSidebar);
-
 // Empêche le raycast de passer à travers la nav bar
 navSidebar.addEventListener('pointerdown', e => e.stopPropagation());
 navSidebar.addEventListener('pointermove', e => e.stopPropagation());
 navSidebar.addEventListener('pointerup', e => e.stopPropagation());
 navSidebar.style.pointerEvents = 'auto';
-
 // Position 3D canvas responsively
 renderer.domElement.style.position = 'absolute';
 if (isMobileDevice) {
@@ -4865,26 +4114,20 @@ if (isMobileDevice) {
   renderer.domElement.style.width = `calc(100vw - ${CONFIG.NAVIGATION.SIDEBAR_WIDTH}px)`;
   renderer.domElement.style.height = '100vh';
 }
-
 // Create mobile navigation toggle after sidebar is created
 createMobileNavToggle();
-
 const navList = document.getElementById('zoneNavList');
-
 // Function to navigate to a hex zone directly
 function navigateToZone(zoneType) {
   const hex = hexObjects.find(h => h.userData.type === zoneType);
   if (!hex) return;
-
   currentActiveHexType = zoneType;
   console.log(`Navigation started: currentActiveHexType set to "${currentActiveHexType}"`);
   updateHexInfo(currentActiveHexType); // Update hex info display
-  
   // Find the hex data for camera position
   const hexData = hexMap.find(h => h.type === zoneType);
   const cameraPos = hexData?.cameraPos || { x: 0, y: 5, z: 10 };
   const hexPosition = hex.position;
-
   // Animate camera to hex
   gsap.to(camera.position, {
     x: cameraPos.x,
@@ -4893,7 +4136,6 @@ function navigateToZone(zoneType) {
     duration: 2,
     ease: 'power3.inOut',
   });
-
   gsap.to(lookAtTarget, {
     x: hexPosition.x,
     y: hexPosition.y,
@@ -4907,11 +4149,9 @@ function navigateToZone(zoneType) {
       console.log(`Navigation completed: currentActiveHexType is "${currentActiveHexType}"`);
     }
   });
-
   // Update active nav item
   updateNavActiveState(zoneType);
 }
-
 // Function to update nav active state
 function updateNavActiveState(activeType) {
   try {
@@ -4920,7 +4160,6 @@ function updateNavActiveState(activeType) {
       console.log('Navigation element not found, skipping nav update');
       return;
     }
-    
     const navItems = navList.querySelectorAll('li');
     navItems.forEach(item => {
       // Find the zone that matches this nav item
@@ -4941,7 +4180,6 @@ function updateNavActiveState(activeType) {
     console.log('Navigation update failed:', error.message);
   }
 }
-
 // Group zones by theme for better organization
 if (typeof mainZones !== 'undefined') {
   const groupedZones = {
@@ -4952,11 +4190,8 @@ if (typeof mainZones !== 'undefined') {
     'projects': mainZones.filter(zone => zone.themeId === 'projects'),
     'cv': mainZones.filter(zone => zone.themeId === 'cv')
   };
-
   // Create navigation items grouped by theme
   Object.entries(groupedZones).forEach(([themeId, zones]) => {
-
-    
     // Create zone items for this theme
     zones.forEach(zone => {
       const li = document.createElement('li');
@@ -4967,12 +4202,10 @@ if (typeof mainZones !== 'undefined') {
     li.style.transition = 'background 0.2s, color 0.2s';
     li.style.fontSize = '1rem';
     li.style.position = 'relative';
-    
     // Add zone label
     const labelSpan = document.createElement('span');
     labelSpan.textContent = zone.label;
     li.appendChild(labelSpan);
-    
     // Add unread badge for this theme (only on the first button of each theme)
     if (zones.indexOf(zone) === 0) {
       const badge = document.createElement('span');
@@ -4991,14 +4224,12 @@ if (typeof mainZones !== 'undefined') {
       badge.style.textAlign = 'center';
       li.appendChild(badge);
     }
-    
     li.onmouseenter = () => {
       // Only highlight if not already active
       if (currentActiveHexType !== zone.type) {
         li.style.background = '#1a82f7';
         li.style.color = '#fff';
       }
-      
       // Highlight corresponding hex
       hexObjects.forEach(hex => {
         if (hex.userData.type === zone.type) {
@@ -5025,7 +4256,6 @@ if (typeof mainZones !== 'undefined') {
         }
       });
     };
-    
     li.onmouseleave = () => {
       // Restore highlight based on active state
       if (currentActiveHexType === zone.type) {
@@ -5037,7 +4267,6 @@ if (typeof mainZones !== 'undefined') {
         li.style.color = '#fff';
         li.style.fontWeight = 'normal';
       }
-      
       // Remove hex highlight
       hexObjects.forEach(hex => {
         if (hex.userData.type === zone.type) {
@@ -5063,37 +4292,27 @@ if (typeof mainZones !== 'undefined') {
         }
       });
     };
-    
     li.onclick = () => {
       // Don't navigate if already active
       if (currentActiveHexType === zone.type) return;
-      
       navigateToZone(zone.type);
     };
-    
     navList.appendChild(li);
   });
 });
-
 }
-
 // Initialize theme unread badges
 updateThemeUnreadBadges();
-
 // Also initialize badges after a short delay to ensure DOM is ready
 setTimeout(() => {
   updateThemeUnreadBadges();
 }, 1000);
-
 // Expose navigation function to window for external access
 window.navigateToZone = navigateToZone;
-
-// === Contact Button ===
 function createContactButton() {
   const contactButton = document.createElement('button');
   contactButton.id = 'contact-button';
   contactButton.innerHTML = '📧 Contact';
-  
   // Base styles
   const baseStyles = {
     position: 'fixed',
@@ -5115,7 +4334,6 @@ function createContactButton() {
     backdropFilter: 'blur(10px)',
     border: '1px solid rgba(255,255,255,0.2)'
   };
-  
   // Responsive positioning to account for navbar
   if (isMobileDevice) {
     // Mobile: Full width, simple centering
@@ -5126,55 +4344,45 @@ function createContactButton() {
     baseStyles.left = `${CONFIG.NAVIGATION.SIDEBAR_WIDTH + (window.innerWidth - CONFIG.NAVIGATION.SIDEBAR_WIDTH) / 2}px`;
     baseStyles.transform = 'translateX(-50%)';
   }
-  
   // Apply styles
   Object.assign(contactButton.style, baseStyles);
-  
   // Mobile adjustments (only vertical positioning and sizing)
   if (isMobileDevice) {
     contactButton.style.bottom = '80px'; // Higher position on mobile to avoid navigation
     contactButton.style.padding = '14px 20px';
     contactButton.style.fontSize = '15px';
   }
-  
   // Hover effects
   contactButton.addEventListener('mouseenter', () => {
     contactButton.style.transform = 'translateX(-50%) translateY(-2px) scale(1.05)';
     contactButton.style.boxShadow = '0 6px 25px rgba(0,0,0,0.4)';
     contactButton.style.background = 'linear-gradient(135deg, #764ba2 0%, #667eea 100%)';
   });
-  
   contactButton.addEventListener('mouseleave', () => {
     contactButton.style.transform = 'translateX(-50%) translateY(0) scale(1)';
     contactButton.style.boxShadow = '0 4px 20px rgba(0,0,0,0.3)';
     contactButton.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
   });
-  
   // Click handler
   contactButton.addEventListener('click', (e) => {
     e.stopPropagation();
     e.preventDefault();
-    
     // Add click animation
     contactButton.style.transform = 'translateX(-50%) translateY(1px) scale(0.95)';
     setTimeout(() => {
       contactButton.style.transform = 'translateX(-50%) translateY(-2px) scale(1.05)';
     }, 150);
-    
     // Open contact modal directly
     showContactModal();
-    
     // Close mobile navigation if open
     if (isMobileDevice && isNavigationOpen) {
       toggleMobileNavigation();
     }
   });
-  
   // Prevent touch events from propagating to 3D scene
   contactButton.addEventListener('touchstart', (e) => e.stopPropagation());
   contactButton.addEventListener('touchmove', (e) => e.stopPropagation());
   contactButton.addEventListener('touchend', (e) => e.stopPropagation());
-  
   // Reposition button on window resize
   const repositionButton = () => {
     if (!isMobileDevice) {
@@ -5182,22 +4390,14 @@ function createContactButton() {
       contactButton.style.left = `${newLeft}px`;
     }
   };
-  
   window.addEventListener('resize', repositionButton);
-  
   document.body.appendChild(contactButton);
-  
   return contactButton;
 }
-
 // Create the contact button
 createContactButton();
-
-
-// === Responsive 3D Canvas: Only fill area right of nav bar ===
 function resize3DView() {
   let width, height;
-  
   if (isMobileDevice) {
     // Mobile: Full screen canvas
     width = window.innerWidth;
@@ -5214,47 +4414,36 @@ function resize3DView() {
     renderer.domElement.style.width = `calc(100vw - ${navWidth}px)`;
     renderer.domElement.style.height = '100vh';
   }
-  
   renderer.setSize(width, height);
   camera.aspect = width / height;
   camera.updateProjectionMatrix();
 }
 window.addEventListener('resize', resize3DView);
 resize3DView(); // Initial call
-
 // Cinematic entrance will be triggered by onAllAssetsLoaded() when appropriate
-
-// === Orbital Camera Controls ===
 // Variables declared earlier in the file near scene initialization
-
 // Mouse down event - start orbiting
 window.addEventListener('mousedown', (event) => {
   // Skip if in cinematic mode or clicking on UI elements
   if (cinematicMode) return;
-  
   // Skip if currently viewing a hex (not in orbital mode)
   if (currentActiveHexType !== null) return;
-  
   // Check if click is on the navigation sidebar
   const navSidebar = document.getElementById('zoneNavSidebar');
   if (navSidebar && navSidebar.contains(event.target)) {
     return; // Don't start orbiting if clicking on nav
   }
-  
   // Only allow orbiting with left mouse button
   if (event.button === 0) {
     previousMouseX = event.clientX;
     // We'll set isOrbiting to true in mousemove if the mouse actually moves
   }
 });
-
 // Mouse move event - update orbit rotation
 window.addEventListener('mousemove', (event) => {
   if (cinematicMode) return;
-  
   // Skip if currently viewing a hex (not in orbital mode)
   if (currentActiveHexType !== null) return;
-  
   // Start orbiting if mouse is pressed and moved (drag detected)
   if (!isOrbiting && event.buttons === 1 && previousMouseX !== 0) {
     const deltaX = Math.abs(event.clientX - previousMouseX);
@@ -5263,28 +4452,21 @@ window.addEventListener('mousemove', (event) => {
       document.body.style.cursor = 'grabbing';
     }
   }
-  
   if (!isOrbiting) return;
-  
   const deltaX = event.clientX - previousMouseX;
   currentCameraAngle -= deltaX * orbitSensitivity; // Negative for natural feel
-  
   // Update camera position based on angle
   camera.position.x = orbitCenter.x + orbitRadius * Math.cos(currentCameraAngle);
   camera.position.z = orbitCenter.z + orbitRadius * Math.sin(currentCameraAngle);
   camera.position.y = orbitHeight;
-  
   // Always look at the center of the island
   camera.lookAt(orbitCenter.x, orbitCenter.y, orbitCenter.z);
-  
   // Keep lookAtTarget synchronized with orbital look-at
   lookAtTarget.x = orbitCenter.x;
   lookAtTarget.y = orbitCenter.y;
   lookAtTarget.z = orbitCenter.z;
-  
   previousMouseX = event.clientX;
 });
-
 // Mouse up event - stop orbiting
 window.addEventListener('mouseup', (event) => {
   if (event.button === 0) {
@@ -5293,7 +4475,6 @@ window.addEventListener('mouseup', (event) => {
     document.body.style.cursor = 'default';
   }
 });
-
 // Mouse leave event - stop orbiting if mouse leaves window
 window.addEventListener('mouseleave', () => {
   if (isOrbiting) {
@@ -5302,8 +4483,6 @@ window.addEventListener('mouseleave', () => {
     document.body.style.cursor = 'default';
   }
 });
-
-// === Debug Console Commands for Light Management ===
 if (typeof window !== 'undefined') {
   // Debug functions available in browser console
   window.debugLights = () => ImportedLightManager.debugLights();
@@ -5311,23 +4490,19 @@ if (typeof window !== 'undefined') {
   window.toggleImportedLights = (enabled) => ImportedLightManager.toggleAllLights(enabled);
   window.getSpotLights = () => ImportedLightManager.getLightsByType('SpotLight');
   window.getPointLights = () => ImportedLightManager.getLightsByType('PointLight');
-  
   // Quick commands for common adjustments
   window.dimLights = () => {
     ImportedLightManager.adjustAllLights(0.1);
     console.log('Dimmed all imported lights to 10% intensity');
   };
-  
   window.brightLights = () => {
     ImportedLightManager.adjustAllLights(0.8);
     console.log('Increased all imported lights to 80% intensity');
   };
-  
   window.resetLights = () => {
     ImportedLightManager.adjustAllLights(0.3); // Back to default 30%
     console.log('Reset all imported lights to default 30% intensity');
   };
-
   // Specific spotlight controls
   window.adjustSpotLights = (intensity, angle, distance) => {
     const spotLights = ImportedLightManager.getLightsByType('SpotLight');
@@ -5336,33 +4511,15 @@ if (typeof window !== 'undefined') {
       if (angle !== undefined) light.angle = angle * Math.PI / 180; // Convert degrees to radians
       if (distance !== undefined) light.distance = distance;
     });
-    console.log(`Adjusted ${spotLights.length} spotlights - intensity: ${intensity}, angle: ${angle}°, distance: ${distance}`);
+    if (!isProduction) console.log(`Adjusted ${spotLights.length} spotlights - intensity: ${intensity}, angle: ${angle}°, distance: ${distance}`);
   };
-
-  console.log(`
-=== Portfolio Light Debug Commands ===
-debugLights() - Show all imported lights info
-adjustLightIntensity(0.5) - Adjust all lights intensity (0.5 = 50%)
-toggleImportedLights(false) - Enable/disable all imported lights
-dimLights() - Quickly dim all lights to 10%
-brightLights() - Increase all lights to 80%
-resetLights() - Reset to default 30%
-adjustSpotLights(intensity, angle, distance) - Control spotlights specifically
-getSpotLights() - Get all spotlight objects
-====================================
-  `);
+  if (!isProduction) {
+    console.log('Portfolio Light Debug Commands loaded');
+  }
 }
-
 // Update camera angle when cinematic animation completes
 function updateCameraAngleFromPosition() {
   const deltaX = camera.position.x - orbitCenter.x;
   const deltaZ = camera.position.z - orbitCenter.z;
   currentCameraAngle = Math.atan2(deltaZ, deltaX);
 }
-
-
-
-
-
-
-

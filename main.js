@@ -18,37 +18,8 @@ import * as THREE from 'https://esm.sh/three@0.150.1';
 import { GLTFLoader } from 'https://esm.sh/three@0.150.1/examples/jsm/loaders/GLTFLoader.js';
 import { gsap } from 'https://esm.sh/gsap@3.12.2';
 
-// Import SEO Manager and Analytics (will be loaded dynamically)
-let SEOManager = null;
-let AnalyticsTracker = null;
-let analytics = null;
-
-if (typeof window !== 'undefined') {
-  // Load SEO Manager dynamically
-  import('./js/seo-manager.js').then(module => {
-    SEOManager = module.default || window.SEOManager;
-    if (SEOManager) {
-      const seoManager = new SEOManager();
-      seoManager.init();
-      window.seoManager = seoManager; // Make available globally
-    }
-  }).catch(err => console.warn('SEO Manager not loaded:', err));
-
-  // Load Analytics dynamically
-  import('./js/analytics.js').then(module => {
-    AnalyticsTracker = module.default || window.AnalyticsTracker;
-    if (AnalyticsTracker) {
-      analytics = new AnalyticsTracker();
-      window.analytics = analytics; // Make available globally
-      
-      // Track portfolio load
-      analytics.track('portfolio_load', {
-        webgl_supported: webGLSupported,
-        touch_device: isTouchDevice
-      });
-    }
-  }).catch(err => console.warn('Analytics not loaded:', err));
-}
+// === REMOVED FOR PRODUCTION ===
+// SEO Manager and Analytics modules removed to reduce bundle size
 
 // === GLOBAL STATE VARIABLES ===
 let interactionsDisabled = false; // Global flag to disable all 3D interactions

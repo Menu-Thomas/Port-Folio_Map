@@ -66,11 +66,13 @@ function incrementTotalAssets() {
 
 function markAssetLoaded() {
   assetsLoaded++;
-  console.log(`Asset loaded: ${assetsLoaded}/${totalAssetsToLoad}`);
+  if (!isProduction) {
+    console.log(`Asset loaded: ${assetsLoaded}/${totalAssetsToLoad}`);
+  }
   
   if (assetsLoaded === totalAssetsToLoad && !allAssetsLoaded) {
     allAssetsLoaded = true;
-    console.log('All assets loaded successfully');
+    if (!isProduction) console.log('All assets loaded successfully');
     
     // Signal to loading page that portfolio assets are ready
     sessionStorage.setItem('portfolioAssetsLoaded', 'true');
@@ -81,8 +83,9 @@ function markAssetLoaded() {
 
 // === Cinematic Entrance Animation ===
 function startCinematicEntrance() {
-  console.log('=== STARTING UNDERWATER EMERGENCE CINEMATIC ===');
-  console.log('Call stack:', new Error().stack);
+  if (!isProduction) {
+    console.log('=== STARTING UNDERWATER EMERGENCE CINEMATIC ===');
+  }
   
   // Set cinematic mode and disable cursor interactions
   cinematicMode = true;
@@ -129,7 +132,7 @@ function startCinematicEntrance() {
       const lookAtCenter = { x: centerX, y: 0.3, z: centerZ };
       camera.lookAt(lookAtCenter.x, lookAtCenter.y, lookAtCenter.z);
       
-      console.log('Underwater emergence complete - controls enabled');
+      if (!isProduction) console.log('Underwater emergence complete - controls enabled');
       cinematicMode = false;
       document.body.style.cursor = 'default';
       
@@ -153,7 +156,7 @@ function startCinematicEntrance() {
 function onAllAssetsLoaded() {
   // Signal that portfolio assets are loaded
   sessionStorage.setItem('portfolioAssetsLoaded', 'true');
-  console.log('Assets loaded, waiting for overlay to be manually dismissed...');
+  if (!isProduction) console.log('Assets loaded, waiting for overlay to be manually dismissed...');
   
   // Set global flag for guide system
   window.allAssetsLoaded = true;
@@ -182,7 +185,7 @@ function onAllAssetsLoaded() {
     
     // Start animation when overlay is hidden, regardless of video state
     if (isOverlayActuallyHidden) {
-      console.log('Overlay confirmed hidden, starting cinematic animation immediately...');
+      if (!isProduction) console.log('Overlay confirmed hidden, starting cinematic animation immediately...');
       // Clean up the video transition flag
       if (videoTransitionComplete) {
         sessionStorage.removeItem('videoTransitionComplete');
@@ -308,11 +311,13 @@ function detectTouchDevice() {
     isMobileDevice = true;
   }
   
-  if (isTouchDevice) {
+  if (isTouchDevice && !isProduction) {
     console.log('Touch device detected - enabling mobile controls');
     console.log('isMobileDevice:', isMobileDevice);
     console.log('Window width:', window.innerWidth);
-    
+  }
+  
+  if (isTouchDevice) {
     // Add mobile-specific styles
     document.body.style.touchAction = 'manipulation'; // Changed from 'none' to allow some touch behaviors
     
@@ -375,9 +380,11 @@ document.addEventListener('keydown', (event) => {
   // Quick position print (Ctrl + P) - only when editor is not active
   if (event.ctrlKey && event.key.toLowerCase() === 'p' && !cameraEditor.isActive) {
     event.preventDefault();
-    console.log('📍 Current Camera Position:');
-    console.log(`Position: { x: ${camera.position.x.toFixed(3)}, y: ${camera.position.y.toFixed(3)}, z: ${camera.position.z.toFixed(3)} }`);
-    console.log(`Looking at: { x: ${lookAtTarget.x.toFixed(3)}, y: ${lookAtTarget.y.toFixed(3)}, z: ${lookAtTarget.z.toFixed(3)} }`);
+    if (!isProduction) {
+      console.log('📍 Current Camera Position:');
+      console.log(`Position: { x: ${camera.position.x.toFixed(3)}, y: ${camera.position.y.toFixed(3)}, z: ${camera.position.z.toFixed(3)} }`);
+      console.log(`Looking at: { x: ${lookAtTarget.x.toFixed(3)}, y: ${lookAtTarget.y.toFixed(3)}, z: ${lookAtTarget.z.toFixed(3)} }`);
+    }
     return;
   }
 });
@@ -1052,9 +1059,7 @@ const hexMap = [
   { q: 2, r: 2, type: 'contact', cameraPos: { x: 5.2, y: 0.8, z: 4.5 } },
   { q: 1, r: 2, type: 'bridge', cameraPos: { x: -1.5, y: 0.5, z: 0.4 } },
   { q: -2, r: 0, type: 'plain1' },
-  //{ q: -1, r: 2, type: 'plain1' },
   { q: 0, r: 2, type: 'plain1' },
-  //{ q: -1, r: 1, type: 'plain1' },
   { q: -2, r: -1, type: 'plain1' },
   { q: 0, r: -1, type: 'champ1', cameraPos: { x: -0.7, y: 0.7, z: -0.9 } },
   { q: -1, r: 0, type: 'garage', cameraPos: { x: -1.4, y: 0.15, z: 0.1 } },
@@ -1305,11 +1310,13 @@ function isDrawerClickableAtCurrentLocation(drawerType) {
     drawerTheme = 'cv';
   }
   
-  console.log(`Drawer ${drawerType}: currentActiveHexType="${currentActiveHexType}", currentTheme="${currentTheme}", drawerTheme="${drawerTheme}"`);
-  
-  // Special debug for skillFlowers
-  if (drawerType.startsWith('skillFlower')) {
-    console.log(`SkillFlower debug: ${drawerType} - currentActiveHexType="${currentActiveHexType}", currentTheme="${currentTheme}", drawerTheme="${drawerTheme}", match: ${currentTheme === drawerTheme}`);
+  if (!isProduction) {
+    console.log(`Drawer ${drawerType}: currentActiveHexType="${currentActiveHexType}", currentTheme="${currentTheme}", drawerTheme="${drawerTheme}"`);
+    
+    // Special debug for skillFlowers
+    if (drawerType.startsWith('skillFlower')) {
+      console.log(`SkillFlower debug: ${drawerType} - currentActiveHexType="${currentActiveHexType}", currentTheme="${currentTheme}", drawerTheme="${drawerTheme}", match: ${currentTheme === drawerTheme}`);
+    }
   }
   
   // Allow interaction if themes match
@@ -1525,12 +1532,14 @@ function initHexInfo() {
   window.getTotalHexesWithObjects = getTotalHexesWithObjects;
   window.markObjectAsDiscovered = markObjectAsDiscovered;
   
-  console.log('Portfolio Info System initialized - Available debug commands:');
-  console.log('- updateHexInfo(hexType) - Update display for specific hex (null for global view)');
-  console.log('- getObjectsForHex(hexType) - Get all objects for a hex');
-  console.log('- getVisitedObjectsForHex(hexType) - Get discovered objects for a hex');
-  console.log('- getHexesWithUnexploredObjects() - Get hexes with unexplored objects');
-  console.log('- getTotalHexesWithObjects() - Get total number of hexes with objects');
+  if (!isProduction) {
+    console.log('Portfolio Info System initialized - Available debug commands:');
+    console.log('- updateHexInfo(hexType) - Update display for specific hex (null for global view)');
+    console.log('- getObjectsForHex(hexType) - Get all objects for a hex');
+    console.log('- getVisitedObjectsForHex(hexType) - Get discovered objects for a hex');
+    console.log('- getHexesWithUnexploredObjects() - Get hexes with unexplored objects');
+    console.log('- getTotalHexesWithObjects() - Get total number of hexes with objects');
+  }
 }
 
 // Helper function to update hex info when an object is discovered
@@ -3042,9 +3051,11 @@ function generateSkillFlowersGrid() {
     { x: gridSpacing.x, z: gridSpacing.z }    // Index 8: Bottom-right -> Meta
   ];
   
-  console.log('=== SkillFlower Grid Debug ===');
-  console.log('CV hex world position:', cvWorldPos);
-  console.log('Grid spacing:', gridSpacing);
+  if (!isProduction) {
+    console.log('=== SkillFlower Grid Debug ===');
+    console.log('CV hex world position:', cvWorldPos);
+    console.log('Grid spacing:', gridSpacing);
+  }
   
   // Load skillFlower model and create 9 instances
   gridPositions.forEach((gridPos, index) => {
@@ -3487,9 +3498,7 @@ window.addEventListener('wheel', (event) => {
     
     // Reset desck modal state when going back to overview
     desckModalClosed = false;
-    pcModalClosed = false;
     desckModalOpened = false;
-    pcModalOpened = false;
     
     // Return to orbital position instead of fixed original position
     const orbitalPosition = {
@@ -3606,10 +3615,7 @@ window.addEventListener('click', (event) => {
       
       // Reset desck modal state when navigating to different areas
       desckModalClosed = false;
-      pcModalClosed = false;
-    pcModalClosed = false;
-      desckModalOpened = false;
-    pcModalOpened = false;
+        desckModalOpened = false;
       
       const hexPosition = object.position;
       const hexData = hexMap.find(hex => hex.q === object.userData.q && hex.r === object.userData.r);
@@ -3877,10 +3883,12 @@ if (isTouchDevice) {
   
   // Touch end - handle tap
   window.addEventListener('touchend', (event) => {
-    console.log('Touch end event triggered');
-    console.log('cinematicMode:', cinematicMode);
-    console.log('touchMoved:', touchMoved);
-    console.log('event.target:', event.target);
+    if (!isProduction) {
+      console.log('Touch end event triggered');
+      console.log('cinematicMode:', cinematicMode);
+      console.log('touchMoved:', touchMoved);
+      console.log('event.target:', event.target);
+    }
     
     if (cinematicMode) return;
     
@@ -3890,13 +3898,15 @@ if (isTouchDevice) {
     const toggleButton = document.getElementById('mobile-nav-toggle');
     const mobileNavOverlay = document.getElementById('mobile-nav-overlay');
     
-    console.log('loadingOverlay exists:', !!loadingOverlay);
-    console.log('loadingOverlay hidden:', loadingOverlay ? loadingOverlay.classList.contains('hidden') : 'n/a');
+    if (!isProduction) {
+      console.log('loadingOverlay exists:', !!loadingOverlay);
+      console.log('loadingOverlay hidden:', loadingOverlay ? loadingOverlay.classList.contains('hidden') : 'n/a');
+    }
     
     // Allow loading overlay interactions
     if (loadingOverlay && !loadingOverlay.classList.contains('hidden')) {
       if (loadingOverlay.contains(event.target)) {
-        console.log('Touch on loading overlay - letting it handle the event');
+        if (!isProduction) console.log('Touch on loading overlay - letting it handle the event');
         return; // Let loading overlay handle its own touch events
       }
     }
@@ -3905,7 +3915,7 @@ if (isTouchDevice) {
     if ((navSidebar && navSidebar.contains(event.target)) || 
         (toggleButton && toggleButton.contains(event.target)) ||
         (mobileNavOverlay && mobileNavOverlay.contains(event.target))) {
-      console.log('Touch on navigation - letting it handle the event');
+      if (!isProduction) console.log('Touch on navigation - letting it handle the event');
       return; // Let navigation handle its own touch events
     }
     
@@ -3914,8 +3924,10 @@ if (isTouchDevice) {
       const touch = event.changedTouches[0];
       const currentTime = Date.now();
       
-      console.log('Processing tap - no movement detected');
-      console.log('Touch coordinates:', touch.clientX, touch.clientY);
+      if (!isProduction) {
+        console.log('Processing tap - no movement detected');
+        console.log('Touch coordinates:', touch.clientX, touch.clientY);
+      }
       
       // Only handle taps on the 3D canvas
       const canvasBounds = renderer.domElement.getBoundingClientRect();
@@ -3924,11 +3936,13 @@ if (isTouchDevice) {
                         touch.clientY >= canvasBounds.top && 
                         touch.clientY <= canvasBounds.bottom;
       
-      console.log('Canvas bounds:', canvasBounds);
-      console.log('Is on canvas:', isOnCanvas);
+      if (!isProduction) {
+        console.log('Canvas bounds:', canvasBounds);
+        console.log('Is on canvas:', isOnCanvas);
+      }
       
       if (isOnCanvas) {
-        console.log('Calling handleInteraction for touch tap');
+        if (!isProduction) console.log('Calling handleInteraction for touch tap');
         
         // Add visual feedback for mobile touches
         const touchIndicator = document.createElement('div');
@@ -3965,11 +3979,11 @@ if (isTouchDevice) {
 
 // === Shared Interaction Handler ===
 function handleInteraction(event) {
-  console.log('handleInteraction called with event:', event);
+  if (!isProduction) console.log('handleInteraction called with event:', event);
   
   // FIRST: Check global interactions disabled flag
   if (interactionsDisabled) {
-    console.log('Interactions disabled - stopping');
+    if (!isProduction) console.log('Interactions disabled - stopping');
     event.preventDefault();
     event.stopImmediatePropagation();
     return false;
@@ -3978,7 +3992,7 @@ function handleInteraction(event) {
   // SECOND: Skip 3D interactions if loading overlay is visible
   const loadingOverlay = document.getElementById('loadingOverlay');
   if (loadingOverlay && !loadingOverlay.classList.contains('hidden')) {
-    console.log('Loading overlay is visible - stopping 3D interactions');
+    if (!isProduction) console.log('Loading overlay is visible - stopping 3D interactions');
     event.preventDefault();
     event.stopImmediatePropagation();
     return false;
@@ -3986,14 +4000,14 @@ function handleInteraction(event) {
   
   // Skip interactions during cinematic mode or if currently orbiting
   if (cinematicMode || isOrbiting) {
-    console.log('Cinematic mode or orbiting - stopping');
+    if (!isProduction) console.log('Cinematic mode or orbiting - stopping');
     return;
   }
   
   // Check if click is on the navigation sidebar
   const navSidebar = document.getElementById('zoneNavSidebar');
   if (navSidebar && navSidebar.contains(event.target)) {
-    console.log('Event on navigation sidebar - stopping');
+    if (!isProduction) console.log('Event on navigation sidebar - stopping');
     return; // Don't process 3D canvas clicks if clicking on nav
   }
 
@@ -4001,22 +4015,22 @@ function handleInteraction(event) {
   mouse.x = ((event.clientX - canvasBounds.left) / canvasBounds.width) * 2 - 1;
   mouse.y = -((event.clientY - canvasBounds.top) / canvasBounds.height) * 2 + 1;
 
-  console.log('Mouse coordinates calculated:', mouse.x, mouse.y);
+  if (!isProduction) console.log('Mouse coordinates calculated:', mouse.x, mouse.y);
 
   raycaster.setFromCamera(mouse, camera);
   const intersects = raycaster.intersectObjects([...hexObjects, ...drawers], true);
 
-  console.log('Raycaster intersects:', intersects.length);
+  if (!isProduction) console.log('Raycaster intersects:', intersects.length);
 
   if (intersects.length > 0) {
     let object = intersects[0].object;
     while (object.parent && !hexObjects.includes(object) && !drawers.includes(object)) object = object.parent;
 
-    console.log('Found object:', object.userData.type);
+    if (!isProduction) console.log('Found object:', object.userData.type);
 
     // Animation caméra pour hexagones classiques
     if (object.userData.q !== undefined && object.userData.r !== undefined) {
-      console.log('Hex object clicked:', object.userData.type);
+      if (!isProduction) console.log('Hex object clicked:', object.userData.type);
       currentActiveHexType = object.userData.type; // Update active type on 3D click
       updateHexInfo(currentActiveHexType); // Update hex info display
       
@@ -4053,10 +4067,7 @@ function handleInteraction(event) {
       
       // Reset desck modal state when navigating to different areas
       desckModalClosed = false;
-      pcModalClosed = false;
-    pcModalClosed = false;
-      desckModalOpened = false;
-    pcModalOpened = false;
+        desckModalOpened = false;
       
       const hexPosition = object.position;
       const hexData = hexMap.find(hex => hex.q === object.userData.q && hex.r === object.userData.r);
@@ -5348,6 +5359,8 @@ function updateCameraAngleFromPosition() {
   const deltaZ = camera.position.z - orbitCenter.z;
   currentCameraAngle = Math.atan2(deltaZ, deltaX);
 }
+
+
 
 
 

@@ -368,8 +368,7 @@
     #loadingOverlay .contact-button {
       position: fixed;
       bottom: 20px;
-      left: 50%;
-      transform: translateX(-50%);
+      left: 20px;
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       color: white;
       border: none;
@@ -391,20 +390,63 @@
     }
 
     #loadingOverlay .contact-button:hover {
-      transform: translateX(-50%) translateY(-2px) scale(1.05);
+      transform: translateY(-2px) scale(1.05);
       box-shadow: 0 6px 25px rgba(0,0,0,0.4);
       background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
     }
 
     #loadingOverlay .contact-button:active {
-      transform: translateX(-50%) translateY(1px) scale(0.95);
+      transform: translateY(1px) scale(0.95);
     }
 
     @media (max-width: 768px) {
       #loadingOverlay .contact-button {
-        bottom: 80px;
+        bottom: 15px;
+        left: 15px;
         padding: 14px 20px;
         font-size: 15px;
+      }
+    }
+
+    /* Intro Content Styles in Loading Overlay */
+    .intro-content {
+      text-align: center;
+      max-width: 500px;
+      margin: 1.5rem auto;
+      margin-bottom: 2rem;
+    }
+
+    .intro-content .main-intro {
+      font-size: 1.1rem;
+      line-height: 1.4;
+      color: #ffd4a3;
+      font-weight: 600;
+      margin-bottom: 1rem;
+    }
+
+    .intro-content .description {
+      font-size: 1rem;
+      line-height: 1.5;
+      color: #c7d2fe;
+      opacity: 0.9;
+      margin-bottom: 0;
+    }
+
+    .intro-content .emoji {
+      margin-right: 8px;
+    }
+
+    @media (max-width: 768px) {
+      .intro-content {
+        margin: 1rem auto 1.5rem auto;
+      }
+      
+      .intro-content .main-intro {
+        font-size: 1rem;
+      }
+      
+      .intro-content .description {
+        font-size: 0.9rem;
       }
     }
   </style>
@@ -421,14 +463,20 @@
     <div class="loading-container">
       <img src="./public/head.png" alt="Thomas Menu" class="profile-image">
       <h1 class="welcome-text">Thomas Menu</h1>
-      <p class="subtitle">Consultant Prototypage, Débug & Optimisation</p>
+      <p class="subtitle">Développeur & Designer Technique Freelance</p>
+      
+      <div class="intro-content">
+        <p class="main-intro"><span class="emoji">⚡</span>Je transforme vos idées en prototypes interactifs et solutions techniques innovantes.</p>
+        
+        <p class="description">Expertise en développement, design UX et technologies émergentes pour donner vie à vos projets les plus ambitieux.</p>
+      </div>
       
       <div class="feature-tags">
-        <div class="feature-tag" style="--delay: 0s">Développement Web</div>
-        <div class="feature-tag" style="--delay: 0.5s">Design UX/UI</div>
-        <div class="feature-tag" style="--delay: 1s">Projets Innovants</div>
-        <div class="feature-tag" style="--delay: 1.5s">Expérience Utilisateur</div>
-        <div class="feature-tag" style="--delay: 2s">Technologies Modernes</div>
+        <div class="feature-tag" style="--delay: 0s">🚀 Prototypage Rapide</div>
+        <div class="feature-tag" style="--delay: 0.5s">🧠 IA & Automatisation</div>
+        <div class="feature-tag" style="--delay: 1s">🔍 Audit & Optimisation</div>
+        <div class="feature-tag" style="--delay: 1.5s">💡 Innovation Technique</div>
+        <div class="feature-tag" style="--delay: 2s">📞 Conseil Gratuit</div>
       </div>
       
       <div class="loading-section">

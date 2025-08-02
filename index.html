@@ -219,6 +219,49 @@
         height: 100px;
       }
     }
+
+    /* Contact Button Styles */
+    .contact-button {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      border-radius: 50px;
+      padding: 12px 24px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      z-index: 1000;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255,255,255,0.2);
+      text-decoration: none;
+    }
+
+    .contact-button:hover {
+      transform: translateX(-50%) translateY(-2px) scale(1.05);
+      box-shadow: 0 6px 25px rgba(0,0,0,0.4);
+      background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+    }
+
+    .contact-button:active {
+      transform: translateX(-50%) translateY(1px) scale(0.95);
+    }
+
+    @media (max-width: 768px) {
+      .contact-button {
+        bottom: 80px;
+        padding: 14px 20px;
+        font-size: 15px;
+      }
+    }
   </style>
 </head>
 <body>
@@ -262,8 +305,29 @@
     </div>
   </div>
 
+  <!-- Contact Button -->
+  <button class="contact-button" onclick="window.location.href='portfolio.html#contact'">
+    <span>💬</span>
+    <span>Me Contacter</span>
+  </button>
+
   <script>
-    // Immediate redirect to portfolio page with overlay loading
+    // Check if returning from contact page
+    const returningFromContact = sessionStorage.getItem('returningFromContact');
+    
+    if (returningFromContact === 'true') {
+      // Clean up the flag
+      sessionStorage.removeItem('returningFromContact');
+      
+      // Set flags to skip loading overlay and go directly to portfolio
+      sessionStorage.setItem('portfolioAssetsLoaded', 'true');
+      sessionStorage.setItem('loadingOverlayHidden', 'true');
+      sessionStorage.setItem('skipTransitionVideo', 'true');
+      
+      console.log('Returning from contact page - redirecting to portfolio with loading skipped');
+    }
+    
+    // Redirect to portfolio page (with or without loading based on flags)
     window.location.href = 'portfolio.html';
   </script>
   <script type="module" src="./guide.js"></script>

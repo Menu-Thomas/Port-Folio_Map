@@ -5106,6 +5106,111 @@ setTimeout(() => {
 // Expose navigation function to window for external access
 window.navigateToZone = navigateToZone;
 
+// === Contact Button ===
+function createContactButton() {
+  const contactButton = document.createElement('button');
+  contactButton.id = 'contact-button';
+  contactButton.innerHTML = '📧 Contact';
+  
+  // Base styles
+  const baseStyles = {
+    position: 'fixed',
+    bottom: '20px',
+    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+    color: 'white',
+    border: 'none',
+    borderRadius: '50px',
+    padding: '12px 24px',
+    fontSize: '16px',
+    fontWeight: 'bold',
+    cursor: 'pointer',
+    zIndex: '1000',
+    boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
+    transition: 'all 0.3s ease',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+    backdropFilter: 'blur(10px)',
+    border: '1px solid rgba(255,255,255,0.2)'
+  };
+  
+  // Responsive positioning to account for navbar
+  if (isMobileDevice) {
+    // Mobile: Full width, simple centering
+    baseStyles.left = '50%';
+    baseStyles.transform = 'translateX(-50%)';
+  } else {
+    // Desktop: Center in the visible area (excluding navbar)
+    baseStyles.left = `${CONFIG.NAVIGATION.SIDEBAR_WIDTH + (window.innerWidth - CONFIG.NAVIGATION.SIDEBAR_WIDTH) / 2}px`;
+    baseStyles.transform = 'translateX(-50%)';
+  }
+  
+  // Apply styles
+  Object.assign(contactButton.style, baseStyles);
+  
+  // Mobile adjustments (only vertical positioning and sizing)
+  if (isMobileDevice) {
+    contactButton.style.bottom = '80px'; // Higher position on mobile to avoid navigation
+    contactButton.style.padding = '14px 20px';
+    contactButton.style.fontSize = '15px';
+  }
+  
+  // Hover effects
+  contactButton.addEventListener('mouseenter', () => {
+    contactButton.style.transform = 'translateX(-50%) translateY(-2px) scale(1.05)';
+    contactButton.style.boxShadow = '0 6px 25px rgba(0,0,0,0.4)';
+    contactButton.style.background = 'linear-gradient(135deg, #764ba2 0%, #667eea 100%)';
+  });
+  
+  contactButton.addEventListener('mouseleave', () => {
+    contactButton.style.transform = 'translateX(-50%) translateY(0) scale(1)';
+    contactButton.style.boxShadow = '0 4px 20px rgba(0,0,0,0.3)';
+    contactButton.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+  });
+  
+  // Click handler
+  contactButton.addEventListener('click', (e) => {
+    e.stopPropagation();
+    e.preventDefault();
+    
+    // Add click animation
+    contactButton.style.transform = 'translateX(-50%) translateY(1px) scale(0.95)';
+    setTimeout(() => {
+      contactButton.style.transform = 'translateX(-50%) translateY(-2px) scale(1.05)';
+    }, 150);
+    
+    // Open contact modal directly
+    showContactModal();
+    
+    // Close mobile navigation if open
+    if (isMobileDevice && isNavigationOpen) {
+      toggleMobileNavigation();
+    }
+  });
+  
+  // Prevent touch events from propagating to 3D scene
+  contactButton.addEventListener('touchstart', (e) => e.stopPropagation());
+  contactButton.addEventListener('touchmove', (e) => e.stopPropagation());
+  contactButton.addEventListener('touchend', (e) => e.stopPropagation());
+  
+  // Reposition button on window resize
+  const repositionButton = () => {
+    if (!isMobileDevice) {
+      const newLeft = CONFIG.NAVIGATION.SIDEBAR_WIDTH + (window.innerWidth - CONFIG.NAVIGATION.SIDEBAR_WIDTH) / 2;
+      contactButton.style.left = `${newLeft}px`;
+    }
+  };
+  
+  window.addEventListener('resize', repositionButton);
+  
+  document.body.appendChild(contactButton);
+  
+  return contactButton;
+}
+
+// Create the contact button
+createContactButton();
+
 
 // === Responsive 3D Canvas: Only fill area right of nav bar ===
 function resize3DView() {

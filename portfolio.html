@@ -29,6 +29,82 @@
       height: 100%;
       z-index: -1;
     }
+    
+    /* Hex Info Display */
+    .hex-info-display {
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 1000;
+      text-align: center;
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(10px);
+      border-radius: 15px;
+      padding: 15px 25px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+      color: #fff;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      transition: all 0.3s ease;
+      min-width: 250px;
+    }
+    
+    .hex-title {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: #ffd4a3;
+      margin-bottom: 8px;
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+    }
+    
+    .hex-objects-count {
+      font-size: 1rem;
+      color: #c7d2fe;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    
+    .objects-icon {
+      font-size: 1.2rem;
+    }
+    
+    #objectsRemaining {
+      color: #4ade80;
+      font-weight: 600;
+    }
+    
+    #objectsTotal {
+      color: #94a3b8;
+      font-weight: 500;
+    }
+    
+    /* Animation when hex changes */
+    .hex-info-display.updating {
+      transform: translateX(-50%) scale(1.05);
+      background: rgba(0, 0, 0, 0.8);
+      border-color: rgba(255, 212, 163, 0.4);
+    }
+    
+    /* Responsive design */
+    @media (max-width: 768px) {
+      .hex-info-display {
+        top: 15px;
+        padding: 12px 20px;
+        min-width: 200px;
+      }
+      
+      .hex-title {
+        font-size: 1.3rem;
+        margin-bottom: 6px;
+      }
+      
+      .hex-objects-count {
+        font-size: 0.9rem;
+      }
+    }
     .page {
       max-width: 800px;
       margin: 0 auto;
@@ -316,6 +392,16 @@
   </video>
 
   <canvas id="bgCanvas"></canvas>
+  
+  <!-- Hex Info Display -->
+  <div id="hexInfo" class="hex-info-display">
+    <div class="hex-title" id="hexTitle">Portfolio Thomas Menu</div>
+    <div class="hex-objects-count" id="hexObjectsCount">
+      <span class="objects-icon">🗺️</span>
+      <span id="objectsRemaining">0</span> / <span id="objectsTotal">0</span> <span id="objectsText">zones explorées</span>
+    </div>
+  </div>
+  
   <div id="app"></div>
   <script type="module" src="./main.js"></script>
   <script type="module" src="./guide.js"></script>

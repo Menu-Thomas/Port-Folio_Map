@@ -193,6 +193,12 @@ function onAllAssetsLoaded() {
   // Initialize badges once all assets are loaded
   updateThemeUnreadBadges();
   
+  // Initialize hex info display
+  initHexInfo();
+  
+  // Initialize portfolio experience system
+  initPortfolioExperience();
+  
   // Wait for loading overlay to be hidden before starting cinematic animation
   function checkAndStartCinematic() {
     const overlayHidden = sessionStorage.getItem('loadingOverlayHidden');
@@ -751,6 +757,7 @@ const drawerOriginalPositions = new Map();
 const unreadDrawers = new Set([
   'drawer1', 'drawer2', 'drawer3', 'drawer4', 
   'steering', 'forge', 'mail-box', 'trashTruck', 'convoyeur', 'sensorSensei', 'medical', 'forviaCAR',
+  'pc', 'desck', // Added missing home objects
   // Individual skillFlowers for CV theme badges
   'skillFlower1', 'skillFlower2', 'skillFlower3', 'skillFlower4', 'skillFlower5',
   'skillFlower6', 'skillFlower7', 'skillFlower8', 'skillFlower9'
@@ -916,6 +923,59 @@ const drawerThemes = {
   'desck': 'home',
   'skillFlower': 'cv' // All skillFlowers belong to CV theme
 };
+
+// === Hex Names Configuration ===
+const hexNames = {
+  'home': 'Home',
+  'cv': 'Curriculum Vitae',
+  'projects': 'Zone Projets',
+  'contact': 'Zone Contact',
+  'bridge': 'Pont de Navigation',
+  'champ1': 'Champs Florissants',
+  'garage': 'Garage Technologique',
+  'forest1': 'Forêt Mystique',
+  'forest2': 'Forêt Enchantée', 
+  'forest3': 'Forêt Ancienne',
+  'marais': 'Marais Tranquille',
+  'marais2': 'Marais Profond',
+  'desert1': 'Désert Doré',
+  'desert2': 'Dunes Sacrées',
+  'plain1': 'Plaines Verdoyantes',
+  'forge2': 'Forge du Créateur'
+};
+
+// === Objects by Hex Configuration ===
+const objectsByHex = {
+  'home': ['drawer1', 'drawer2', 'drawer3', 'drawer4', 'pc', 'trashTruck', 'convoyeur', 'desck'],
+  'cv': [], // SkillFlowers are dynamic based on theme
+  'projects': ['sensorSensei'],
+  'contact': ['mail-box'],
+  'bridge': [],
+  'champ1': [],
+  'garage': ['steering', 'medical', 'forviaCAR'],
+  'forest1': [],
+  'forest2': [],
+  'forest3': [],
+  'marais': [],
+  'marais2': [],
+  'desert1': [],
+  'desert2': [],
+  'plain1': [],
+  'forge2': ['forge']
+};
+
+// === Portfolio Experience Configuration ===
+const portfolioExperiences = [
+  // Main objects
+  'drawer1', 'drawer2', 'drawer3', 'drawer4', 'pc', 'trashTruck', 'convoyeur', 'desck',
+  'sensorSensei', 'mail-box', 'steering', 'medical', 'forviaCAR', 'forge',
+  // Skill flowers (all 9 skill flowers)
+  'skillFlower1', 'skillFlower2', 'skillFlower3', 'skillFlower4', 'skillFlower5',
+  'skillFlower6', 'skillFlower7', 'skillFlower8', 'skillFlower9'
+];
+
+// Global portfolio state
+let portfolioVisitedExperiences = new Set();
 
 // Camera target positions for click-animated drawers
 const drawerCameraTargets = {
@@ -1365,6 +1425,208 @@ drawerLabel.style.border = "1px solid #eee";
 drawerLabel.style.transition = "opacity 0.2s";
 document.body.appendChild(drawerLabel);
 
+// === Hex Information Display Functions ===
+function getHexDisplayName(hexType) {
+  return hexNames[hexType] || 'Zone Inconnue';
+}
+
+function getObjectsForHex(hexType) {
+  let objects = [...(objectsByHex[hexType] || [])];
+  
+  // Add skill flowers if on CV hex
+  if (getCurrentHexTheme(hexType) === 'cv') {
+    // Add all 9 skill flowers directly
+    const allSkillFlowers = [
+      'skillFlower1', 'skillFlower2', 'skillFlower3', 'skillFlower4', 'skillFlower5',
+      'skillFlower6', 'skillFlower7', 'skillFlower8', 'skillFlower9'
+    ];
+    objects = objects.concat(allSkillFlowers);
+  }
+  
+  return objects;
+}
+
+function getVisitedObjectsForHex(hexType) {
+  const objects = getObjectsForHex(hexType);
+  return objects.filter(objType => {
+    // Check if this object type has been visited
+    if (objType.startsWith('skillFlower')) {
+      return !unreadDrawers.has(objType);
+    }
+    return !unreadDrawers.has(objType);
+  });
+}
+
+function getHexesWithUnexploredObjects() {
+  const hexesWithObjects = [];
+  
+  // Check all hexes that have objects
+  Object.keys(objectsByHex).forEach(hexType => {
+    const totalObjects = getObjectsForHex(hexType);
+    const visitedObjects = getVisitedObjectsForHex(hexType);
+    
+    // If there are unvisited objects in this hex, count it
+    if (totalObjects.length > 0 && visitedObjects.length < totalObjects.length) {
+      hexesWithObjects.push(hexType);
+    }
+  });
+  
+  return hexesWithObjects;
+}
+
+function getTotalHexesWithObjects() {
+  // Count all hexes that have at least one object
+  let count = 0;
+  Object.keys(objectsByHex).forEach(hexType => {
+    const totalObjects = getObjectsForHex(hexType);
+    if (totalObjects.length > 0) {
+      count++;
+    }
+  });
+  return count;
+}
+
+function updateHexInfo(hexType = null) {
+  const hexInfoElement = document.getElementById('hexInfo');
+  const hexTitleElement = document.getElementById('hexTitle');
+  const objectsRemainingElement = document.getElementById('objectsRemaining');
+  const objectsTotalElement = document.getElementById('objectsTotal');
+  const objectsCountElement = document.getElementById('hexObjectsCount');
+  const objectsTextElement = document.getElementById('objectsText');
+  
+  if (!hexInfoElement || !hexTitleElement || !objectsRemainingElement || !objectsTotalElement || !objectsCountElement) {
+    return;
+  }
+  
+  // Check if we're in global view (no specific hex clicked) or specific hex view
+  if (hexType === null || currentActiveHexType === null) {
+    // Global portfolio view - show portfolio title and hex exploration counter
+    const portfolioTitle = 'Portfolio Thomas Menu';
+    const hexesWithUnexplored = getHexesWithUnexploredObjects();
+    const totalHexesWithObjects = getTotalHexesWithObjects();
+    const exploredHexes = totalHexesWithObjects - hexesWithUnexplored.length;
+    
+    hexTitleElement.textContent = portfolioTitle;
+    objectsRemainingElement.textContent = exploredHexes;
+    objectsTotalElement.textContent = totalHexesWithObjects;
+    
+    // Update icon and text for global view
+    const objectsIcon = objectsCountElement.querySelector('.objects-icon');
+    if (objectsIcon) objectsIcon.textContent = '🗺️';
+    if (objectsTextElement) objectsTextElement.textContent = 'zones explorées';
+    
+    console.log(`Global Portfolio View: ${exploredHexes}/${totalHexesWithObjects} zones explorées (${hexesWithUnexplored.length} zones restantes)`);
+  } else {
+    // Specific hex view - show hex name and hex-specific objects
+    const currentHex = hexType || currentActiveHexType;
+    const hexDisplayName = getHexDisplayName(currentHex);
+    const totalObjects = getObjectsForHex(currentHex);
+    const visitedObjects = getVisitedObjectsForHex(currentHex);
+    
+    hexTitleElement.textContent = hexDisplayName;
+    objectsRemainingElement.textContent = visitedObjects.length;
+    objectsTotalElement.textContent = totalObjects.length;
+    
+    // Update icon and text for hex view
+    const objectsIcon = objectsCountElement.querySelector('.objects-icon');
+    if (objectsIcon) objectsIcon.textContent = '🔍';
+    if (objectsTextElement) objectsTextElement.textContent = 'objets découverts';
+    
+    console.log(`Hex Info Updated: ${hexDisplayName} - ${visitedObjects.length}/${totalObjects.length} objects discovered`);
+  }
+  
+  // Add updating animation
+  hexInfoElement.classList.add('updating');
+  setTimeout(() => {
+    hexInfoElement.classList.remove('updating');
+  }, 300);
+}
+
+function initHexInfo() {
+  // Initialize with global portfolio view (no specific hex)
+  updateHexInfo(null);
+  
+  // Make functions available globally for debugging
+  window.updateHexInfo = updateHexInfo;
+  window.getObjectsForHex = getObjectsForHex;
+  window.getVisitedObjectsForHex = getVisitedObjectsForHex;
+  window.getHexesWithUnexploredObjects = getHexesWithUnexploredObjects;
+  window.getTotalHexesWithObjects = getTotalHexesWithObjects;
+  window.markObjectAsDiscovered = markObjectAsDiscovered;
+  
+  console.log('Portfolio Info System initialized - Available debug commands:');
+  console.log('- updateHexInfo(hexType) - Update display for specific hex (null for global view)');
+  console.log('- getObjectsForHex(hexType) - Get all objects for a hex');
+  console.log('- getVisitedObjectsForHex(hexType) - Get discovered objects for a hex');
+  console.log('- getHexesWithUnexploredObjects() - Get hexes with unexplored objects');
+  console.log('- getTotalHexesWithObjects() - Get total number of hexes with objects');
+}
+
+// Helper function to update hex info when an object is discovered
+function onObjectDiscovered(objectType) {
+  // Update the appropriate display based on current context
+  if (currentActiveHexType) {
+    // We're in a specific hex view - update hex info
+    const hexObjects = getObjectsForHex(currentActiveHexType);
+    if (hexObjects.includes(objectType) || objectType.startsWith('skillFlower')) {
+      updateHexInfo(currentActiveHexType);
+    }
+  } else {
+    // We're in global view - update global info
+    updateHexInfo(null);
+  }
+}
+
+// Wrapper function for marking objects as discovered
+function markObjectAsDiscovered(objectType) {
+  if (unreadDrawers.has(objectType)) {
+    unreadDrawers.delete(objectType);
+    updateThemeUnreadBadges();
+    onObjectDiscovered(objectType);
+    updatePortfolioExperience(objectType);
+  }
+}
+
+// === PORTFOLIO EXPERIENCE FUNCTIONS ===
+
+function updatePortfolioExperience(discoveredObject = null) {
+  if (discoveredObject) {
+    portfolioVisitedExperiences.add(discoveredObject);
+    console.log(`Portfolio Experience: ${portfolioVisitedExperiences.size}/${portfolioExperiences.length} experiences discovered`);
+  }
+}
+
+function initPortfolioExperience() {
+  // Load visited experiences from localStorage
+  const savedExperiences = localStorage.getItem('portfolioVisitedExperiences');
+  if (savedExperiences) {
+    try {
+      const experiencesArray = JSON.parse(savedExperiences);
+      portfolioVisitedExperiences = new Set(experiencesArray);
+      console.log(`Loaded ${portfolioVisitedExperiences.size} previously discovered experiences`);
+    } catch (e) {
+      console.warn('Failed to load portfolio experiences:', e);
+      portfolioVisitedExperiences = new Set();
+    }
+  }
+  
+  // Save to localStorage whenever the set changes
+  const originalAdd = portfolioVisitedExperiences.add.bind(portfolioVisitedExperiences);
+  portfolioVisitedExperiences.add = function(value) {
+    const result = originalAdd(value);
+    localStorage.setItem('portfolioVisitedExperiences', JSON.stringify([...portfolioVisitedExperiences]));
+    return result;
+  };
+  
+  // Make functions available globally for debugging
+  window.updatePortfolioExperience = updatePortfolioExperience;
+  window.portfolioVisitedExperiences = portfolioVisitedExperiences;
+  
+  console.log('Portfolio Experience System initialized');
+  console.log('- updatePortfolioExperience(objectType) - Update global experience counter');
+  console.log('- portfolioVisitedExperiences - Set of discovered experiences');
+}
+
 window.addEventListener('mousemove', (event) => {
   // Skip interactions during cinematic mode
   if (cinematicMode) return;
@@ -1672,8 +1934,13 @@ window.addEventListener('mousemove', (event) => {
           // Mark drawer as read (except forge - steering can be marked as read)
           if (unreadDrawers.has(object.userData.type) && 
               object.userData.type !== 'forge') {
-            unreadDrawers.delete(object.userData.type);
-            updateThemeUnreadBadges();
+            // For skillFlowers, use markObjectAsDiscovered instead of just deleting from unreadDrawers
+            if (object.userData.type.startsWith('skillFlower')) {
+              markObjectAsDiscovered(object.userData.type);
+            } else {
+              unreadDrawers.delete(object.userData.type);
+              updateThemeUnreadBadges();
+            }
           }
         }
       } else {
@@ -3218,6 +3485,7 @@ window.addEventListener('wheel', (event) => {
     // Reset active nav state since we're going back to overview
     currentActiveHexType = null;
     updateNavActiveState(null);
+    updateHexInfo(null); // Update to global portfolio view
     
     // Reset virtual modal state when going back to overview
     virtualModalClosed = false;
@@ -3302,6 +3570,13 @@ window.addEventListener('click', (event) => {
     return false;
   }
   
+  // THIRD: Skip 3D interactions if any modal is open
+  const existingModals = document.querySelectorAll('[id$="Modal"]');
+  if (existingModals.length > 0) {
+    // Don't process 3D canvas clicks if any modal is open
+    return false;
+  }
+  
   // Skip interactions during cinematic mode or if currently orbiting
   if (cinematicMode || isOrbiting) return;
   
@@ -3325,6 +3600,7 @@ window.addEventListener('click', (event) => {
     // Animation caméra pour hexagones classiques
     if (object.userData.q !== undefined && object.userData.r !== undefined) {
       currentActiveHexType = object.userData.type; // Update active type on 3D click
+      updateHexInfo(currentActiveHexType); // Update hex info display
       
       // Stop any ongoing orbital movement
       isOrbiting = false;
@@ -3485,8 +3761,8 @@ window.addEventListener('click', (event) => {
       
       // Mark forge as read
       if (unreadDrawers.has('forge')) {
-        unreadDrawers.delete('forge');
-        updateThemeUnreadBadges();
+        markObjectAsDiscovered('forge');
+
       }
       showForgeModal();
     }
@@ -3506,6 +3782,19 @@ window.addEventListener('click', (event) => {
       
       // Show contact modal instead of navigating to a new page
       showContactModal();
+    }
+    // Handle skillFlower clicks
+    else if (object.userData.type && object.userData.type.startsWith('skillFlower')) {
+      // Check if skillFlower is clickable at the current location/theme
+      if (!isDrawerClickableAtCurrentLocation(object.userData.type)) {
+        console.log(`SkillFlower ${object.userData.type} not clickable at current location/theme`);
+        return; // Don't allow interaction if not at correct theme
+      }
+      
+      // Mark skillFlower as discovered when clicked
+      if (unreadDrawers.has(object.userData.type)) {
+        markObjectAsDiscovered(object.userData.type);
+      }
     }
   }
 });
@@ -3758,6 +4047,7 @@ function handleInteraction(event) {
     if (object.userData.q !== undefined && object.userData.r !== undefined) {
       console.log('Hex object clicked:', object.userData.type);
       currentActiveHexType = object.userData.type; // Update active type on 3D click
+      updateHexInfo(currentActiveHexType); // Update hex info display
       
       // Stop any ongoing orbital movement
       isOrbiting = false;
@@ -3918,8 +4208,8 @@ function handleInteraction(event) {
       
       // Mark forge as read
       if (unreadDrawers.has('forge')) {
-        unreadDrawers.delete('forge');
-        updateThemeUnreadBadges();
+        markObjectAsDiscovered('forge');
+
       }
       showForgeModal();
     }
@@ -3993,13 +4283,32 @@ function createModalBase(id, onClose = null) {
     justify-content: center;
   `;
   
-  closeBtn.onclick = () => {
+  closeBtn.onclick = (event) => {
+    event.stopPropagation();
+    event.preventDefault();
     if (onClose) onClose();
     modal.remove();
   };
 
   content.appendChild(closeBtn);
   modal.appendChild(content);
+  
+  // Prevent clicks on modal from propagating to 3D scene and close modal on overlay click
+  modal.addEventListener('click', (event) => {
+    event.stopPropagation();
+    event.preventDefault();
+    // Close modal if clicking on the overlay (not the content)
+    if (event.target === modal) {
+      if (onClose) onClose();
+      modal.remove();
+    }
+  });
+  
+  // Prevent clicks on content from closing modal and propagating
+  content.addEventListener('click', (event) => {
+    event.stopPropagation();
+    event.preventDefault();
+  });
   
   return { modal, content };
 }
@@ -4058,54 +4367,7 @@ function showVirtualModal() {
   
   const { modal, content } = createModalBase('virtualModal', () => {
     virtualModalClosed = true; // Mark that user has closed the modal
-    
-    // Check if we should start the cinematic animation
-    const urlParams = new URLSearchParams(window.location.search);
-    const fromLoading = urlParams.get('from') === 'loading' || document.referrer.includes('index.html');
-    const overlayHidden = sessionStorage.getItem('loadingOverlayHidden') === 'true';
-    const overlayElement = document.getElementById('loadingOverlay');
-    const isOverlayActuallyHidden = overlayHidden && (!overlayElement || overlayElement.classList.contains('hidden'));
-    
-    if (fromLoading && isOverlayActuallyHidden) {
-      // Only start cinematic animation if loading overlay has been manually dismissed
-      console.log('Virtual modal closed and overlay already dismissed, starting cinematic animation');
-      startCinematicEntrance();
-    } else if (!isOverlayActuallyHidden) {
-      // If overlay is still visible, don't start animation
-      console.log('Virtual modal closed but loading overlay still visible, not starting animation');
-    } else {
-      // Return to orbital position instead of fixed original position
-      const orbitalPosition = {
-        x: orbitCenter.x + orbitRadius * Math.cos(currentCameraAngle),
-        y: orbitHeight,
-        z: orbitCenter.z + orbitRadius * Math.sin(currentCameraAngle)
-      };
-      
-      // Animate camera position
-      gsap.to(camera.position, {
-        x: orbitalPosition.x,
-        y: orbitalPosition.y,
-        z: orbitalPosition.z,
-        duration: CONFIG.ANIMATION.CAMERA_DURATION,
-        ease: CONFIG.ANIMATION.EASE,
-      });
-      
-      // Smoothly animate look-at target to orbital center
-      gsap.to(lookAtTarget, {
-        x: orbitCenter.x,
-        y: orbitCenter.y,
-        z: orbitCenter.z,
-        duration: CONFIG.ANIMATION.CAMERA_DURATION,
-        ease: CONFIG.ANIMATION.EASE,
-        onUpdate: () => {
-          camera.lookAt(lookAtTarget.x, lookAtTarget.y, lookAtTarget.z);
-        },
-        onComplete: () => {
-          // Update orbital camera angle to match the current position
-          updateCameraAngleFromPosition();
-        }
-      });
-    }
+    // Camera stays in current position - no movement on modal close
   });
   
   const iframe = document.createElement('iframe');
@@ -4133,38 +4395,7 @@ function showTrashModal() {
   
   const { modal, content } = createModalBase('trashModal', () => {
     trashModalClosed = true; // Mark that user has closed the modal
-    
-    // Return to orbital position instead of fixed original position
-    const orbitalPosition = {
-      x: orbitCenter.x + orbitRadius * Math.cos(currentCameraAngle),
-      y: orbitHeight,
-      z: orbitCenter.z + orbitRadius * Math.sin(currentCameraAngle)
-    };
-    
-    // Animate camera position
-    gsap.to(camera.position, {
-      x: orbitalPosition.x,
-      y: orbitalPosition.y,
-      z: orbitalPosition.z,
-      duration: CONFIG.ANIMATION.CAMERA_DURATION,
-      ease: CONFIG.ANIMATION.EASE,
-    });
-    
-    // Smoothly animate look-at target to orbital center
-    gsap.to(lookAtTarget, {
-      x: orbitCenter.x,
-      y: orbitCenter.y,
-      z: orbitCenter.z,
-      duration: CONFIG.ANIMATION.CAMERA_DURATION,
-      ease: CONFIG.ANIMATION.EASE,
-      onUpdate: () => {
-        camera.lookAt(lookAtTarget.x, lookAtTarget.y, lookAtTarget.z);
-      },
-      onComplete: () => {
-        // Update orbital camera angle to match the current position
-        updateCameraAngleFromPosition();
-      }
-    });
+    // Camera stays in current position - no movement on modal close
   });
   
   const iframe = document.createElement('iframe');
@@ -4192,38 +4423,7 @@ function showConvoyeurModal() {
   
   const { modal, content } = createModalBase('convoyeurModal', () => {
     convoyeurModalClosed = true; // Mark that user has closed the modal
-    
-    // Return to orbital position instead of fixed original position
-    const orbitalPosition = {
-      x: orbitCenter.x + orbitRadius * Math.cos(currentCameraAngle),
-      y: orbitHeight,
-      z: orbitCenter.z + orbitRadius * Math.sin(currentCameraAngle)
-    };
-    
-    // Animate camera position
-    gsap.to(camera.position, {
-      x: orbitalPosition.x,
-      y: orbitalPosition.y,
-      z: orbitalPosition.z,
-      duration: CONFIG.ANIMATION.CAMERA_DURATION,
-      ease: CONFIG.ANIMATION.EASE,
-    });
-    
-    // Smoothly animate look-at target to orbital center
-    gsap.to(lookAtTarget, {
-      x: orbitCenter.x,
-      y: orbitCenter.y,
-      z: orbitCenter.z,
-      duration: CONFIG.ANIMATION.CAMERA_DURATION,
-      ease: CONFIG.ANIMATION.EASE,
-      onUpdate: () => {
-        camera.lookAt(lookAtTarget.x, lookAtTarget.y, lookAtTarget.z);
-      },
-      onComplete: () => {
-        // Update orbital camera angle to match the current position
-        updateCameraAngleFromPosition();
-      }
-    });
+    // Camera stays in current position - no movement on modal close
   });
   
   const iframe = document.createElement('iframe');
@@ -4251,38 +4451,7 @@ function showSensorSenseiModal() {
   
   const { modal, content } = createModalBase('sensorSenseiModal', () => {
     sensorSenseiModalClosed = true; // Mark that user has closed the modal
-    
-    // Return to orbital position instead of fixed original position
-    const orbitalPosition = {
-      x: orbitCenter.x + orbitRadius * Math.cos(currentCameraAngle),
-      y: orbitHeight,
-      z: orbitCenter.z + orbitRadius * Math.sin(currentCameraAngle)
-    };
-    
-    // Animate camera position
-    gsap.to(camera.position, {
-      x: orbitalPosition.x,
-      y: orbitalPosition.y,
-      z: orbitalPosition.z,
-      duration: CONFIG.ANIMATION.CAMERA_DURATION,
-      ease: CONFIG.ANIMATION.EASE,
-    });
-    
-    // Smoothly animate look-at target to orbital center
-    gsap.to(lookAtTarget, {
-      x: orbitCenter.x,
-      y: orbitCenter.y,
-      z: orbitCenter.z,
-      duration: CONFIG.ANIMATION.CAMERA_DURATION,
-      ease: CONFIG.ANIMATION.EASE,
-      onUpdate: () => {
-        camera.lookAt(lookAtTarget.x, lookAtTarget.y, lookAtTarget.z);
-      },
-      onComplete: () => {
-        // Update orbital camera angle to match the current position
-        updateCameraAngleFromPosition();
-      }
-    });
+    // Camera stays in current position - no movement on modal close
   });
   
   const iframe = document.createElement('iframe');
@@ -4310,38 +4479,7 @@ function showMedicalModal() {
   
   const { modal, content } = createModalBase('medicalModal', () => {
     medicalModalClosed = true; // Mark that user has closed the modal
-    
-    // Return to orbital position instead of fixed original position
-    const orbitalPosition = {
-      x: orbitCenter.x + orbitRadius * Math.cos(currentCameraAngle),
-      y: orbitHeight,
-      z: orbitCenter.z + orbitRadius * Math.sin(currentCameraAngle)
-    };
-    
-    // Animate camera position
-    gsap.to(camera.position, {
-      x: orbitalPosition.x,
-      y: orbitalPosition.y,
-      z: orbitalPosition.z,
-      duration: CONFIG.ANIMATION.CAMERA_DURATION,
-      ease: CONFIG.ANIMATION.EASE,
-    });
-    
-    // Smoothly animate look-at target to orbital center
-    gsap.to(lookAtTarget, {
-      x: orbitCenter.x,
-      y: orbitCenter.y,
-      z: orbitCenter.z,
-      duration: CONFIG.ANIMATION.CAMERA_DURATION,
-      ease: CONFIG.ANIMATION.EASE,
-      onUpdate: () => {
-        camera.lookAt(lookAtTarget.x, lookAtTarget.y, lookAtTarget.z);
-      },
-      onComplete: () => {
-        // Update orbital camera angle to match the current position
-        updateCameraAngleFromPosition();
-      }
-    });
+    // Camera stays in current position - no movement on modal close
   });
   
   const iframe = document.createElement('iframe');
@@ -4369,38 +4507,7 @@ function showForviaCarModal() {
   
   const { modal, content } = createModalBase('forviaCarModal', () => {
     forviaCarModalClosed = true; // Mark that user has closed the modal
-    
-    // Return to orbital position instead of fixed original position
-    const orbitalPosition = {
-      x: orbitCenter.x + orbitRadius * Math.cos(currentCameraAngle),
-      y: orbitHeight,
-      z: orbitCenter.z + orbitRadius * Math.sin(currentCameraAngle)
-    };
-    
-    // Animate camera position
-    gsap.to(camera.position, {
-      x: orbitalPosition.x,
-      y: orbitalPosition.y,
-      z: orbitalPosition.z,
-      duration: CONFIG.ANIMATION.CAMERA_DURATION,
-      ease: CONFIG.ANIMATION.EASE,
-    });
-    
-    // Smoothly animate look-at target to orbital center
-    gsap.to(lookAtTarget, {
-      x: orbitCenter.x,
-      y: orbitCenter.y,
-      z: orbitCenter.z,
-      duration: CONFIG.ANIMATION.CAMERA_DURATION,
-      ease: CONFIG.ANIMATION.EASE,
-      onUpdate: () => {
-        camera.lookAt(lookAtTarget.x, lookAtTarget.y, lookAtTarget.z);
-      },
-      onComplete: () => {
-        // Update orbital camera angle to match the current position
-        updateCameraAngleFromPosition();
-      }
-    });
+    // Camera stays in current position - no movement on modal close
   });
   
   const iframe = document.createElement('iframe');
@@ -4789,6 +4896,7 @@ function navigateToZone(zoneType) {
 
   currentActiveHexType = zoneType;
   console.log(`Navigation started: currentActiveHexType set to "${currentActiveHexType}"`);
+  updateHexInfo(currentActiveHexType); // Update hex info display
   
   // Find the hex data for camera position
   const hexData = hexMap.find(h => h.type === zoneType);

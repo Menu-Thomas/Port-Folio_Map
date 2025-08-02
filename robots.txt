@@ -1,0 +1,19 @@
+User-agent: *
+Allow: /
+
+# Sitemap location (update with your actual domain)
+Sitemap: https://your-domain.com/sitemap.xml
+
+# Disallow crawling of thank you pages (avoid indexing form confirmations)
+Disallow: /thank-you.html
+
+# Allow crawling of important pages
+Allow: /index.html
+Allow: /portfolio.html
+Allow: /sidepages/
+
+# Block crawling of development files
+Disallow: /*.md$
+Disallow: /cleanup.ps1
+Disallow: /EMAIL_SETUP_GUIDE.md
+Disallow: /DEPLOYMENT_GUIDE.md

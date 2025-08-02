@@ -128,14 +128,9 @@
       transform: none;
     }
 
-    button:hover {
+    button:hover:not(:disabled) {
       transform: translateY(-2px);
       box-shadow: 0 6px 20px rgba(255, 212, 163, 0.5);
-    }
-
-    button:disabled:hover {
-      transform: none;
-      box-shadow: 0 4px 16px rgba(255, 212, 163, 0.3);
     }
 
     button:active {
@@ -190,39 +185,6 @@
       min-height: 80px;
     }
 
-    @media (max-width: 768px) {
-      body {
-        padding: 0.5rem;
-      }
-      
-      h2 {
-        font-size: 2rem;
-        margin-bottom: 0.5rem;
-      }
-      
-      .form-container {
-        padding: 1rem;
-      }
-      
-      label {
-        font-size: 1rem;
-      }
-      
-      input, textarea {
-        font-size: 0.9rem;
-        padding: 0.7rem;
-      }
-      
-      button {
-        font-size: 1rem;
-        padding: 0.9rem 1.8rem;
-      }
-      
-      .footer-text {
-        font-size: 0.9rem;
-      }
-    }
-
     /* Back Button Styles */
     .back-button {
       position: fixed;
@@ -253,17 +215,20 @@
       background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
     }
 
-    .back-button:active {
-      transform: translateY(1px) scale(0.95);
+    /* Platform indicator */
+    .platform-info {
+      font-size: 0.8rem;
+      color: #c7d2fe;
+      opacity: 0.7;
+      text-align: center;
+      margin-top: 0.5rem;
     }
 
     @media (max-width: 768px) {
-      .back-button {
-        top: 15px;
-        left: 15px;
-        padding: 10px 16px;
-        font-size: 14px;
-      }
+      body { padding: 0.5rem; }
+      h2 { font-size: 2rem; margin-bottom: 0.5rem; }
+      .form-container { padding: 1rem; }
+      .back-button { top: 15px; left: 15px; padding: 10px 16px; font-size: 14px; }
     }
   </style>
 </head>
@@ -277,7 +242,15 @@
   <div class="contact-container">
     <h2>Contact</h2>
     <div class="form-container">
-      <form id="contactForm">
+      <!-- Netlify Form (preferred for Netlify deployment) -->
+      <form id="contactForm" name="contact" method="POST" data-netlify="true" data-netlify-honeypot="bot-field" action="/thank-you">
+        <!-- Hidden field for Netlify -->
+        <input type="hidden" name="form-name" value="contact">
+        <!-- Honeypot field for spam protection -->
+        <div style="display: none;">
+          <label>Don't fill this out if you're human: <input name="bot-field"></label>
+        </div>
+        
         <div class="form-fields">
           <label>
             Nom
@@ -298,11 +271,39 @@
         </div>
         <button type="submit">Envoyer le message</button>
       </form>
+      
+      <!-- Alternative form for non-Netlify hosting -->
+      <form id="fallbackForm" style="display: none;" action="https://formspree.io/f/xrbzppzp" method="POST">
+        <div class="form-fields">
+          <label>
+            Nom
+            <input type="text" name="name" required placeholder="Votre nom">
+          </label>
+          <label>
+            Email
+            <input type="email" name="email" required placeholder="Votre email">
+          </label>
+          <label>
+            Sujet
+            <input type="text" name="subject" required placeholder="Sujet de votre message">
+          </label>
+          <label class="message-field">
+            Message
+            <textarea name="message" required placeholder="Votre message"></textarea>
+          </label>
+        </div>
+        <button type="submit">Envoyer le message</button>
+      </form>
+      
       <div id="successMessage" class="success-message">
         ✓ Votre message a été envoyé avec succès ! Je vous répondrai rapidement.
       </div>
       <div id="errorMessage" class="error-message">
-        ✗ Impossible d'envoyer l'email automatiquement. Veuillez copier les informations et m'envoyer un email à <a href="mailto:menu.techvision@gmail.com" style="color: #ffd4a3;">menu.techvision@gmail.com</a>
+        ✗ Erreur lors de l'envoi. Email direct : <a href="mailto:menu.techvision@gmail.com" style="color: #ffd4a3;">menu.techvision@gmail.com</a>
+      </div>
+      
+      <div class="platform-info" id="platformInfo">
+        Formulaire optimisé pour votre plateforme d'hébergement
       </div>
     </div>
     <p class="footer-text">
@@ -311,78 +312,82 @@
     </p>
   </div>
 
-  <!-- EmailJS SDK -->
-  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
-  
   <script>
-    // Initialize EmailJS with your public key
-    emailjs.init('YOUR_PUBLIC_KEY'); // Replace with your EmailJS public key
+    // Detect if running on Netlify or other platforms
+    const isNetlify = window.location.hostname.includes('netlify') || 
+                     document.querySelector('[data-netlify]') !== null;
     
-    document.getElementById('contactForm').addEventListener('submit', async function(e) {
-      e.preventDefault();
-      
-      const submitButton = this.querySelector('button[type="submit"]');
-      const originalText = submitButton.textContent;
-      
-      // Show loading state
-      submitButton.textContent = 'Envoi en cours...';
-      submitButton.disabled = true;
-      
-      const formData = new FormData(this);
-      const templateParams = {
-        from_name: formData.get('name'),
-        from_email: formData.get('email'),
-        subject: formData.get('subject'),
-        message: formData.get('message'),
-        to_email: 'menu.techvision@gmail.com'
-      };
-      
-      try {
-        // Send email using EmailJS
-        const response = await emailjs.send(
-          'YOUR_SERVICE_ID',    // Replace with your EmailJS service ID
-          'YOUR_TEMPLATE_ID',   // Replace with your EmailJS template ID
-          templateParams
-        );
-        
-        // Show success message
-        document.getElementById('successMessage').style.display = 'block';
-        document.getElementById('errorMessage').style.display = 'none';
-        
-        // Reset form after success
-        setTimeout(() => {
-          this.reset();
-          document.getElementById('successMessage').style.display = 'none';
-        }, 5000);
-        
-      } catch (error) {
-        console.error('EmailJS Error:', error);
-        
-        // Fallback to mailto if EmailJS fails
-        const mailtoLink = `mailto:menu.techvision@gmail.com?subject=${encodeURIComponent(`[Portfolio Contact] ${templateParams.subject}`)}&body=${encodeURIComponent(`Nom: ${templateParams.from_name}\nEmail: ${templateParams.from_email}\n\nMessage:\n${templateParams.message}`)}`;
-        
-        // Try mailto as fallback
-        try {
-          window.location.href = mailtoLink;
-          document.getElementById('successMessage').style.display = 'block';
-          document.getElementById('errorMessage').style.display = 'none';
-        } catch (mailtoError) {
-          // Show error message if both methods fail
-          document.getElementById('errorMessage').style.display = 'block';
-          document.getElementById('successMessage').style.display = 'none';
-        }
-      } finally {
-        // Reset button state
-        submitButton.textContent = originalText;
-        submitButton.disabled = false;
-      }
-    });
+    const netlifyForm = document.getElementById('contactForm');
+    const fallbackForm = document.getElementById('fallbackForm');
+    const platformInfo = document.getElementById('platformInfo');
+    const successMessage = document.getElementById('successMessage');
+    const errorMessage = document.getElementById('errorMessage');
 
-    // Function to handle back button click
+    // Show appropriate form based on platform
+    if (isNetlify) {
+      netlifyForm.style.display = 'flex';
+      fallbackForm.style.display = 'none';
+      platformInfo.textContent = 'Formulaire Netlify - Envoi direct et sécurisé';
+      
+      // Netlify form handling
+      netlifyForm.addEventListener('submit', function(e) {
+        const submitButton = this.querySelector('button[type="submit"]');
+        const originalText = submitButton.textContent;
+        
+        submitButton.textContent = 'Envoi en cours...';
+        submitButton.disabled = true;
+        
+        // Let Netlify handle the form submission
+        // Success page will be shown automatically
+      });
+      
+    } else {
+      netlifyForm.style.display = 'none';
+      fallbackForm.style.display = 'flex';
+      platformInfo.textContent = 'Formulaire Formspree - Compatible tous hébergeurs';
+      
+      // Fallback form handling
+      fallbackForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const submitButton = this.querySelector('button[type="submit"]');
+        const originalText = submitButton.textContent;
+        
+        submitButton.textContent = 'Envoi en cours...';
+        submitButton.disabled = true;
+        
+        try {
+          const response = await fetch(this.action, {
+            method: this.method,
+            body: new FormData(this),
+            headers: {
+              'Accept': 'application/json'
+            }
+          });
+
+          if (response.ok) {
+            successMessage.style.display = 'block';
+            errorMessage.style.display = 'none';
+            this.reset();
+            
+            setTimeout(() => {
+              successMessage.style.display = 'none';
+            }, 5000);
+          } else {
+            throw new Error('Server error');
+          }
+        } catch (error) {
+          errorMessage.style.display = 'block';
+          successMessage.style.display = 'none';
+        } finally {
+          submitButton.textContent = originalText;
+          submitButton.disabled = false;
+        }
+      });
+    }
+
     function goBackToPortfolio() {
-      // Set flag to indicate returning from contact
       sessionStorage.setItem('returningFromContact', 'true');
-      // Redirect back to loading page (index.html)
       window.location.href = '../index.html';
     }
   </script>

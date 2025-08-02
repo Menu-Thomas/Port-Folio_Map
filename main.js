@@ -509,7 +509,7 @@ class AssetValidator {
     ],
     pages: [
       'project1.html', 'project2.html', 'project3.html', 'project4.html',
-      'forge.html', 'virtual.html', 'sidepages/contact.html',
+      'forge.html', 'virtual.html', 'sidepages/contact-production.html',
       'sidepages/trashProject.html', 'sidepages/convoyeur.html',
       'sidepages/sensorSensei.html', 'sidepages/desck.html'
     ]
@@ -3667,7 +3667,7 @@ function showContactModal() {
   if (existingModal) return; // Already open
   const { modal, content } = createModalBase('contactModal');
   const iframe = document.createElement('iframe');
-  iframe.src = 'sidepages/contact.html';
+  iframe.src = 'sidepages/contact-production.html';
   iframe.style.cssText = `
     width: 100%;
     height: 100%;

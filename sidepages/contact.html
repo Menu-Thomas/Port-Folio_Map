@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -269,9 +269,9 @@
 </head>
 <body>
   <!-- Back Button -->
-  <button class="back-button" onclick="goBackToPortfolio()" title="Retour au portfolio">
+  <button class="back-button" onclick="goBackToPortfolio()" title="Back to portfolio">
     <span>←</span>
-    <span>Retour</span>
+    <span>Back</span>
   </button>
   
   <div class="contact-container">
@@ -280,34 +280,34 @@
       <form id="contactForm">
         <div class="form-fields">
           <label>
-            Nom
-            <input type="text" name="name" required placeholder="Votre nom">
+            Name
+            <input type="text" name="name" required placeholder="Your name">
           </label>
           <label>
             Email
-            <input type="email" name="email" required placeholder="Votre email">
+            <input type="email" name="email" required placeholder="Your email">
           </label>
           <label>
-            Sujet
-            <input type="text" name="subject" required placeholder="Sujet de votre message">
+            Subject
+            <input type="text" name="subject" required placeholder="Subject of your message">
           </label>
           <label class="message-field">
             Message
-            <textarea name="message" required placeholder="Votre message"></textarea>
+            <textarea name="message" required placeholder="Your message"></textarea>
           </label>
         </div>
-        <button type="submit">Envoyer le message</button>
+        <button type="submit">Send Message</button>
       </form>
       <div id="successMessage" class="success-message">
-        ✓ Votre message a été envoyé avec succès ! Je vous répondrai rapidement.
+        ✓ Your message has been sent successfully! I will reply to you quickly.
       </div>
       <div id="errorMessage" class="error-message">
-        ✗ Impossible d'envoyer l'email automatiquement. Veuillez copier les informations et m'envoyer un email à <a href="mailto:menu.techvision@gmail.com" style="color: #ffd4a3;">menu.techvision@gmail.com</a>
+        ✗ Unable to send email automatically. Please copy the information and send me an email at <a href="mailto:menu.techvision@gmail.com" style="color: #ffd4a3;">menu.techvision@gmail.com</a>
       </div>
     </div>
     <p class="footer-text">
-      Je vous répondrai rapidement !<br>
-      Email direct : <a href="mailto:menu.techvision@gmail.com" style="color: #ffd4a3; text-decoration: none;">menu.techvision@gmail.com</a>
+      I will reply to you quickly!<br>
+      Direct email: <a href="mailto:menu.techvision@gmail.com" style="color: #ffd4a3; text-decoration: none;">menu.techvision@gmail.com</a>
     </p>
   </div>
 
@@ -325,7 +325,7 @@
       const originalText = submitButton.textContent;
       
       // Show loading state
-      submitButton.textContent = 'Envoi en cours...';
+      submitButton.textContent = 'Sending...';
       submitButton.disabled = true;
       
       const formData = new FormData(this);

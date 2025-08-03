@@ -219,6 +219,152 @@
       animation: profileGlow 2s ease-in-out infinite alternate;
       object-fit: cover;
     }
+
+    /* Credentials Section */
+    .credentials-section {
+      position: relative;
+      display: inline-block;
+      margin-bottom: 2rem;
+    }
+
+    /* Medals Container */
+    .medals-container {
+      position: absolute;
+      top: -15px;
+      right: -80px;
+      display: flex;
+      flex-direction: column;
+      gap: -15px;
+      z-index: 15;
+    }
+
+    /* Individual Medal Styles */
+    .medal {
+      width: 55px;
+      height: 55px;
+      border-radius: 15px;
+      background: linear-gradient(135deg, #ffd700, #ffed4e, #ffd700);
+      border: 3px solid #fff;
+      box-shadow: 0 4px 16px rgba(255, 215, 0, 0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      position: relative;
+    }
+
+    .medal:nth-child(1) {
+      transform: rotate(-15deg);
+      z-index: 3;
+    }
+
+    .medal:nth-child(2) {
+      transform: rotate(8deg);
+      z-index: 2;
+      margin-top: -10px;
+    }
+
+    .medal:nth-child(3) {
+      transform: rotate(-12deg);
+      z-index: 1;
+      margin-top: -8px;
+    }
+
+    .medal-text {
+      font-size: 0.6rem;
+      font-weight: bold;
+      color: #8b4513;
+      text-align: center;
+      line-height: 1.1;
+      text-shadow: 0 1px 2px rgba(255, 255, 255, 0.5);
+    }
+
+    .medal:hover {
+      transform: scale(1.1) rotate(0deg);
+      box-shadow: 0 8px 32px rgba(255, 215, 0, 0.6);
+      z-index: 10;
+    }
+
+    .medal::after {
+      content: attr(data-title);
+      position: absolute;
+      bottom: -35px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0, 0, 0, 0.8);
+      color: #ffd4a3;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      white-space: nowrap;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      pointer-events: none;
+      z-index: 20;
+    }
+
+    .medal:hover::after {
+      opacity: 1;
+    }
+
+    /* Mobile responsive styles for medals */
+    @media (max-width: 768px) {
+      .medals-container {
+        top: -10px;
+        right: -60px;
+        gap: -12px;
+      }
+      
+      .medal {
+        width: 45px;
+        height: 45px;
+        border-width: 2px;
+      }
+
+      .medal:nth-child(2) {
+        margin-top: -8px;
+      }
+
+      .medal:nth-child(3) {
+        margin-top: -6px;
+      }
+      
+      .medal-text {
+        font-size: 0.5rem;
+      }
+      
+      .medal::after {
+        font-size: 0.65rem;
+        bottom: -30px;
+      }
+    }
+
+    /* Extra small screens */
+    @media (max-width: 480px) {
+      .medals-container {
+        top: -8px;
+        right: -45px;
+        gap: -10px;
+      }
+      
+      .medal {
+        width: 35px;
+        height: 35px;
+      }
+
+      .medal:nth-child(2) {
+        margin-top: -6px;
+      }
+
+      .medal:nth-child(3) {
+        margin-top: -4px;
+      }
+      
+      .medal-text {
+        font-size: 0.45rem;
+      }
+    }
     
     .welcome-text {
       font-size: 2.5rem;
@@ -449,6 +595,63 @@
         font-size: 0.9rem;
       }
     }
+
+    /* Diploma Modal Styles */
+    .diploma-modal {
+      position: fixed;
+      z-index: 10000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.8);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .diploma-modal-content {
+      position: relative;
+      background: white;
+      padding: 20px;
+      border-radius: 15px;
+      max-width: 90%;
+      max-height: 90%;
+      box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);
+    }
+
+    .diploma-close {
+      position: absolute;
+      top: 10px;
+      right: 15px;
+      color: #666;
+      font-size: 28px;
+      font-weight: bold;
+      cursor: pointer;
+      z-index: 10001;
+    }
+
+    .diploma-close:hover,
+    .diploma-close:focus {
+      color: #000;
+      text-decoration: none;
+    }
+
+    .diploma-display {
+      max-width: 100%;
+      max-height: 70vh;
+      object-fit: contain;
+      display: block;
+      margin: 0 auto;
+    }
+
+    .diploma-title {
+      text-align: center;
+      margin-top: 15px;
+      font-size: 18px;
+      font-weight: bold;
+      color: #333;
+    }
   </style>
 </head>
 <body>
@@ -456,27 +659,40 @@
   <div id="loadingOverlay">
     <button class="close-btn" id="closeBtn" title="Skip loading">×</button>
     <!-- Contact Button in Loading Overlay -->
-    <button class="contact-button" onclick="showContactFromLoading()" title="Me contacter">
+    <button class="contact-button" onclick="showContactFromLoading()" title="Contact Me">
       <span>💬</span>
-      <span>Me Contacter</span>
+      <span>Contact Me</span>
     </button>
     <div class="loading-container">
-      <img src="./public/head.png" alt="Thomas Menu" class="profile-image">
+      <div class="credentials-section">
+        <img src="./public/head.png" alt="Thomas Menu" class="profile-image">
+        <div class="medals-container">
+          <div class="medal" data-title="Master of Science IoT" onclick="showDiplomaModal('MSCIOT.jpg', 'Master of Science IoT')">
+            <span class="medal-text">MSc<br>IoT</span>
+          </div>
+          <div class="medal" data-title="Web/Mobile Manager" onclick="showDiplomaModal('webmaster.jpg', 'Web/Mobile Manager')">
+            <span class="medal-text">Web<br>Mobile</span>
+          </div>
+          <div class="medal" data-title="Unity Master" onclick="showDiplomaModal('placeholder-unity.jpg', 'Unity Master Certification')">
+            <span class="medal-text">Unity<br>Master</span>
+          </div>
+        </div>
+      </div>
       <h1 class="welcome-text">Thomas Menu</h1>
-      <p class="subtitle">Développeur & Designer Technique Freelance</p>
+      <p class="subtitle">Developer & Technical Designer Freelance</p>
       
       <div class="intro-content">
-        <p class="main-intro"><span class="emoji">⚡</span>Je transforme vos idées en prototypes interactifs et solutions techniques innovantes.</p>
+        <p class="main-intro"><span class="emoji">⚡</span>I transform your ideas into interactive prototypes and innovative technical solutions.</p>
         
-        <p class="description">Expertise en développement, design UX et technologies émergentes pour donner vie à vos projets les plus ambitieux.</p>
+        <p class="description">Expertise in development, UX design and emerging technologies to bring your most ambitious projects to life.</p>
       </div>
       
       <div class="feature-tags">
-        <div class="feature-tag" style="--delay: 0s">🚀 Prototypage Rapide</div>
-        <div class="feature-tag" style="--delay: 0.5s">🧠 IA & Automatisation</div>
-        <div class="feature-tag" style="--delay: 1s">🔍 Audit & Optimisation</div>
-        <div class="feature-tag" style="--delay: 1.5s">💡 Innovation Technique</div>
-        <div class="feature-tag" style="--delay: 2s">📞 Conseil Gratuit</div>
+        <div class="feature-tag" style="--delay: 0s">🚀 Rapid Prototyping</div>
+        <div class="feature-tag" style="--delay: 0.5s">🧠 AI & Automation</div>
+        <div class="feature-tag" style="--delay: 1s">🔍 Audit & Optimization</div>
+        <div class="feature-tag" style="--delay: 1.5s">💡 Technical Innovation</div>
+        <div class="feature-tag" style="--delay: 2s">📞 Free Consultation</div>
       </div>
       
       <div class="loading-section">
@@ -493,6 +709,15 @@
     <div class="bubble-container" id="bubbleContainer"></div>
   </div>
 
+  <!-- Diploma Modal -->
+  <div id="diplomaModal" class="diploma-modal" style="display: none;">
+    <div class="diploma-modal-content">
+      <span class="diploma-close" onclick="closeDiplomaModal()">&times;</span>
+      <img id="diplomaImage" src="" alt="Diploma" class="diploma-display">
+      <div id="diplomaTitle" class="diploma-title"></div>
+    </div>
+  </div>
+
   <!-- Transition Video -->
   <video id="transitionVideo" preload="auto" volume="0.7">
     <source src="./public/images/Spongebubble.webm" type="video/webm">
@@ -503,10 +728,10 @@
   
   <!-- Hex Info Display -->
   <div id="hexInfo" class="hex-info-display">
-    <div class="hex-title" id="hexTitle">Portfolio Thomas Menu</div>
+    <div class="hex-title" id="hexTitle">Thomas Menu Portfolio</div>
     <div class="hex-objects-count" id="hexObjectsCount">
       <span class="objects-icon">🗺️</span>
-      <span id="objectsRemaining">0</span> / <span id="objectsTotal">0</span> <span id="objectsText">zones explorées</span>
+      <span id="objectsRemaining">0</span> / <span id="objectsTotal">0</span> <span id="objectsText">areas explored</span>
     </div>
   </div>
   
@@ -861,6 +1086,40 @@
       }
       clearInterval(checkInterval);
     }, 10000);
+
+    // Diploma Modal Functions
+    function showDiplomaModal(imagePath, title) {
+      const modal = document.getElementById('diplomaModal');
+      const image = document.getElementById('diplomaImage');
+      const titleElement = document.getElementById('diplomaTitle');
+      
+      // Handle placeholder or missing images
+      if (imagePath.includes('placeholder')) {
+        image.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjBmMGYwIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxOCIgZmlsbD0iIzY2NiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPkNlcnRpZmljYXRpb24gQ29taW5nIFNvb24</dGV4dD48L3N2Zz4=';
+      } else {
+        image.src = 'public/images/' + imagePath;
+      }
+      
+      titleElement.textContent = title;
+      modal.style.display = 'flex';
+      
+      // Prevent event bubbling to avoid closing loading overlay
+      if (window.event) {
+        window.event.stopPropagation();
+      }
+    }
+
+    function closeDiplomaModal() {
+      const modal = document.getElementById('diplomaModal');
+      modal.style.display = 'none';
+    }
+
+    // Close modal when clicking outside the content
+    document.getElementById('diplomaModal').addEventListener('click', function(e) {
+      if (e.target === this) {
+        closeDiplomaModal();
+      }
+    });
   </script>
 </body>
 </html>

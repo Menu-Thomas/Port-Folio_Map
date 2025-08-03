@@ -259,7 +259,7 @@ function detectTouchDevice() {
     // Add mobile UI indicators
     const mobileInfo = document.createElement('div');
     mobileInfo.id = 'mobile-info';
-    mobileInfo.innerHTML = '👆 Glissez pour explorer • Tapez pour sélectionner';
+    mobileInfo.innerHTML = '👆 Swipe to explore • Tap to select';
     mobileInfo.style.cssText = `
       position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
       background: rgba(0,0,0,0.7); color: white; padding: 8px 16px;
@@ -417,7 +417,7 @@ class ErrorHandler {
       return true;
     } catch (error) {
       this.logError(error, 'WebGL Support Check');
-      this.showUserError('Votre navigateur ne supporte pas WebGL. Certaines fonctionnalités peuvent ne pas fonctionner.', true);
+      this.showUserError('Your browser does not support WebGL. Some features may not work properly.', true);
       return false;
     }
   }
@@ -751,20 +751,20 @@ const drawerThemes = {
 const hexNames = {
   'home': 'Home',
   'cv': 'Curriculum Vitae',
-  'projects': 'Zone Projets',
-  'contact': 'Zone Contact',
-  'bridge': 'Pont de Navigation',
-  'champ1': 'Champs Florissants',
-  'garage': 'Garage Technologique',
-  'forest1': 'Forêt Mystique',
-  'forest2': 'Forêt Enchantée',
-  'forest3': 'Forêt Ancienne',
-  'marais': 'Marais Tranquille',
-  'marais2': 'Marais Profond',
-  'desert1': 'Désert Doré',
-  'desert2': 'Dunes Sacrées',
-  'plain1': 'Plaines Verdoyantes',
-  'forge2': 'Forge du Créateur'
+  'projects': 'Projects Zone',
+  'contact': 'Contact Zone',
+  'bridge': 'Navigation Bridge',
+  'champ1': 'Flourishing Fields',
+  'garage': 'Technology Garage',
+  'forest1': 'Mystic Forest',
+  'forest2': 'Enchanted Forest',
+  'forest3': 'Ancient Forest',
+  'marais': 'Tranquil Marsh',
+  'marais2': 'Deep Marsh',
+  'desert1': 'Golden Desert',
+  'desert2': 'Sacred Dunes',
+  'plain1': 'Verdant Plains',
+  'forge2': 'Creator\'s Forge'
 };
 const objectsByHex = {
   'home': ['drawer1', 'drawer2', 'drawer3', 'drawer4', 'pc', 'trashTruck', 'convoyeur', 'desck'],
@@ -1248,8 +1248,8 @@ function updateHexInfo(hexType = null) {
     // Update icon and text for global view
     const objectsIcon = objectsCountElement.querySelector('.objects-icon');
     if (objectsIcon) objectsIcon.textContent = '🗺️';
-    if (objectsTextElement) objectsTextElement.textContent = 'zones explorées';
-    console.log(`Global Portfolio View: ${exploredHexes}/${totalHexesWithObjects} zones explorées (${hexesWithUnexplored.length} zones restantes)`);
+    if (objectsTextElement) objectsTextElement.textContent = 'areas explored';
+    console.log(`Global Portfolio View: ${exploredHexes}/${totalHexesWithObjects} areas explored (${hexesWithUnexplored.length} areas remaining)`);
   } else {
     // Specific hex view - show hex name and hex-specific objects
     const currentHex = hexType || currentActiveHexType;
@@ -1262,7 +1262,7 @@ function updateHexInfo(hexType = null) {
     // Update icon and text for hex view
     const objectsIcon = objectsCountElement.querySelector('.objects-icon');
     if (objectsIcon) objectsIcon.textContent = '🔍';
-    if (objectsTextElement) objectsTextElement.textContent = 'objets découverts';
+    if (objectsTextElement) objectsTextElement.textContent = 'objects discovered';
     console.log(`Hex Info Updated: ${hexDisplayName} - ${visitedObjects.length}/${totalObjects.length} objects discovered`);
   }
   // Add updating animation
@@ -3032,7 +3032,7 @@ window.addEventListener('click', (event) => {
   if (intersects.length > 0) {
     let object = intersects[0].object;
     while (object.parent && !hexObjects.includes(object) && !drawers.includes(object)) object = object.parent;
-    // Animation caméra pour hexagones classiques
+    // Camera animation for classic hexagons
     if (object.userData.q !== undefined && object.userData.r !== undefined) {
       currentActiveHexType = object.userData.type; // Update active type on 3D click
       updateHexInfo(currentActiveHexType); // Update hex info display
@@ -4092,9 +4092,9 @@ if (isMobileDevice) {
   Object.assign(navSidebar.style, baseNavStyles);
   navSidebar.style.width = CONFIG.NAVIGATION.SIDEBAR_WIDTH + 'px';
 }
-navSidebar.innerHTML = `<div style="font-size:1.3rem;margin-bottom:18px;font-weight:bold;">${isMobileDevice ? 'Navigation' : 'Zones à explorer'}</div><ul id="zoneNavList" style="list-style:none;padding:0;margin:0;width:100%;"></ul>`;
+navSidebar.innerHTML = `<div style="font-size:1.3rem;margin-bottom:18px;font-weight:bold;">${isMobileDevice ? 'Navigation' : 'Areas to explore'}</div><ul id="zoneNavList" style="list-style:none;padding:0;margin:0;width:100%;"></ul>`;
 document.body.appendChild(navSidebar);
-// Empêche le raycast de passer à travers la nav bar
+// Prevent raycast from passing through the nav bar
 navSidebar.addEventListener('pointerdown', e => e.stopPropagation());
 navSidebar.addEventListener('pointermove', e => e.stopPropagation());
 navSidebar.addEventListener('pointerup', e => e.stopPropagation());

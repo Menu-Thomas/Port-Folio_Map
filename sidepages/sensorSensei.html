@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sensor Sensei - Extension LoRa</title>
+  <title>Sensor Sensei - LoRa Extension</title>
   <link rel="icon" type="image/png" sizes="32x32" href="../public/favicon-32x32.png">
   
   <style>
@@ -184,27 +184,27 @@
 <body>
 <header>
   <h1>📡 Sensor Sensei</h1>
-  <p>Extension LoRa pour Sensor.Community</p>
+  <p>LoRa Extension for Sensor.Community</p>
 </header>
 
 <div class="main-container">
   <section>
     <div class="project-overview">
-      <h1>📡 Sensor Sensei - Extension LoRa pour Sensor.Community</h1>
-      <p><strong>Une extension du projet Sensor.Community utilisant la communication LoRa pour permettre le déploiement de capteurs environnementaux dans des zones sans WiFi direct.</strong></p>
+      <h1>📡 Sensor Sensei - LoRa Extension for Sensor.Community</h1>
+      <p><strong>An extension of the Sensor.Community project using LoRa communication to enable deployment of environmental sensors in areas without direct WiFi.</strong></p>
     </div>
 
     <div class="content-grid">
       <!-- Introduction -->
       <div class="card">
-        <h3><span class="icon">🌍</span> Concept du Projet</h3>
-        <p><strong>Sensor Sensei</strong> étend le projet <a href="https://sensor.community/en/" target="_blank">Sensor.Community</a> en permettant la communication LoRa entre capteurs et un nœud relais WiFi central.</p>
-        <p>Cette solution est idéale pour les déploiements dans des environnements distants ou distribués où le WiFi direct n'est pas disponible pour chaque nœud de capteur.</p>
+        <h3><span class="icon">🌍</span> Project Concept</h3>
+        <p><strong>Sensor Sensei</strong> extends the <a href="https://sensor.community/en/" target="_blank">Sensor.Community</a> project by enabling LoRa communication between sensors and a central WiFi relay node.</p>
+        <p>This solution is ideal for deployments in remote or distributed environments where direct WiFi is not available for each sensor node.</p>
       </div>
 
       <!-- Technologies -->
       <div class="card">
-        <h3><span class="icon">⚙️</span> Technologies Utilisées</h3>
+        <h3><span class="icon">⚙️</span> Technologies Used</h3>
         <div class="tech-stack">
           <span class="tech-tag">ESP32</span>
           <span class="tech-tag">LoRa 433MHz</span>
@@ -213,107 +213,107 @@
           <span class="tech-tag">HTTP API</span>
           <span class="tech-tag">Sensor.Community</span>
         </div>
-        <p style="margin-top: 1rem;">Architecture distribuée avec communication longue portée et intégration API.</p>
+        <p style="margin-top: 1rem;">Distributed architecture with long-range communication and API integration.</p>
       </div>
 
-      <!-- Fonctionnalités -->
+      <!-- Features -->
       <div class="card">
-        <h3><span class="icon">🚀</span> Fonctionnalités Clés</h3>
+        <h3><span class="icon">🚀</span> Key Features</h3>
         <ul>
-          <li>Collecte de <strong>température, humidité et niveaux sonores</strong></li>
-          <li>Communication <strong>LoRa (433 MHz)</strong> longue portée</li>
-          <li><strong>Nœud relais WiFi</strong> pour transmission API</li>
-          <li>Contrôles de santé via LoRa pour la fiabilité</li>
-          <li>Intégration transparente avec Sensor.Community</li>
+          <li>Collection of <strong>temperature, humidity and sound levels</strong></li>
+          <li><strong>LoRa (433 MHz)</strong> long-range communication</li>
+          <li><strong>WiFi relay node</strong> for API transmission</li>
+          <li>Health checks via LoRa for reliability</li>
+          <li>Seamless integration with Sensor.Community</li>
         </ul>
       </div>
 
       <!-- Architecture -->
       <div class="card">
-        <h3><span class="icon">🔧</span> Architecture Technique</h3>
+        <h3><span class="icon">🔧</span> Technical Architecture</h3>
         <ul>
-          <li><strong>Capteurs Clients :</strong> ESP32 + DHT11 + LoRa</li>
-          <li><strong>Serveur Relais :</strong> ESP32 + WiFi + LoRa</li>
-          <li><strong>Communication :</strong> Protocole LoRa 433MHz</li>
-          <li><strong>API :</strong> HTTP POST vers Sensor.Community</li>
-          <li><strong>Monitoring :</strong> Health checks automatiques</li>
+          <li><strong>Client Sensors:</strong> ESP32 + DHT11 + LoRa</li>
+          <li><strong>Relay Server:</strong> ESP32 + WiFi + LoRa</li>
+          <li><strong>Communication:</strong> LoRa 433MHz protocol</li>
+          <li><strong>API:</strong> HTTP POST to Sensor.Community</li>
+          <li><strong>Monitoring:</strong> Automatic health checks</li>
         </ul>
       </div>
     </div>
 
-    <!-- Méthodologie -->
+    <!-- Methodology -->
     <div class="card">
-      <h3><span class="icon">🔄</span> Méthodologie de Développement</h3>
+      <h3><span class="icon">🔄</span> Development Methodology</h3>
       <div class="content-grid">
         <div>
-          <h4>Phases de Développement</h4>
+          <h4>Development Phases</h4>
           <ol>
-            <li><strong>Setup Hardware :</strong> Configuration ESP32 dual</li>
-            <li><strong>Protocole LoRa :</strong> Développement communication</li>
-            <li><strong>Collecte Données :</strong> Intégration capteurs</li>
-            <li><strong>API Integration :</strong> Sensor.Community</li>
-            <li><strong>Tests Terrain :</strong> Validation fiabilité</li>
+            <li><strong>Hardware Setup:</strong> Dual ESP32 configuration</li>
+            <li><strong>LoRa Protocol:</strong> Communication development</li>
+            <li><strong>Data Collection:</strong> Sensor integration</li>
+            <li><strong>API Integration:</strong> Sensor.Community</li>
+            <li><strong>Field Testing:</strong> Reliability validation</li>
           </ol>
         </div>
         <div>
-          <h4>Défis Techniques</h4>
+          <h4>Technical Challenges</h4>
           <ul>
-            <li>Optimisation consommation énergétique</li>
-            <li>Fiabilité transmission LoRa</li>
-            <li>Gestion des erreurs réseau</li>
-            <li>Synchronisation des données</li>
-            <li>Portée et obstacles terrain</li>
+            <li>Energy consumption optimization</li>
+            <li>LoRa transmission reliability</li>
+            <li>Network error handling</li>
+            <li>Data synchronization</li>
+            <li>Range and terrain obstacles</li>
           </ul>
         </div>
       </div>
     </div>
 
-    <!-- Résultats et Impact -->
+    <!-- Results and Impact -->
     <div class="card">
-      <h3><span class="icon">🏆</span> Résultats et Applications</h3>
+      <h3><span class="icon">🏆</span> Results and Applications</h3>
       <div class="content-grid">
         <div>
-          <h4>Performances Système</h4>
+          <h4>System Performance</h4>
           <ul>
-            <li>Portée LoRa : jusqu'à 2km en zone dégagée</li>
-            <li>Autonomie : plusieurs mois sur batterie</li>
-            <li>Fiabilité transmission : > 95%</li>
-            <li>Intégration API transparente</li>
+            <li>LoRa range: up to 2km in open area</li>
+            <li>Battery life: several months</li>
+            <li>Transmission reliability: > 95%</li>
+            <li>Seamless API integration</li>
           </ul>
         </div>
         <div>
-          <h4>Applications Pratiques</h4>
+          <h4>Practical Applications</h4>
           <ul>
-            <li>Surveillance environnementale rurale</li>
-            <li>Déploiements urbains distribués</li>
-            <li>Monitoring qualité air distant</li>
-            <li>Réseaux de capteurs autonomes</li>
+            <li>Rural environmental monitoring</li>
+            <li>Distributed urban deployments</li>
+            <li>Remote air quality monitoring</li>
+            <li>Autonomous sensor networks</li>
           </ul>
         </div>
       </div>
-      <p><strong>Impact :</strong> Ce projet démontre l'extension réussie d'un réseau de capteurs communautaire existant, permettant des déploiements dans des zones précédemment inaccessibles et contribuant à la surveillance environnementale globale.</p>
+      <p><strong>Impact:</strong> This project demonstrates the successful extension of an existing community sensor network, enabling deployments in previously inaccessible areas and contributing to global environmental monitoring.</p>
     </div>
 
-    <!-- Évolutions Futures -->
+    <!-- Future Developments -->
     <div class="card">
-      <h3><span class="icon">🔮</span> Évolutions et Améliorations</h3>
+      <h3><span class="icon">🔮</span> Future Developments and Improvements</h3>
       <div class="content-grid">
         <div>
-          <h4>Extensions Techniques</h4>
+          <h4>Technical Extensions</h4>
           <ul>
-            <li>Support LoRaWAN pour plus grande échelle</li>
-            <li>Intégration panneaux solaires</li>
-            <li>Capteurs additionnels (PM2.5, CO2)</li>
-            <li>Chiffrement des données</li>
+            <li>LoRaWAN support for larger scale</li>
+            <li>Solar panel integration</li>
+            <li>Additional sensors (PM2.5, CO2)</li>
+            <li>Data encryption</li>
           </ul>
         </div>
         <div>
-          <h4>Fonctionnalités Avancées</h4>
+          <h4>Advanced Features</h4>
           <ul>
-            <li>Interface web de configuration</li>
-            <li>Alertes temps réel</li>
-            <li>Analytics et tendances</li>
-            <li>Géolocalisation automatique</li>
+            <li>Web configuration interface</li>
+            <li>Real-time alerts</li>
+            <li>Analytics and trends</li>
+            <li>Automatic geolocation</li>
           </ul>
         </div>
       </div>
@@ -322,7 +322,7 @@
 </div>
 
 <footer>
-  <p>Projet réalisé par Thomas Menu — IoT & Environmental Monitoring</p>
+  <p>Project realized by Thomas Menu — IoT & Environmental Monitoring</p>
 </footer>
 
 </body>

@@ -253,62 +253,62 @@
         
         <div class="form-fields">
           <label>
-            Nom
-            <input type="text" name="name" required placeholder="Votre nom">
+            Name
+            <input type="text" name="name" required placeholder="Your name">
           </label>
           <label>
             Email
-            <input type="email" name="email" required placeholder="Votre email">
+            <input type="email" name="email" required placeholder="Your email">
           </label>
           <label>
-            Sujet
-            <input type="text" name="subject" required placeholder="Sujet de votre message">
+            Subject
+            <input type="text" name="subject" required placeholder="Subject of your message">
           </label>
           <label class="message-field">
             Message
-            <textarea name="message" required placeholder="Votre message"></textarea>
+            <textarea name="message" required placeholder="Your message"></textarea>
           </label>
         </div>
-        <button type="submit">Envoyer le message</button>
+        <button type="submit">Send message</button>
       </form>
       
       <!-- Alternative form for non-Netlify hosting -->
       <form id="fallbackForm" style="display: none;" action="https://formspree.io/f/xrbzppzp" method="POST">
         <div class="form-fields">
           <label>
-            Nom
-            <input type="text" name="name" required placeholder="Votre nom">
+            Name
+            <input type="text" name="name" required placeholder="Your name">
           </label>
           <label>
             Email
-            <input type="email" name="email" required placeholder="Votre email">
+            <input type="email" name="email" required placeholder="Your email">
           </label>
           <label>
-            Sujet
-            <input type="text" name="subject" required placeholder="Sujet de votre message">
+            Subject
+            <input type="text" name="subject" required placeholder="Subject of your message">
           </label>
           <label class="message-field">
             Message
-            <textarea name="message" required placeholder="Votre message"></textarea>
+            <textarea name="message" required placeholder="Your message"></textarea>
           </label>
         </div>
-        <button type="submit">Envoyer le message</button>
+        <button type="submit">Send message</button>
       </form>
       
       <div id="successMessage" class="success-message">
-        ✓ Votre message a été envoyé avec succès ! Je vous répondrai rapidement.
+        ✓ Your message has been sent successfully! I will reply to you quickly.
       </div>
       <div id="errorMessage" class="error-message">
-        ✗ Erreur lors de l'envoi. Email direct : <a href="mailto:menu.techvision@gmail.com" style="color: #ffd4a3;">menu.techvision@gmail.com</a>
+        ✗ Error sending message. Direct email: <a href="mailto:menu.techvision@gmail.com" style="color: #ffd4a3;">menu.techvision@gmail.com</a>
       </div>
       
       <div class="platform-info" id="platformInfo">
-        Formulaire optimisé pour votre plateforme d'hébergement
+        Form optimized for your hosting platform
       </div>
     </div>
     <p class="footer-text">
-      Je vous répondrai rapidement !<br>
-      Email direct : <a href="mailto:menu.techvision@gmail.com" style="color: #ffd4a3; text-decoration: none;">menu.techvision@gmail.com</a>
+      I will reply to you quickly!<br>
+      Direct email: <a href="mailto:menu.techvision@gmail.com" style="color: #ffd4a3; text-decoration: none;">menu.techvision@gmail.com</a>
     </p>
   </div>
 
@@ -327,14 +327,14 @@
     if (isNetlify) {
       netlifyForm.style.display = 'flex';
       fallbackForm.style.display = 'none';
-      platformInfo.textContent = 'Formulaire Netlify - Envoi direct et sécurisé';
+      platformInfo.textContent = 'Netlify Form - Direct and secure sending';
       
       // Netlify form handling
       netlifyForm.addEventListener('submit', function(e) {
         const submitButton = this.querySelector('button[type="submit"]');
         const originalText = submitButton.textContent;
         
-        submitButton.textContent = 'Envoi en cours...';
+        submitButton.textContent = 'Sending...';
         submitButton.disabled = true;
         
         // Let Netlify handle the form submission
@@ -344,7 +344,7 @@
     } else {
       netlifyForm.style.display = 'none';
       fallbackForm.style.display = 'flex';
-      platformInfo.textContent = 'Formulaire Formspree - Compatible tous hébergeurs';
+      platformInfo.textContent = 'Formspree Form - Compatible with all hosts';
       
       // Fallback form handling
       fallbackForm.addEventListener('submit', async function(e) {
@@ -353,7 +353,7 @@
         const submitButton = this.querySelector('button[type="submit"]');
         const originalText = submitButton.textContent;
         
-        submitButton.textContent = 'Envoi en cours...';
+        submitButton.textContent = 'Sending...';
         submitButton.disabled = true;
         
         try {
@@ -387,8 +387,15 @@
     }
 
     function goBackToPortfolio() {
-      sessionStorage.setItem('returningFromContact', 'true');
-      window.location.href = '../index.html';
+      // Check if we're in an iframe (modal context)
+      if (window.parent !== window) {
+        // We're in an iframe, communicate with parent to close modal
+        window.parent.postMessage({ action: 'closeContactModal' }, '*');
+      } else {
+        // Standalone page, navigate normally
+        sessionStorage.setItem('returningFromContact', 'true');
+        window.location.href = '../index.html';
+      }
     }
   </script>
 </body>

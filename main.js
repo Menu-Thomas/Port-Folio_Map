@@ -3684,6 +3684,17 @@ function showContactModal() {
   content.appendChild(iframe);
   document.body.appendChild(modal);
 }
+
+// Listen for messages from iframe to close contact modal
+window.addEventListener('message', (event) => {
+  if (event.data && event.data.action === 'closeContactModal') {
+    const contactModal = document.getElementById('contactModal');
+    if (contactModal) {
+      contactModal.remove();
+    }
+  }
+});
+
 function showVirtualModal() {
   let existingModal = document.getElementById('virtualModal');
   if (existingModal) return; // Already open

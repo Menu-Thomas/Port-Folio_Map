@@ -3013,7 +3013,11 @@ window.addEventListener('click', (event) => {
   }
   // THIRD: Skip 3D interactions if any modal is open
   const existingModals = document.querySelectorAll('[id$="Modal"]');
-  if (existingModals.length > 0) {
+  const visibleModals = Array.from(existingModals).filter(modal => {
+    const style = window.getComputedStyle(modal);
+    return style.display !== 'none' && style.visibility !== 'hidden';
+  });
+  if (visibleModals.length > 0) {
     // Don't process 3D canvas clicks if any modal is open
     return false;
   }

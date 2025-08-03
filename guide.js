@@ -45,32 +45,32 @@ let guideState = {
 const guideSteps = [
   {
     id: 'welcome',
-    title: '🌟 Bienvenue sur mon île portfolio !',
-    message: 'Je suis votre guide virtuel ! Cette île hexagonale en 3D présente mon univers professionnel de manière interactive. Prêt pour une visite guidée ?',
+    title: '🌟 Welcome to my portfolio island!',
+    message: 'I am your virtual guide! This 3D hexagonal island presents my professional universe in an interactive way. Ready for a guided tour?',
     action: 'continue',
     position: 'bottom-right',
     showSkip: true
   },
   {
     id: 'overview',
-    title: '🗺️ Vue d\'ensemble',
-    message: 'Vous pouvez faire glisser la souris pour tourner autour de l\'île et découvrir les différentes zones thématiques. Chaque hexagone représente une section de mon portfolio.',
+    title: '🗺️ Overview',
+    message: 'You can drag the mouse to rotate around the island and discover the different thematic zones. Each hexagon represents a section of my portfolio.',
     action: 'continue',
     position: 'bottom-right',
     highlight: null
   },
   {
     id: 'navigation',
-    title: '🧭 Navigation facile',
-    message: 'Utilisez cette barre de navigation pour accéder rapidement aux différentes sections : Accueil, CV, Projets, Contact, et Conception.',
+    title: '🧭 Easy navigation',
+    message: 'Use this navigation bar to quickly access the different sections: Home, CV, Projects, Contact, and Design.',
     action: 'continue',
     position: 'left-center',
     highlight: '#zoneNavSidebar'
   },
   {
     id: 'hex_interaction',
-    title: '🎯 Cliquez sur les hexagones',
-    message: 'Cliquez sur n\'importe quel hexagone pour vous y rendre ! La caméra s\'animera automatiquement vers cette zone. Essayez de cliquer sur un hexagone maintenant.',
+    title: '🎯 Click on hexagons',
+    message: 'Click on any hexagon to go there! The camera will automatically animate to that zone. Try clicking on a hexagon now.',
     action: 'click_hex',
     position: 'center',
     highlight: null,
@@ -78,16 +78,16 @@ const guideSteps = [
   },
   {
     id: 'objects_intro',
-    title: '🔍 Objets interactifs',
-    message: 'Chaque zone contient des objets 3D interactifs ! Recherchez des éléments qui brillent ou qui bougent quand vous passez la souris dessus.',
+    title: '🔍 Interactive objects',
+    message: 'Each zone contains interactive 3D objects! Look for elements that shine or move when you hover over them.',
     action: 'continue',
     position: 'bottom-right',
     highlight: null
   },
   {
     id: 'hover_objects',
-    title: '✨ Survol pour découvrir',
-    message: 'Passez votre souris sur les objets pour voir des informations et des animations. Certains objets se soulèvent ou s\'illuminent !',
+    title: '✨ Hover to discover',
+    message: 'Hover your mouse over objects to see information and animations. Some objects lift up or light up!',
     action: 'hover_object',
     position: 'top-center',
     highlight: null,
@@ -95,8 +95,8 @@ const guideSteps = [
   },
   {
     id: 'click_objects',
-    title: '🖱️ Cliquez pour approfondir',
-    message: 'Cliquez sur les objets spéciaux pour ouvrir des modales détaillées avec mes projets, expériences et compétences. Essayez maintenant !',
+    title: '🖱️ Click to explore further',
+    message: 'Click on special objects to open detailed modals with my projects, experiences and skills. Try it now!',
     action: 'click_object',
     position: 'top-center',
     highlight: null,
@@ -104,16 +104,16 @@ const guideSteps = [
   },
   {
     id: 'scroll_tip',
-    title: '🔄 Astuce de navigation',
-    message: 'Utilisez la molette de la souris pour revenir à la vue d\'ensemble à tout moment. Très pratique pour explorer rapidement !',
+    title: '🔄 Navigation tip',
+    message: 'Use the mouse wheel to return to the overview at any time. Very convenient for quick exploration!',
     action: 'continue',
     position: 'bottom-right',
     highlight: null
   },
   {
     id: 'completion',
-    title: '🎉 Parfait !',
-    message: 'Vous maîtrisez maintenant les bases ! Explorez librement mon univers professionnel. Bonne découverte et n\'hésitez pas à me contacter !',
+    title: '🎉 Perfect!',
+    message: 'You now master the basics! Freely explore my professional universe. Have a good discovery and don\'t hesitate to contact me!',
     action: 'complete',
     position: 'center',
     highlight: null
@@ -386,7 +386,7 @@ function createHighlightOverlay(targetSelector) {
 function createSkipButton() {
   const skipBtn = document.createElement('button');
   skipBtn.id = 'guide-skip-button';
-  skipBtn.textContent = 'Passer le guide';
+  skipBtn.textContent = 'Skip guide';
   skipBtn.style.cssText = `
     position: fixed;
     top: 20px;
@@ -440,7 +440,7 @@ function createGuideToggleButton() {
   const toggleBtn = document.createElement('button');
   toggleBtn.id = 'guide-toggle';
   toggleBtn.innerHTML = '❓';
-  toggleBtn.title = 'Relancer le guide (clic droit pour réinitialiser)';
+  toggleBtn.title = 'Restart guide (right-click to reset)';
   toggleBtn.style.cssText = `
     position: fixed;
     top: 20px;
@@ -489,10 +489,10 @@ function createGuideToggleButton() {
     
     // Show confirmation
     toggleBtn.innerHTML = '✓';
-    toggleBtn.title = 'Préférences du guide réinitialisées - Clic gauche pour démarrer';
+    toggleBtn.title = 'Guide preferences reset - Left click to start';
     setTimeout(() => {
       toggleBtn.innerHTML = '❓';
-      toggleBtn.title = 'Relancer le guide (clic droit pour réinitialiser)';
+      toggleBtn.title = 'Restart guide (right-click to reset)';
     }, 2000);
   });
 
@@ -646,14 +646,14 @@ function updateBubbleContent(step) {
         </div>
         ${isInteractiveStep ? `
           <div style="margin-top: 10px; padding: 8px; background: rgba(255, 212, 163, 0.1); border-radius: 8px; font-size: 12px; color: #ffd4a3; border: 1px solid rgba(255, 212, 163, 0.2);">
-            💡 Interagissez avec l'élément pour continuer
+            💡 Interact with the element to continue
           </div>
         ` : ''}
       </div>
     </div>
     <div style="display: flex; justify-content: space-between; align-items: center;">
       <div style="font-size: 12px; color: #aaa;">
-        Étape ${guideState.currentStep + 1} sur ${guideSteps.length}
+        Step ${guideState.currentStep + 1} of ${guideSteps.length}
       </div>
       <div>
         ${showNextButton ? 
@@ -666,7 +666,7 @@ function updateBubbleContent(step) {
             cursor: pointer;
             font-weight: bold;
             transition: all 0.2s ease;
-          ">Suivant</button>` : ''
+          ">Next</button>` : ''
         }
         ${isCompleteStep ? 
           `<button id="guide-complete-btn" style="
@@ -678,7 +678,7 @@ function updateBubbleContent(step) {
             cursor: pointer;
             font-weight: bold;
             transition: all 0.2s ease;
-          ">Terminer</button>` : ''
+          ">Finish</button>` : ''
         }
       </div>
     </div>

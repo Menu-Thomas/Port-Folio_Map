@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Arduino & IoT Development - Tool Mastery</title>
+  <style>
+    .arduino-bg { background: linear-gradient(135deg, #00979c 0%, #005f73 100%); color: #fff; font-family: 'Segoe UI', sans-serif; padding: 2rem; border-radius: 20px; }
+    .arduino-title { color: #ffffff; font-size: 1.8rem; margin-bottom: 0.5em; display: flex; align-items: center; gap: 0.5rem; }
+    .arduino-logo { width: 40px; height: 40px; background: linear-gradient(45deg, #00979c, #0d7377); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: bold; }
+    .arduino-section { background-color: rgba(255,255,255,0.95); padding: 2rem; border-radius: 20px; box-shadow: 0 8px 32px rgba(0,0,0,0.1); backdrop-filter: blur(10px); color: #333; }
+    .arduino-ul { padding-left: 1.5rem; margin-bottom: 1rem; }
+    .arduino-skills { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 1rem; }
+    .skill-tag { background: linear-gradient(45deg, #00979c, #0d7377); color: white; padding: 0.3rem 0.8rem; border-radius: 15px; font-size: 0.9rem; font-weight: 500; }
+    .projects-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem; }
+    .project-card { background: rgba(0,0,0,0.05); padding: 1rem; border-radius: 10px; border-left: 4px solid #00979c; }
+    .mastery-level { background: linear-gradient(90deg, #00979c, #0d7377); height: 8px; border-radius: 4px; margin-top: 0.5rem; }
+    .code-snippet { background: #f5f5f5; padding: 1rem; border-radius: 8px; font-family: 'Courier New', monospace; font-size: 0.9rem; margin-top: 1rem; }
+  </style>
+</head>
+<body>
+  <div>
+    <div class="arduino-bg">
+      <div class="arduino-title">
+        <div class="arduino-logo">A</div>
+        Arduino & IoT Development - Expert Level
+      </div>
+      <div class="arduino-section">
+        <p><strong>4+ years of Arduino and IoT development</strong> - Creating smart systems with sensor integration and real-time data processing.</p>
+        
+        <h3>🎯 Core Expertise</h3>
+        <ul class="arduino-ul">
+          <li><strong>Microcontroller Programming:</strong> Arduino UNO/Nano/ESP32, efficient C++ code</li>
+          <li><strong>Sensor Integration:</strong> Temperature, humidity, motion, light, pressure sensors</li>
+          <li><strong>Communication Protocols:</strong> WiFi, Bluetooth, I2C, SPI, Serial communication</li>
+          <li><strong>IoT Ecosystems:</strong> MQTT, HTTP APIs, cloud integration, data visualization</li>
+          <li><strong>Hardware Design:</strong> Circuit design, breadboarding, PCB prototyping</li>
+          <li><strong>Real-time Systems:</strong> Interrupt handling, timing-critical applications</li>
+        </ul>
+
+        <h3>🚀 IoT Projects</h3>
+        <div class="projects-grid">
+          <div class="project-card">
+            <h4>Smart Home Automation</h4>
+            <p>Arduino-based home monitoring with temperature, humidity, and motion sensors connected to web dashboard</p>
+          </div>
+          <div class="project-card">
+            <h4>Environmental Monitoring</h4>
+            <p>Multi-sensor networks for air quality monitoring with real-time data transmission</p>
+          </div>
+          <div class="project-card">
+            <h4>Industrial Sensors</h4>
+            <p>Custom sensor solutions for manufacturing and quality control applications</p>
+          </div>
+          <div class="project-card">
+            <h4>IoT Data Visualization</h4>
+            <p>Three.js integration for 3D visualization of sensor data and network topology</p>
+          </div>
+        </div>
+
+        <h3>🛠️ Technical Skills</h3>
+        <div class="arduino-skills">
+          <span class="skill-tag">Arduino IDE</span>
+          <span class="skill-tag">C/C++</span>
+          <span class="skill-tag">ESP32/ESP8266</span>
+          <span class="skill-tag">Sensor Networks</span>
+          <span class="skill-tag">MQTT Protocol</span>
+          <span class="skill-tag">WiFi/Bluetooth</span>
+          <span class="skill-tag">Circuit Design</span>
+          <span class="skill-tag">Data Logging</span>
+          <span class="skill-tag">Real-time Systems</span>
+          <span class="skill-tag">IoT Architecture</span>
+        </div>
+
+        <h3>💻 Code Example</h3>
+        <div class="code-snippet">
+// Arduino sensor reading with WiFi transmission<br>
+#include &lt;WiFi.h&gt;<br>
+#include &lt;DHT.h&gt;<br><br>
+DHT dht(2, DHT22);<br>
+void setup() {<br>
+&nbsp;&nbsp;Serial.begin(115200);<br>
+&nbsp;&nbsp;dht.begin();<br>
+&nbsp;&nbsp;WiFi.begin(ssid, password);<br>
+}
+        </div>
+
+        <h3>📈 Mastery Level</h3>
+        <p>Senior IoT Developer - Complex sensor networks and embedded system integration</p>
+        <div class="mastery-level"></div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

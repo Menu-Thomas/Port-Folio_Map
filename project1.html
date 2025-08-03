@@ -3,29 +3,58 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Virtual Replica</title>
+  <title>Unity Engine - Expert</title>
   <style>
-    .vr-bg { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #fff; font-family: 'Segoe UI', sans-serif; padding: 2rem; border-radius: 20px; }
-    .vr-title { color: #4a90e2; font-size:1.5rem; margin-bottom: 0.5em; }
-    .vr-section { background-color: rgba(255,255,255,0.95); padding: 2rem; border-radius: 20px; box-shadow: 0 8px 32px rgba(0,0,0,0.1); backdrop-filter: blur(10px); color: #333; }
-    .vr-ul { padding-left: 1.5rem; }
+    .unity-bg { background: linear-gradient(135deg, #1f1f1f 0%, #2d2d30 100%); color: #fff; font-family: 'Segoe UI', sans-serif; padding: 1.5rem; border-radius: 15px; }
+    .unity-title { color: #ffffff; font-size: 1.6rem; margin-bottom: 0.8rem; display: flex; align-items: center; gap: 0.5rem; }
+    .unity-logo { width: 35px; height: 35px; background: linear-gradient(45deg, #ff6b35, #f7931e); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: bold; }
+    .unity-section { background-color: rgba(255,255,255,0.95); padding: 1.5rem; border-radius: 15px; color: #333; }
+    .skills { display: flex; flex-wrap: wrap; gap: 0.4rem; margin: 1rem 0; }
+    .skill { background: linear-gradient(45deg, #ff6b35, #f7931e); color: white; padding: 0.2rem 0.6rem; border-radius: 12px; font-size: 0.8rem; }
+    .projects { display: grid; grid-template-columns: 1fr 1fr; gap: 0.8rem; margin-top: 1rem; }
+    .project { background: rgba(0,0,0,0.05); padding: 0.8rem; border-radius: 8px; border-left: 3px solid #ff6b35; }
+    .project h4 { margin: 0 0 0.3rem 0; font-size: 0.9rem; }
+    .project p { margin: 0; font-size: 0.8rem; color: #666; }
   </style>
 </head>
 <body>
   <div>
-    <div class="vr-bg" >
-      <div class="vr-title">Virtual Replica</div>
-      <div class="vr-section">
-        <p>Simulateur automobile immersif pour tester des prototypes.</p>
-        <ul class="vr-ul">
-          <li>Environnement réaliste avec données GPS (OpenStreetMap)</li>
-          <li>Contrôle via volant/pédales ou automatique</li>
-          <li>Intégration d'interfaces GUI/UX</li>
-          <li>Connexion avec le serveur (fichiers JSON)</li>
-          <li>Optimisé pour 30 FPS sur PC portable</li>
-        </ul>
+    <div class="unity-bg">
+      <div class="unity-title">
+        <div class="unity-logo">U</div>
+        Unity Engine - 5+ Years
+      </div>
+      <div class="unity-section">
+        <p><strong>VR/AR Development & 3D Simulations</strong></p>
+        
+        <div class="skills">
+          <span class="skill">C# Scripting</span>
+          <span class="skill">Meta Quest SDK</span>
+          <span class="skill">AR Foundation</span>
+          <span class="skill">Physics Systems</span>
+          <span class="skill">3D Animation</span>
+          <span class="skill">Performance Optimization</span>
+        </div>
+
+        <div class="projects">
+          <div class="project">
+            <h4>CES 2023 Car Simulator</h4>
+            <p>VR automotive cockpit with real-time controls</p>
+          </div>
+          <div class="project">
+            <h4>Smart City AR</h4>
+            <p>IoT visualization with Arduino integration</p>
+          </div>
+          <div class="project">
+            <h4>Wall-E VR Controller</h4>
+            <p>Interactive VR experience for Meta Quest</p>
+          </div>
+          <div class="project">
+            <h4>Medical 3D App</h4>
+            <p>3D anatomy visualization for tablets</p>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 </body>
-</html>

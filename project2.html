@@ -3,26 +3,57 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Forvia Cockpit</title>
+  <title>Three.js - Expert</title>
   <style>
-    .fc-bg { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #fff; font-family: 'Segoe UI', sans-serif; padding: 2rem; }
-    .fc-title { color: #4a90e2; font-size:1.5rem; margin-bottom: 0.5em; }
-    .fc-section { background-color: rgba(255,255,255,0.95); padding: 2rem; border-radius: 20px; box-shadow: 0 8px 32px rgba(0,0,0,0.1); backdrop-filter: blur(10px); color: #333; }
-    .fc-ul { padding-left: 1.5rem; }
+    .threejs-bg { background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%); color: #fff; font-family: 'Segoe UI', sans-serif; padding: 1.5rem; border-radius: 15px; }
+    .threejs-title { color: #ffffff; font-size: 1.6rem; margin-bottom: 0.8rem; display: flex; align-items: center; gap: 0.5rem; }
+    .threejs-logo { width: 35px; height: 35px; background: linear-gradient(45deg, #049ef4, #00d4ff); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: bold; }
+    .threejs-section { background-color: rgba(255,255,255,0.95); padding: 1.5rem; border-radius: 15px; color: #333; }
+    .skills { display: flex; flex-wrap: wrap; gap: 0.4rem; margin: 1rem 0; }
+    .skill { background: linear-gradient(45deg, #049ef4, #00d4ff); color: white; padding: 0.2rem 0.6rem; border-radius: 12px; font-size: 0.8rem; }
+    .projects { display: grid; grid-template-columns: 1fr 1fr; gap: 0.8rem; margin-top: 1rem; }
+    .project { background: rgba(0,0,0,0.05); padding: 0.8rem; border-radius: 8px; border-left: 3px solid #049ef4; }
+    .project h4 { margin: 0 0 0.3rem 0; font-size: 0.9rem; }
+    .project p { margin: 0; font-size: 0.8rem; color: #666; }
   </style>
 </head>
 <body>
   <div>
-    <div class="fc-bg">
-      <div class="fc-title">Forvia Cockpit</div>
-      <div class="fc-section">
-        <p>Prototype interactif présenté au CES 2023.</p>
-        <ul class="fc-ul">
-          <li>Habitacle virtuel avec GUI intégrées</li>
-          <li>Sièges motorisés contrôlés par scénarios</li>
-          <li>Contrôle centralisé depuis le serveur EPICNPOC</li>
-          <li>Validé en conditions réelles</li>
-        </ul>
+    <div class="threejs-bg">
+      <div class="threejs-title">
+        <div class="threejs-logo">3</div>
+        Three.js & WebGL - 3+ Years
+      </div>
+      <div class="threejs-section">
+        <p><strong>Complex 3D Web Experiences</strong></p>
+        
+        <div class="skills">
+          <span class="skill">3D Scene Management</span>
+          <span class="skill">WebGL Shaders</span>
+          <span class="skill">GSAP Animation</span>
+          <span class="skill">Raycasting</span>
+          <span class="skill">Asset Loading</span>
+          <span class="skill">Performance Tuning</span>
+        </div>
+
+        <div class="projects">
+          <div class="project">
+            <h4>Interactive 3D Portfolio</h4>
+            <p>This website! Hexagonal world with ocean simulation</p>
+          </div>
+          <div class="project">
+            <h4>3D Product Configurators</h4>
+            <p>Real-time customization and visualization</p>
+          </div>
+          <div class="project">
+            <h4>IoT Data Visualization</h4>
+            <p>3D charts and interactive dashboards</p>
+          </div>
+          <div class="project">
+            <h4>WebXR Applications</h4>
+            <p>VR/AR experiences in browsers</p>
+          </div>
+        </div>
       </div>
     </div>
   </div>

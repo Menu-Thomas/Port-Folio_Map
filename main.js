@@ -603,7 +603,7 @@ const unreadDrawers = new Set([
   'drawer1', 'drawer2', 'drawer3', 'drawer4',
   'steering', 'forge', 'mail-box', 'trashTruck', 'convoyeur', 'sensorSensei', 'medical', 'forviaCAR',
   'pc', 'desck', // Added missing home objects
-  // Individual skillFlowers for CV theme badges
+  // Individual skillFlowers for Skills theme badges
   'skillFlower1', 'skillFlower2', 'skillFlower3', 'skillFlower4', 'skillFlower5',
   'skillFlower6', 'skillFlower7', 'skillFlower8', 'skillFlower9'
 ]);
@@ -746,12 +746,12 @@ const drawerThemes = {
   'medical': 'garage',
   'forviaCAR': 'garage',
   'desck': 'home',
-  'skillFlower': 'cv' // All skillFlowers belong to CV theme
+  'skillFlower': 'skills' // All skillFlowers belong to Skills theme
 };
 const hexNames = {
   'home': 'Home',
-  'cv': 'Curriculum Vitae',
-  'projects': 'Projects Zone',
+  'skills': 'Skills',
+  'projects': 'Eco Projects',
   'contact': 'Contact Zone',
   'bridge': 'Navigation Bridge',
   'champ1': 'Flourishing Fields',
@@ -764,11 +764,11 @@ const hexNames = {
   'desert1': 'Golden Desert',
   'desert2': 'Sacred Dunes',
   'plain1': 'Verdant Plains',
-  'forge2': 'Creator\'s Forge'
+  'forge2': 'Industrial Experience'
 };
 const objectsByHex = {
   'home': ['drawer1', 'drawer2', 'drawer3', 'drawer4', 'pc', 'trashTruck', 'convoyeur', 'desck'],
-  'cv': [], // SkillFlowers are dynamic based on theme
+  'skills': [], // SkillFlowers are dynamic based on theme
   'projects': ['sensorSensei'],
   'contact': ['mail-box'],
   'bridge': [],
@@ -880,7 +880,7 @@ setupLighting();
 scene.fog = new THREE.Fog(CONFIG.SCENE.FOG_COLOR, CONFIG.SCENE.FOG_NEAR, CONFIG.SCENE.FOG_FAR);
 const hexMap = [
   { q: 0, r: 0, type: 'home', cameraPos: { x: 0.5, y: 0.08, z: 0} },
-  { q: 1, r: 0, type: 'cv', cameraPos: { x: 2.45, y: 0.5, z: 0.5 } },
+  { q: 1, r: 0, type: 'skills', cameraPos: { x: 2.45, y: 0.5, z: 0.5 } },
   { q: 0, r: 1, type: 'projects', cameraPos: { x: 1.2, y: 1.0, z: 2.2 } },
   { q: 2, r: 2, type: 'contact', cameraPos: { x: 5.2, y: 0.8, z: 4.5 } },
   { q: 1, r: 2, type: 'bridge', cameraPos: { x: -1.5, y: 0.5, z: 0.4 } },
@@ -907,19 +907,25 @@ const hexMap = [
 const loader = new GLTFLoader();
 const hexObjects = [];
 // Load hex objects with error handling
+// Hex file mapping for renamed types
+const hexFileMapping = {
+  'skills': 'cv' // skills theme uses the cv hex model
+};
+
 let loadedHexCount = 0;
 const totalHexCount = hexMap.length;
 // Register hex assets for loading tracking
 hexMap.forEach(() => incrementTotalAssets());
 hexMap.forEach(({ q, r, type }) => {
   const { x, z } = hexToWorld(q, r);
+  const hexFileName = hexFileMapping[type] || type; // Use mapping if available
   ErrorHandler.handleAsyncError(
     new Promise((resolve, reject) => {
       loader.load(
-        `./public/models/Hex-${type}.glb`,
+        `./public/models/Hex-${hexFileName}.glb`,
         (gltf) => {
           try {
-            processGLBMaterials(gltf, `Hex-${type}.glb`);
+            processGLBMaterials(gltf, `Hex-${hexFileName}.glb`);
             const hex = gltf.scene;
             hex.position.set(x, 0, z);
             hex.scale.set(1, 1, 1);
@@ -942,12 +948,12 @@ hexMap.forEach(({ q, r, type }) => {
           console.log(`Loading ${type}: ${percent.toFixed(1)}%`);
         },
         (error) => {
-          console.error(`Failed to load Hex-${type}.glb:`, error);
+          console.error(`Failed to load Hex-${hexFileName}.glb:`, error);
           // Create fallback hex geometry
           const fallbackGeometry = new THREE.CylinderGeometry(0.8, 0.8, 0.1, 6);
           const fallbackMaterial = new THREE.MeshStandardMaterial({
             color: type === 'home' ? 0x4a9eff :
-                   type === 'cv' ? 0x9c27b0 :
+                   type === 'skills' ? 0x9c27b0 :
                    type === 'projects' ? 0xff9800 :
                    type === 'contact' ? 0x4caf50 :
                    type.includes('forge') ? 0xff5722 : 0x607d8b
@@ -1055,9 +1061,9 @@ function getUnreadCountForTheme(themeId) {
   let count = 0;
   unreadDrawers.forEach(drawer => {
     let drawerTheme = drawerThemes[drawer];
-    // Handle skillFlowers - they all belong to CV theme
+    // Handle skillFlowers - they all belong to Skills theme
     if (drawer.startsWith('skillFlower')) {
-      drawerTheme = 'cv';
+      drawerTheme = 'skills';
     }
     if (drawerTheme === themeId) {
       count++;
@@ -1066,7 +1072,7 @@ function getUnreadCountForTheme(themeId) {
   return count;
 }
 function updateThemeUnreadBadges() {
-  const themes = ['home', 'garage', 'forge', 'contact', 'projects', 'cv'];
+  const themes = ['home', 'garage', 'forge', 'contact', 'projects', 'skills'];
   themes.forEach(themeId => {
     const count = getUnreadCountForTheme(themeId);
     const badge = document.getElementById(`unread-badge-${themeId}`);
@@ -1090,9 +1096,9 @@ function isDrawerClickableAtCurrentLocation(drawerType) {
   const currentTheme = getCurrentHexTheme(currentActiveHexType);
   // Get the theme required for this drawer
   let drawerTheme = drawerThemes[drawerType];
-  // Handle skillFlowers - they all belong to CV theme
+  // Handle skillFlowers - they all belong to Skills theme
   if (drawerType.startsWith('skillFlower')) {
-    drawerTheme = 'cv';
+    drawerTheme = 'skills';
   }
   if (!isProduction) {
     console.log(`Drawer ${drawerType}: currentActiveHexType="${currentActiveHexType}", currentTheme="${currentTheme}", drawerTheme="${drawerTheme}"`);
@@ -1108,7 +1114,7 @@ function getCurrentHexTheme(hexType) {
   // Define which hex types belong to which themes
   const hexThemes = {
     'home': 'home',
-    'cv': 'cv',
+    'skills': 'skills',
     'projects': 'projects',
     'contact': 'contact',
     'bridge': 'home',
@@ -1180,8 +1186,8 @@ function getHexDisplayName(hexType) {
 }
 function getObjectsForHex(hexType) {
   let objects = [...(objectsByHex[hexType] || [])];
-  // Add skill flowers if on CV hex
-  if (getCurrentHexTheme(hexType) === 'cv') {
+  // Add skill flowers if on Skills hex
+  if (getCurrentHexTheme(hexType) === 'skills') {
     // Add all 9 skill flowers directly
     const allSkillFlowers = [
       'skillFlower1', 'skillFlower2', 'skillFlower3', 'skillFlower4', 'skillFlower5',
@@ -2565,17 +2571,17 @@ function createFallbackEnvironment() {
 // Start loading environment textures
 loadEnvironmentTexture(envTexturePaths);
 function generateSkillFlowersGrid() {
-  const cvHex = hexMap.find(hex => hex.type === 'cv');
-  if (!cvHex) {
-    console.error('CV hex not found');
+  const skillsHex = hexMap.find(hex => hex.type === 'skills');
+  if (!skillsHex) {
+    console.error('Skills hex not found');
     return;
   }
-  const cvWorldPos = hexToWorld(cvHex.q, cvHex.r);
+  const skillsWorldPos = hexToWorld(skillsHex.q, skillsHex.r);
   const gridSpacing = { x: 0.2, z: 0.27 }; // Grid dimensions reduced by half
   const collisionBoxYOffset = -0.1; // Configurable Y offset for collision boxes (negative = lower)
-  // 3x3 grid positions (center at 0,0 relative to CV hex)
+  // 3x3 grid positions (center at 0,0 relative to Skills hex)
   // NOTE: The coordinate system is relative to the camera's viewing angle
-  // From the user's perspective when looking at the CV hex:
+  // From the user's perspective when looking at the Skills hex:
   // - Negative Z is "forward" (top row)
   // - Positive Z is "backward" (bottom row)
   // - Negative X is "left"
@@ -2593,7 +2599,7 @@ function generateSkillFlowersGrid() {
   ];
   if (!isProduction) {
     console.log('=== SkillFlower Grid Debug ===');
-    console.log('CV hex world position:', cvWorldPos);
+    console.log('Skills hex world position:', skillsWorldPos);
     console.log('Grid spacing:', gridSpacing);
   }
   // Load skillFlower model and create 9 instances
@@ -2602,9 +2608,9 @@ function generateSkillFlowersGrid() {
     incrementTotalAssets(); // Register for loading tracking
     // Calculate final world position
     const finalWorldPos = {
-      x: cvWorldPos.x + gridPos.x,
+      x: skillsWorldPos.x + gridPos.x,
       y: 0,
-      z: cvWorldPos.z + gridPos.z
+      z: skillsWorldPos.z + gridPos.z
     };
     const expectedFlower = languageFlowerData[index];
     console.log(`SkillFlower ${index}: Grid(${gridPos.x.toFixed(2)}, ${gridPos.z.toFixed(2)}) -> World(${finalWorldPos.x.toFixed(2)}, ${finalWorldPos.z.toFixed(2)}) -> ${expectedFlower?.displayName} (${expectedFlower?.name})`);

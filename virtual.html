@@ -3,9 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Virtual Paris Replica - VR Project</title>
-  <link rel="icon" type="image/png" sizes="32x32" href="./public/favicon-32x32.png">
-  
+  <title>Virtual Replica - Realistic Automotive Simulator</title>
   <style>
     * {
       margin: 0;
@@ -14,66 +12,37 @@
     }
 
     body {
-      font-family: 'Arial', sans-serif;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      line-height: 1.6;
+      color: #333;
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       min-height: 100vh;
-      color: #333;
-      display: flex;
-      flex-direction: column;
+      overflow-x: hidden;
     }
 
-    header {
-      background: rgba(255, 255, 255, 0.1);
-      backdrop-filter: blur(10px);
-      text-align: center;
-      padding: 2rem 1rem;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-    }
-
-    header h1 {
-      color: white;
-      font-size: 2.5rem;
-      margin-bottom: 0.5rem;
-      text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
-    }
-
-    header p {
-      color: rgba(255, 255, 255, 0.9);
-      font-size: 1.1rem;
-      font-weight: 300;
-    }
-
-    .main-container {
-      flex: 1;
-      overflow-y: auto;
-      scrollbar-width: thin;
-      scrollbar-color: #4a90e2 rgba(255, 255, 255, 0.1);
-    }
-
-    .main-container::-webkit-scrollbar {
-      width: 8px;
-    }
-
-    .main-container::-webkit-scrollbar-track {
-      background: rgba(255, 255, 255, 0.1);
-      border-radius: 4px;
-    }
-
-    .main-container::-webkit-scrollbar-thumb {
-      background: #4a90e2;
-      border-radius: 4px;
-      border: 2px solid rgba(255, 255, 255, 0.1);
-    }
-    
-    .main-container::-webkit-scrollbar-thumb:hover {
-      background: #357abd;
-    }
-
-    section {
+    .container {
       max-width: 1200px;
       margin: 0 auto;
       padding: 2rem;
-      color: #333;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 3rem;
+      color: white;
+    }
+
+    .title {
+      font-size: 2.5rem;
+      margin-bottom: 0.5rem;
+      font-weight: 700;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+    }
+
+    .subtitle {
+      font-size: 1.2rem;
+      opacity: 0.9;
+      margin-bottom: 1rem;
     }
 
     .project-overview {
@@ -100,7 +69,6 @@
       backdrop-filter: blur(10px);
       border: 1px solid rgba(255, 255, 255, 0.2);
       transition: transform 0.3s ease, box-shadow 0.3s ease;
-      margin: 1rem 0;
     }
 
     .card:hover {
@@ -126,7 +94,7 @@
       color: #555;
     }
 
-    .card ul, .card ol {
+    .card ul {
       margin-left: 1rem;
     }
 
@@ -146,245 +114,203 @@
       font-weight: 500;
     }
 
-    h2 {
-      color: #4a90e2;
-      margin-top: 1.8rem;
-      margin-bottom: 0.8rem;
-      font-size: 1.25rem;
-    }
-
-    ul, ol {
-      padding-left: 1.3rem;
-      margin-top: 0.5rem;
-      margin-bottom: 1.2rem;
-    }
-
-    li {
-      margin-bottom: 0.5rem;
-    }
-
-    footer {
-      background-color: #783a4d;
-      color: white;
-      text-align: center;
-      padding: 1rem 0;
-      font-size: 0.9rem;
-      flex-shrink: 0;
-    }
-    
-    /* Styles pour la galerie de photos */
-    .gallery {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-      gap: 1rem;
-      margin: 1.5rem 0;
-    }
-    
-    .gallery img {
-      width: 100%;
-      height: 200px;
-      object-fit: cover;
+    .highlight {
+      background: linear-gradient(120deg, #a8edea 0%, #fed6e3 100%);
+      border-left: 4px solid #4a90e2;
+      padding: 1rem;
       border-radius: 8px;
-      cursor: pointer;
-      transition: transform 0.3s ease;
-    }
-    
-    .gallery img:hover {
-      transform: scale(1.05);
+      margin: 1rem 0;
     }
 
-    /* Modal pour les images */
-    .modal {
-      display: none;
-      position: fixed;
-      z-index: 1000;
-      left: 0;
-      top: 0;
-      width: 100%;
-      height: 100%;
-      background-color: rgba(0,0,0,0.9);
+    .results {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border-radius: 15px;
+      padding: 2rem;
+      margin-top: 2rem;
+      text-align: center;
     }
 
-    .modal-content {
-      margin: auto;
-      display: block;
-      width: 80%;
-      max-width: 700px;
-      max-height: 80%;
-      object-fit: contain;
+    .results h3 {
+      font-size: 1.8rem;
+      margin-bottom: 1rem;
     }
 
-    .close {
-      position: absolute;
-      top: 15px;
-      right: 35px;
-      color: #f1f1f1;
-      font-size: 40px;
-      font-weight: bold;
-      cursor: pointer;
+    .achievement {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
+      padding: 1rem;
+      margin: 1rem 0;
+      border: 1px solid rgba(255, 255, 255, 0.2);
     }
 
-    .close:hover,
-    .close:focus {
-      color: #bbb;
-      text-decoration: none;
-      cursor: pointer;
+    .image-placeholder {
+      background: linear-gradient(45deg, #f0f0f0, #e0e0e0);
+      border-radius: 10px;
+      padding: 2rem;
+      text-align: center;
+      color: #666;
+      border: 2px dashed #ccc;
+      margin: 1rem 0;
     }
 
-    /* Responsive */
     @media (max-width: 768px) {
+      .title {
+        font-size: 2rem;
+      }
+      
+      .container {
+        padding: 1rem;
+      }
+      
       .content-grid {
         grid-template-columns: 1fr;
         gap: 1rem;
       }
-      
-      header h1 {
-        font-size: 2rem;
-      }
-      
-      section {
-        padding: 1rem;
-      }
-      
-      .gallery {
-        grid-template-columns: 1fr;
-      }
     }
   </style>
 </head>
-
 <body>
-<header>
-  <h1>�️ Virtual Paris Replica</h1>
-  <p>Immersive VR representation of downtown Paris</p>
-</header>
+  <div class="container">
+    <div class="header">
+      <h1 class="title">🚗 Virtual Replica</h1>
+      <p class="subtitle">Realistic automotive simulator with cockpit and interactive GUI</p>
+      <p><strong>Project completed for EPICNPOC prototyping services</strong></p>
+    </div>
 
-<div class="main-container">
-  <section>
     <div class="project-overview">
-      <h1>�️ Virtual Paris Replica - Interactive Urban Environment</h1>
-      <p><strong>A detailed virtual reconstruction of 1km² section of downtown Paris using OpenStreetMap data and real urban structures, creating an immersive VR experience of authentic Parisian architecture and city layout.</strong></p>
+      <h2>📋 Project Overview</h2>
+      <p>Virtual Replica is an automotive simulator designed to visualize and test prototypes and user experiences for EPICNPOC projects in advance. This simulator, designed as a key feature, enables immersive visualization of technological innovations, effectively preparing concepts for trade show presentations.</p>
+      
+      <div class="highlight">
+        <strong>Context:</strong> The realistic and modular automotive simulator was part of the third stage of the company's prototyping chain, according to the description on the EPICNPOC Prototyping Services website.
+      </div>
     </div>
 
     <div class="content-grid">
-      <!-- Objectives -->
       <div class="card">
-        <h3><span class="icon">🎯</span> Objectives</h3>
+        <h3><span class="icon">🎯</span>Project Objectives</h3>
         <ul>
-          <li>Create an accurate virtual replica of downtown Paris (1km² area)</li>
-          <li>Develop an immersive virtual reality urban experience</li>
-          <li>Master advanced 3D modeling tools</li>
-          <li>Optimize performance for real-time rendering</li>
-          <li>Integrate natural interactions</li>
+          <li>Create a virtual replica of the car cockpit for interface project presentations</li>
+          <li>Develop environments based on real roads using authentic GPS data</li>
+          <li>Integrate automatic and manual driving via Logitech steering wheel/pedals or server</li>
+          <li>Display GUI and UX developed by the company in the simulator</li>
+          <li>Ensure smooth and fast communication between simulator and server</li>
         </ul>
       </div>
 
-      <!-- Technologies -->
       <div class="card">
-        <h3><span class="icon">⚙️</span> Technologies Used</h3>
+        <h3><span class="icon">🔬</span>Development Methodology</h3>
+        <h4>1. Resource Optimization</h4>
+        <ul>
+          <li>Research and testing of existing Unity assets</li>
+          <li>Time-efficient development approach</li>
+          <li>Integration of modular components</li>
+        </ul>
+        
+        <h4>2. Hardware Integration</h4>
+        <ul>
+          <li>Logitech SDK implementation</li>
+          <li>Real-time GPS data processing</li>
+          <li>Server communication protocols</li>
+        </ul>
+        
+        <h4>3. Testing and Validation</h4>
+        <ul>
+          <li>Trade show preparation</li>
+          <li>Performance optimization</li>
+          <li>User interface validation</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h3><span class="icon">💻</span>Technologies Used</h3>
         <div class="tech-stack">
-          <span class="tech-tag">Blender</span>
           <span class="tech-tag">Unity 3D</span>
-          <span class="tech-tag">Oculus SDK</span>
-          <span class="tech-tag">C#</span>
-          <span class="tech-tag">WebXR</span>
-          <span class="tech-tag">OpenStreetMap API</span>
+          <span class="tech-tag">C# Scripting</span>
+          <span class="tech-tag">Logitech SDK</span>
+          <span class="tech-tag">GPS Integration</span>
+          <span class="tech-tag">Networking</span>
+          <span class="tech-tag">Real-time GUI</span>
+          <span class="tech-tag">Hardware Integration</span>
+          <span class="tech-tag">3D Modeling</span>
         </div>
-        <p style="margin-top: 1rem;">Complete 3D creation pipeline, from OSM data processing to VR implementation.</p>
+        
+        <div class="image-placeholder">
+          <img src="./public/images/virtual-replica/epicnpoc-salon-1.jpg" alt="Virtual cockpit interface" style="width: 100%; height: 300px; object-fit: cover; border-radius: 8px;" onerror="this.style.display='none'; this.parentNode.innerHTML='<p>📸 Virtual Cockpit Interface</p><p>High-fidelity 3D cockpit with integrated GUI displays</p>'">
+        </div>
       </div>
 
-      <!-- Methodology -->
       <div class="card">
-        <h3><span class="icon">🔄</span> Methodology</h3>
-        <ol>
-          <li><strong>Data Acquisition:</strong> OpenStreetMap data extraction and processing</li>
-          <li><strong>3D Modeling:</strong> Building and street creation in Blender</li>
-          <li><strong>Texturing:</strong> Realistic Parisian material application</li>
-          <li><strong>Optimization:</strong> Polygon reduction for VR performance</li>
-          <li><strong>Integration:</strong> Unity assembly and lighting setup</li>
-          <li><strong>VR Testing:</strong> Validation on Oculus headset</li>
-        </ol>
-      </div>
-
-      <!-- Technical Challenges -->
-      <div class="card">
-        <h3><span class="icon">⚡</span> Technical Challenges</h3>
+        <h3><span class="icon">⚡</span>Key Features</h3>
         <ul>
-          <li><strong>VR Performance:</strong> Maintain constant 90 FPS with large urban environment</li>
-          <li><strong>Scale Management:</strong> Handle 1km² area without performance loss</li>
-          <li><strong>Data Processing:</strong> Convert OSM data to usable 3D geometry</li>
-          <li><strong>LOD System:</strong> Implement level-of-detail for distant buildings</li>
-          <li><strong>Immersion:</strong> Maintain authentic Parisian atmosphere</li>
+          <li><strong>Realistic Cockpit:</strong> High-fidelity virtual car interior with authentic controls</li>
+          <li><strong>GPS-Based Routes:</strong> Real-world road environments from authentic GPS data</li>
+          <li><strong>Dual Control System:</strong> Manual steering wheel/pedal control or server automation</li>
+          <li><strong>Dynamic GUI Display:</strong> Company-developed interfaces integrated in simulator</li>
+          <li><strong>Real-time Communication:</strong> Fast data exchange with company servers</li>
+          <li><strong>Trade Show Ready:</strong> Optimized for live demonstrations and presentations</li>
         </ul>
       </div>
-    </div>
 
-    <!-- Results -->
-    <div class="card">
-      <h3><span class="icon">🏆</span> Results and Achievements</h3>
-      <div class="content-grid">
-        <div>
-          <h4>Technical Performance</h4>
-          <ul>
-            <li>Stable 90 FPS rendering in VR</li>
-            <li>Loading time < 10 seconds</li>
-            <li>Optimized models (< 50k polygons/building)</li>
-            <li>4K textures for authentic Parisian realism</li>
-          </ul>
-        </div>
-        <div>
-          <h4>Implemented Features</h4>
-          <ul>
-            <li>Free teleportation navigation</li>
-            <li>Urban environment exploration</li>
-            <li>Dynamic day/night lighting</li>
-            <li>Realistic Parisian ambient sounds</li>
-          </ul>
+      <div class="card">
+        <h3><span class="icon">🔧</span>Technical Challenges Overcome</h3>
+        <ul>
+          <li><strong>Hardware Integration:</strong> Perfect synchronization between Logitech controls and simulator</li>
+          <li><strong>Real GPS Processing:</strong> Converting authentic GPS coordinates to realistic road networks</li>
+          <li><strong>Server Communication:</strong> Low-latency networking for remote control capabilities</li>
+          <li><strong>Performance Optimization:</strong> Maintaining smooth frame rates with complex 3D environments</li>
+          <li><strong>GUI Overlay System:</strong> Flexible interface display for various prototype demonstrations</li>
+        </ul>
+        
+        <div class="image-placeholder">
+          <img src="./public/images/virtual-replica/epicnpoc-salon-2.jpg" alt="Hardware integration setup" style="width: 100%; height: 300px; object-fit: cover; border-radius: 8px;" onerror="this.style.display='none'; this.parentNode.innerHTML='<p>⚙️ Hardware Integration</p><p>Logitech steering wheel and pedal system integration</p>'">
         </div>
       </div>
-      <p><strong>Impact:</strong> This project demonstrates my ability to create complete VR experiences, from conception to implementation, mastering the entire 3D production pipeline with real-world data integration.</p>
-    </div>
 
-    <!-- Image Gallery -->
-    <div class="card">
-      <h3><span class="icon">🖼️</span> Project Gallery</h3>
-      <div class="gallery">
-        <img src="public/images/virtual-replica/virtual1.jpg" alt="Overview of cockpit" onclick="openModal(this.src)">
-        <img src="public/images/virtual-replica/virtual2.jpg" alt="Backseat cockpit" onclick="openModal(this.src)">
-        <img src="public/images/virtual-replica/virtual3.jpg" alt="Overview of virtual Paris downtown section" onclick="openModal(this.src)">
-        <img src="public/images/virtual-replica/virtual4.jpg" alt="Detailed textures OSM" onclick="openModal(this.src)">
+      <div class="card">
+        <h3><span class="icon">🤝</span>Development Context</h3>
+        <p>Work completed as part of EPICNPOC prototyping services:</p>
+        <ul>
+          <li><strong>Prototyping Chain:</strong> Third stage of company's development pipeline</li>
+          <li><strong>Trade Show Focus:</strong> Designed for professional presentation environments</li>
+          <li><strong>Resource Optimization:</strong> Efficient use of available development time and assets</li>
+        </ul>
+        
+        <div class="highlight">
+          <strong>Innovation:</strong> The simulator allows testing different concepts and prototypes in realistic virtual car environments, bridging the gap between digital prototypes and real-world user experience.
+        </div>
       </div>
     </div>
-  </section>
-</div>
 
-<!-- Modal to display images in full size -->
-<div id="imageModal" class="modal" onclick="closeModal()">
-  <span class="close" onclick="closeModal()">&times;</span>
-  <img class="modal-content" id="modalImage">
-</div>
-
-<footer>
-  <p>Projet réalisé par Thomas Menu — Virtual Reality & 3D Modeling</p>
-</footer>
-
-<script>
-function openModal(src) {
-  document.getElementById('imageModal').style.display = 'block';
-  document.getElementById('modalImage').src = src;
-}
-
-function closeModal() {
-  document.getElementById('imageModal').style.display = 'none';
-}
-
-// Fermer le modal en appuyant sur Échap
-document.addEventListener('keydown', function(event) {
-  if (event.key === 'Escape') {
-    closeModal();
-  }
-});
-</script>
-
+    <div class="results">
+      <h3>🏆 Results and Impact</h3>
+      
+      <div class="achievement">
+        <h4>✅ Successful Implementation</h4>
+        <p>Delivered a fully functional automotive simulator capable of realistic cockpit simulation with GPS-based road environments and dual control systems.</p>
+      </div>
+      
+      <div class="achievement">
+        <h4>✅ Hardware Integration Success</h4>
+        <p>Successfully integrated Logitech steering wheel and pedal systems with Unity physics engine, providing realistic driving experience for prototype testing.</p>
+      </div>
+      
+      <div class="achievement">
+        <h4>✅ Trade Show Ready</h4>
+        <p>Optimized simulator performance and presentation capabilities for professional trade show environments, facilitating effective prototype demonstrations.</p>
+      </div>
+      
+      <div class="achievement">
+        <h4>✅ Technological Innovation</h4>
+        <p>Demonstrated ability to integrate complex technologies (3D simulation, GPS data, hardware controls, networking) into cohesive prototyping platform.</p>
+      </div>
+      
+      <div class="achievement">
+        <h4>✅ Skills Developed</h4>
+        <p>Advanced Unity development, hardware integration, GPS data processing, networking protocols, and trade show presentation systems.</p>
+      </div>
+    </div>
+  </div>
 </body>
 </html>

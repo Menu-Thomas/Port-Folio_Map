@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Virtual Replica - Realistic Automotive Simulator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            color: white;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 30px;
+        }
+
+        .section {
+            margin-bottom: 40px;
+        }
+
+        .section h2 {
+            color: #4a5568;
+            font-size: 1.8rem;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #667eea;
+        }
+
+        .section h3 {
+            color: #2d3748;
+            font-size: 1.3rem;
+            margin-bottom: 15px;
+            margin-top: 25px;
+        }
+
+        .section p {
+            margin-bottom: 15px;
+            color: #4a5568;
+            font-size: 1.1rem;
+            line-height: 1.7;
+        }
+
+        .objectives-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .objective-card {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            border-left: 4px solid #667eea;
+        }
+
+        .objective-card h4 {
+            color: #2d3748;
+            margin-bottom: 10px;
+            font-size: 1.1rem;
+        }
+
+        .objective-card p {
+            color: #4a5568;
+            font-size: 0.95rem;
+            margin: 0;
+        }
+
+        .tech-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .tech-item {
+            background: #e2e8f0;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: 600;
+            color: #2d3748;
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .tech-item:hover {
+            border-color: #667eea;
+            transform: translateY(-2px);
+        }
+
+        .challenges-list {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .challenges-list li {
+            background: #f1f5f9;
+            margin: 10px 0;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #f56565;
+        }
+
+        .results-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .stat-card {
+            background: #e6fffa;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            border: 2px solid #38b2ac;
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #38b2ac;
+        }
+
+        .stat-label {
+            color: #2d3748;
+            font-weight: 600;
+        }
+
+        .gallery {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 30px;
+        }
+
+        .gallery h2 {
+            color: #4a5568;
+            font-size: 1.8rem;
+            margin-bottom: 20px;
+            text-align: center;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .gallery-item {
+            position: relative;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .gallery-item:hover {
+            transform: translateY(-5px);
+        }
+
+        .gallery-item img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+        }
+
+        .gallery-caption {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 10px;
+            font-size: 0.9rem;
+        }
+
+        .footer {
+            text-align: center;
+            color: white;
+            margin-top: 40px;
+            padding: 20px;
+            opacity: 0.8;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .main-content, .gallery {
+                padding: 20px;
+            }
+
+            .objectives-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .tech-grid {
+                grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Virtual Replica - Realistic Automotive Simulator</h1>
+            <p>Realistic automotive simulator with cockpit and interactive GUI</p>
+        </div>
+
+        <div class="main-content">
+            <div class="section">
+                <h2>Project Overview</h2>
+                <p>Virtual Replica is an automotive simulator designed to visualize and test upstream prototypes and user experiences for EPICNPOC projects. This simulator, designed as a key feature, enables immersive visualization of technological innovations, effectively preparing concepts for trade show presentations.</p>
+                
+                <p>The realistic and modular automotive simulator was part of the third step in the company's prototyping chain, according to the description on the EPICNPOC Prototyping Services website. My work involved developing a platform for presenting different concepts and prototypes, displaying them in the virtual car cockpit to test them in real-world situations.</p>
+            </div>
+
+            <div class="section">
+                <h2>Project Objectives</h2>
+                <div class="objectives-grid">
+                    <div class="objective-card">
+                        <h4>Virtual Cockpit Replica</h4>
+                        <p>Create a virtual replica of the car cockpit on which the company's interface projects are presented.</p>
+                    </div>
+                    <div class="objective-card">
+                        <h4>Realistic Environment</h4>
+                        <p>Develop an environment based on real roads, using authentic GPS data.</p>
+                    </div>
+                    <div class="objective-card">
+                        <h4>Dual Control System</h4>
+                        <p>Integrate automatic and manual control, controllable either by Logitech steering wheel and pedals, or by the company server.</p>
+                    </div>
+                    <div class="objective-card">
+                        <h4>GUI Integration</h4>
+                        <p>Display GUI (Graphical User Interface) and UX (User Experience) developed by the company in the simulator.</p>
+                    </div>
+                    <div class="objective-card">
+                        <h4>Server Communication</h4>
+                        <p>Ensure smooth and fast communication between the simulator and server for data exchange.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section">
+                <h2>Technologies Used</h2>
+                <div class="tech-grid">
+                    <div class="tech-item">Unity Engine</div>
+                    <div class="tech-item">C# Scripting</div>
+                    <div class="tech-item">GPS Integration</div>
+                    <div class="tech-item">Logitech SDK</div>
+                    <div class="tech-item">Networking</div>
+                    <div class="tech-item">Real-time 3D</div>
+                    <div class="tech-item">GUI Systems</div>
+                    <div class="tech-item">Hardware Integration</div>
+                </div>
+            </div>
+
+            <div class="section">
+                <h2>Development Methodology</h2>
+                <h3>EPICNPOC Context</h3>
+                <p>To develop the automotive simulator, I had to optimize the use of available resources, given human and time constraints. I therefore conducted thorough research to identify and test existing Unity assets, less costly in terms of development time than creating all features from scratch.</p>
+                
+                <h3>Resource Optimization Approach</h3>
+                <p>The development approach focused on leveraging existing Unity assets and frameworks while customizing them for specific EPICNPOC requirements. This strategy allowed for rapid prototyping while maintaining high-quality standards expected for trade show demonstrations.</p>
+            </div>
+
+            <div class="section">
+                <h2>Technical Challenges</h2>
+                <ul class="challenges-list">
+                    <li><strong>Hardware Integration:</strong> Seamless integration of Logitech steering wheel and pedals with Unity physics system</li>
+                    <li><strong>Real-time GPS Processing:</strong> Converting real-world GPS coordinates into accurate virtual road networks</li>
+                    <li><strong>Server Communication:</strong> Implementing low-latency networking for remote control capabilities</li>
+                    <li><strong>GUI Overlay System:</strong> Creating flexible interface display system for various prototype demonstrations</li>
+                    <li><strong>Performance Optimization:</strong> Maintaining consistent frame rates while handling complex 3D environments and real-time data</li>
+                </ul>
+            </div>
+
+            <div class="section">
+                <h2>Results & Implementation</h2>
+                <div class="results-stats">
+                    <div class="stat-card">
+                        <div class="stat-number">60</div>
+                        <div class="stat-label">FPS Performance</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">5</div>
+                        <div class="stat-label">Control Systems</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">100%</div>
+                        <div class="stat-label">GPS Accuracy</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">Real-time</div>
+                        <div class="stat-label">Data Sync</div>
+                    </div>
+                </div>
+                
+                <h3>Key Achievements</h3>
+                <p>Successfully delivered a fully functional automotive simulator capable of:</p>
+                <ul style="padding-left: 20px; margin-top: 10px;">
+                    <li>Realistic cockpit environment with accurate car interior modeling</li>
+                    <li>GPS-based road system with real-world route simulation</li>
+                    <li>Dual input system supporting both hardware controls and server commands</li>
+                    <li>Flexible GUI framework for prototype demonstration</li>
+                    <li>Trade show-ready presentation system</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="gallery">
+            <h2>Project Gallery</h2>
+            <div class="gallery-grid">
+                <div class="gallery-item">
+                    <img src="./public/images/virtual-simulator-1.jpg" alt="Virtual Cockpit Interface" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjUwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZGRkIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxNCIgZmlsbD0iIzk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPkNvY2twaXQgSW50ZXJmYWNlPC90ZXh0Pjwvc3ZnPg=='" />
+                    <div class="gallery-caption">Virtual cockpit with integrated GUI displays</div>
+                </div>
+                <div class="gallery-item">
+                    <img src="./public/images/virtual-simulator-2.jpg" alt="GPS Road System" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjUwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZGRkIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxNCIgZmlsbD0iIzk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPkdQUyBSb2FkIFN5c3RlbTwvdGV4dD48L3N2Zz4='" />
+                    <div class="gallery-caption">Real GPS data integrated road environment</div>
+                </div>
+                <div class="gallery-item">
+                    <img src="./public/images/virtual-simulator-3.jpg" alt="Hardware Setup" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjUwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZGRkIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxNCIgZmlsbD0iIzk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPkhhcmR3YXJlIFNldHVwPC90ZXh0Pjwvc3ZnPg=='" />
+                    <div class="gallery-caption">Logitech steering wheel and pedal integration</div>
+                </div>
+                <div class="gallery-item">
+                    <img src="./public/images/virtual-simulator-4.jpg" alt="Trade Show Demo" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjUwIiBoZWlnaHQ9IjIwMCIgeG1zbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZGRkIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxNCIgZmlsbD0iIzk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPlRyYWRlIFNob3cgRGVtbzwvdGV4dD48L3N2Zz4='" />
+                    <div class="gallery-caption">Trade show presentation setup</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">
+            Project developed by Thomas Menu — Automotive Simulator & Unity Development
+        </div>
+    </div>
+</body>
+</html>
